@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://cl23t0ysayiyk"]
+
+[ext_resource type="Texture2D" uid="uid://ba21hvuaxsj2m" path="res://art/backgrounds/combat_theater.png" id="1_wce0x"]
+[ext_resource type="Script" uid="uid://16136e040w2v" path="res://scripts/theater/battlefield_layout.gd" id="3_nhugf"]
+[ext_resource type="Script" uid="uid://bers3kwnsupbt" path="res://scripts/theater/theater_controller.gd" id="9_t6ngf"]
+
+[node name="TheaterTest" type="Node2D" unique_id=284280943]
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=724008787]
+texture = ExtResource("1_wce0x")
+
+[node name="TheaterController" type="Node" parent="." unique_id=1941477817]
+script = ExtResource("9_t6ngf")
+
+[node name="Node2D" type="Node2D" parent="." unique_id=1801175047]
+
+[node name="BattlefieldLayout" type="Node" parent="Node2D" unique_id=342698419]
+script = ExtResource("3_nhugf")
+metadata/_custom_type_script = "uid://16136e040w2v"
+
+[node name="HeroSlots" type="Node2D" parent="Node2D/BattlefieldLayout" unique_id=1301226431]
+
+[node name="Slot0" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2124689907]
+
+[node name="Slot1" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2097280847]
+
+[node name="Slot2" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2001287511]
+
+[node name="Slot3" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=1796374128]
+
+[node name="Slot4" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=894962059]
+
+[node name="Slot5" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=342455889]
+
+[node name="EnemySlots" type="Node2D" parent="Node2D/BattlefieldLayout" unique_id=1114686367]
+
+[node name="Slot0" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1521410739]
+
+[node name="Slot1" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1723433260]
+
+[node name="Slot2" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=2107825597]
+
+[node name="Slot3" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1539459789]
+
+[node name="Slot4" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1246564546]
+
+[node name="Slot5" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1460659039]

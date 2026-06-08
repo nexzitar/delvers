@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://c8naycsowwxx3"]
+
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_hodyc"]
+
+[resource]
+resource_name = "Auto Attack"
+script = ExtResource("1_hodyc")
+base_max_damage = 9

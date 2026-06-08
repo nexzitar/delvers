@@ -1,0 +1,142 @@
+[gd_scene format=3 uid="uid://ctc4i51geqd1x"]
+
+[ext_resource type="Texture2D" uid="uid://jtuavc5nholc" path="res://art/backgrounds/campfire_scene.png" id="1_65ltr"]
+[ext_resource type="FontFile" uid="uid://b70ywrddxgpna" path="res://art/fonts/Herculanum.ttf" id="2_cfcag"]
+[ext_resource type="Texture2D" uid="uid://5qykq0gmd8su" path="res://art/ui/stone_texture.jpeg" id="3_sf4ia"]
+
+[sub_resource type="Theme" id="Theme_mae5d"]
+default_font = ExtResource("2_cfcag")
+default_font_size = 150
+
+[sub_resource type="LabelSettings" id="LabelSettings_4hy44"]
+font = ExtResource("2_cfcag")
+font_size = 125
+font_color = Color(0, 0, 0, 1)
+outline_size = 10
+outline_color = Color(0.64980674, 0.06987181, 0, 1)
+stacked_outline_count = 2
+stacked_outline_0/size = 10
+stacked_outline_0/color = Color(0.3419999, 0.14356893, 7.219613e-08, 0.3372549)
+stacked_outline_1/size = 10
+stacked_outline_1/color = Color(0.69411767, 0.19607843, 0, 0.6666667)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lti8b"]
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+bg_color = Color(0.039215688, 0.039215688, 0.039215688, 0.7058824)
+draw_center = false
+border_color = Color(0.40136147, 0.26811507, 0.10675422, 0.8627451)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mae5d"]
+texture = ExtResource("3_sf4ia")
+modulate_color = Color(0.529324, 0.30810353, 0.13396725, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4hy44"]
+texture = ExtResource("3_sf4ia")
+modulate_color = Color(0.66535044, 0.3340578, 0.09230905, 1)
+
+[node name="menu" type="Control" unique_id=1925184257]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="TextureRect" parent="." unique_id=1842766443]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_65ltr")
+expand_mode = 3
+
+[node name="Label" type="Label" parent="Background" unique_id=2022679361]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 112.0
+offset_right = 901.0
+offset_bottom = 312.0
+theme = SubResource("Theme_mae5d")
+theme_type_variation = &"HeaderLarge"
+theme_override_colors/font_color = Color(0.42384627, 0.25345564, 0.013036936, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7294118)
+theme_override_fonts/font = ExtResource("2_cfcag")
+theme_override_font_sizes/font_size = 150
+text = "Delvers"
+label_settings = SubResource("LabelSettings_4hy44")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1678157854]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.09803922)
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1773996351]
+layout_mode = 0
+offset_left = 53.0
+offset_top = 140.0
+offset_right = 453.0
+offset_bottom = 740.0
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer" unique_id=1263061402]
+custom_minimum_size = Vector2(400, 600)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_lti8b")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer" unique_id=677644827]
+custom_minimum_size = Vector2(300, 500)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+size_flags_stretch_ratio = 0.0
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="EnterButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=77198958]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_cfcag")
+theme_override_font_sizes/font_size = 45
+theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
+theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
+text = "Enter"
+
+[node name="Button2" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1337447855]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
+theme_override_fonts/font = ExtResource("2_cfcag")
+theme_override_font_sizes/font_size = 45
+theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
+text = "Placeholder
+"
+
+[node name="ExitButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1740202451]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
+theme_override_fonts/font = ExtResource("2_cfcag")
+theme_override_font_sizes/font_size = 45
+theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
+text = "Exit
+"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=775868629]
