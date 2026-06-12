@@ -26,7 +26,11 @@ const MELEE_STRIKE_DISTANCE = 140
 ## screen draw in front of units behind them.
 @export var actors_root: Node2D
 
+@export var hero_sidebar: BattleSidebar
+@export var enemy_sidebar: BattleSidebar
+
 var actors = {}
+var sidebars_by_entity = {}
 
 var slash_scene = preload("res://art/effects/slash.tscn")
 var combat_result: CombatResult
@@ -57,6 +61,10 @@ func play_damage(event):
 
 	var source = actors[event.source_id]
 	var target = actors[event.target_id]
+
+	sidebars_by_entity[event.source_id].add_damage(
+		event.source_id, event.amount, event.time
+	)
 
 	if is_projectile(event.skill):
 		await play_ranged_attack(source, target, event)
@@ -105,7 +113,8 @@ func apply_hit(target, event):
 
 	target.play_hit()
 
-	target.set_health(
+	sidebars_by_entity[event.target_id].set_health(
+		event.target_id,
 		event.remaining_health,
 		event.max_health
 	)
@@ -139,6 +148,8 @@ func spawn_projectile(source, target, skill):
 func play_death(event):
 
 	var target = actors[event.target_id]
+
+	sidebars_by_entity[event.target_id].mark_dead(event.target_id)
 
 	await target.play_death()
 
@@ -248,16 +259,17 @@ func play_spawn(event):
 		event.formation_slot
 	)
 
-	actor.setup_spawn(
-		event.entity_id,
-		event.entity_name,
-		event.current_health,
-		event.max_health
-	)
-
+	actor.setup_spawn(event.entity_id)
 	actor.equip_gear(event.gear)
 
 	actors[event.entity_id] = actor
+
+	var sidebar = (
+		hero_sidebar if event.team == CombatEntity.Team.HERO
+		else enemy_sidebar
+	)
+	sidebar.add_unit(event)
+	sidebars_by_entity[event.entity_id] = sidebar
 	
 func get_slot_position(team, formation_slot):
 

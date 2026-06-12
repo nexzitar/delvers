@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://ccm3dhnu1va8q" path="res://scenes/theater/actors/slime_actor.tscn" id="1_lin6p"]
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_sh440"]
 [ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_sh440"]
+[ext_resource type="Texture2D" path="res://art/portraits/icon_green_slime.png" id="4_icon"]
 
 [resource]
 script = ExtResource("1_kfisv")
@@ -13,4 +14,5 @@ actor_scene = ExtResource("1_lin6p")
 base_health = 25
 base_attack = 1
 base_attack_interval = 4.0
+portrait = ExtResource("4_icon")
 skills = Array[ExtResource("2_sh440")]([ExtResource("3_sh440")])

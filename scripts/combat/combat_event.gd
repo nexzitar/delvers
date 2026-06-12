@@ -19,6 +19,9 @@ var entity_id: int
 var time: float
 var type: EventType
 
+var current_mana: int
+var max_mana: int
+
 var source_name: String
 var target_name: String
 
@@ -55,6 +58,8 @@ static func create_spawn(combat_entity):
 
 	event.current_health = combat_entity.current_health
 	event.max_health = combat_entity.max_health
+	event.current_mana = combat_entity.current_mana
+	event.max_mana = combat_entity.template.base_mana
 	event.gear = combat_entity.gear
 
 	return event

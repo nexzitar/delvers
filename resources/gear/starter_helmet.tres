@@ -1,14 +1,13 @@
-[gd_resource type="Resource" script_class="GearDefinition" format=3]
+[gd_resource type="Resource" script_class="GearDefinition" format=3 uid="uid://bgidrpuj17ap4"]
 
-[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
-[ext_resource type="Texture2D" path="res://art/gear/starter_helmet.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://bitmblhuwkx5f" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" uid="uid://b5ss8chu5fbj6" path="res://art/gear/starter_helmet.png" id="2_tex"]
 
 [resource]
 resource_name = "Starter Helmet"
 script = ExtResource("1_gear")
 gear_id = "starter_helmet"
 gear_name = "Starter Helmet"
-slot = 0
 texture = ExtResource("2_tex")
 icon = ExtResource("2_tex")
 offset = Vector2(15, -350)

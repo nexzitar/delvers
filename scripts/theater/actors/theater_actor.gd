@@ -2,10 +2,7 @@ extends Node2D
 class_name TheaterActor
 
 @onready var sprite = $Sprite2D
-@onready var health_bar = $NameLabel/HealthBar
 @onready var animation_player = $AnimationPlayer
-@onready var hp_label = $NameLabel/HealthBar/HP
-@onready var name_label = $NameLabel
 @export var attack_direction := 1
 
 ## Optional attack pose shown while winding up an attack.
@@ -24,8 +21,6 @@ enum DeathStyle {
 ## The x component is flipped by attack_direction.
 @export var projectile_origin := Vector2(70, -10)
 
-var max_health := 10
-var current_health := 10
 var entity_id : int
 
 var weapon_type := GearDefinition.WeaponType.NONE
@@ -90,38 +85,6 @@ func end_windup():
 	sprite.texture = _idle_texture
 	sprite.region_enabled = _idle_region_enabled
 	sprite.scale = _idle_sprite_scale
-
-func setup(entity):
-
-	entity_id = entity.entity_id
-	current_health = entity.current_health
-	max_health = entity.template.base_health
-
-	print(
-		"SETUP:",
-		entity.entity_name,
-		" HP:",
-		current_health,
-		"/",
-		max_health
-	)
-
-	set_health(
-		current_health,
-		max_health
-	)
-
-	name_label.text = entity.entity_name
-	
-func set_health(current, maxhp):
-
-	current_health = current
-	max_health = maxhp
-
-	health_bar.max_value = max_health
-	health_bar.value = current_health
-
-	hp_label.text = str(current_health) + "/" + str(max_health)
 
 func jump_to(target_position):
 
@@ -266,7 +229,6 @@ func play_hit():
 func play_death():
 
 	end_windup()
-	name_label.visible = false
 
 	if animation_player.has_animation("death"):
 		animation_player.play("death")
@@ -321,21 +283,6 @@ func _death_fade():
 	fade.tween_property(self, "modulate:a", 0.0, 0.5)
 	await fade.finished
 
-func setup_spawn(
-	p_entity_id,
-	p_entity_name,
-	p_current_health,
-	p_max_health
-):
+func setup_spawn(p_entity_id):
 
 	entity_id = p_entity_id
-
-	current_health = p_current_health
-	max_health = p_max_health
-
-	set_health(
-		current_health,
-		max_health
-	)
-
-	name_label.text = p_entity_name

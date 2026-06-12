@@ -16,6 +16,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 - **Combat simulation** — Heroes and enemies fight using timed auto-attacks, skills, and formation slots. Combat runs headlessly and produces a full event log.
 - **Theater playback** — Combat results are replayed visually: actors spawn on the battlefield, attack animations play, damage numbers float up, and deaths are shown.
+- **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
 - **Main menu** — Campfire-themed menu with Enter and Exit actions.
 
@@ -127,7 +128,7 @@ Combat is split into two layers:
 
 1. **Simulation** (`scripts/combat/`) — `CombatState` runs the fight in discrete time steps. Entities attack on intervals, damage is rolled from skill definitions, and every action is recorded as a `CombatEvent` in a `CombatLog`. When one side is eliminated, a `CombatResult` is built.
 
-2. **Theater** (`scripts/theater/`) — `TheaterController` reads the combat log and plays it back: spawning actors via `ActorFactory`, triggering attack/hit/death animations, showing HP bars, and spawning floating damage numbers.
+2. **Theater** (`scripts/theater/`) — `TheaterController` reads the combat log and plays it back: spawning actors, triggering attack/hit/death animations, spawning floating damage numbers, and feeding the side panels (unit health/mana and the damage meters).
 
 ## Current Content
 

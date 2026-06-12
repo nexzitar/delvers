@@ -4,21 +4,25 @@
 [ext_resource type="Script" uid="uid://dcbphjyx7hvig" path="res://scripts/data/hero_template.gd" id="1_ok26h"]
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_ctke7"]
 [ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_iac65"]
-[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="4_gear"]
+[ext_resource type="Script" uid="uid://bitmblhuwkx5f" path="res://scripts/data/gear_definition.gd" id="4_gear"]
 [ext_resource type="Resource" path="res://resources/gear/starter_sword.tres" id="5_sword"]
 [ext_resource type="Resource" path="res://resources/gear/starter_shield.tres" id="6_shield"]
 [ext_resource type="Resource" path="res://resources/gear/starter_helmet.tres" id="7_helmet"]
 [ext_resource type="Resource" path="res://resources/gear/starter_armor.tres" id="8_armor"]
+[ext_resource type="Texture2D" path="res://art/portraits/icon_delver.png" id="9_icon"]
 
 [resource]
 resource_name = "HeroTemplate"
 script = ExtResource("1_ok26h")
 hero_id = "Default Delver"
 hero_name = "Default Delver"
+template_id = null
 actor_scene = ExtResource("1_iac65")
 base_health = 100
 base_mana = 10
 base_attack = 1
 base_attack_interval = 3.0
+portrait = ExtResource("9_icon")
 starting_skills = Array[ExtResource("2_ctke7")]([ExtResource("3_iac65")])
 starting_gear = Array[ExtResource("4_gear")]([ExtResource("5_sword"), ExtResource("6_shield"), ExtResource("7_helmet"), ExtResource("8_armor")])
+preferred_slots = null

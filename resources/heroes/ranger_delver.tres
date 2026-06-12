@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://resources/gear/starter_bow.tres" id="6_bow"]
 [ext_resource type="Resource" path="res://resources/gear/starter_helmet.tres" id="7_helmet"]
 [ext_resource type="Resource" path="res://resources/gear/starter_armor.tres" id="8_armor"]
+[ext_resource type="Texture2D" path="res://art/portraits/icon_delver.png" id="9_icon"]
 
 [resource]
 resource_name = "HeroTemplate"
@@ -19,6 +20,7 @@ base_health = 80
 base_mana = 10
 base_attack = 2
 base_attack_interval = 3.0
+portrait = ExtResource("9_icon")
 starting_skills = Array[ExtResource("3_skill")]([ExtResource("4_arrow")])
 starting_gear = Array[ExtResource("5_gear")]([ExtResource("6_bow"), ExtResource("7_helmet"), ExtResource("8_armor")])
 preferred_row = 1

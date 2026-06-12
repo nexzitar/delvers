@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="GearDefinition" format=3]
+[gd_resource type="Resource" script_class="GearDefinition" format=3 uid="uid://dm1bhc7wpjrj4"]
 
-[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
-[ext_resource type="Texture2D" path="res://art/gear/starter_armor.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://bitmblhuwkx5f" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" uid="uid://ck55kjpy38mq4" path="res://art/gear/starter_armor.png" id="2_tex"]
 
 [resource]
 resource_name = "Starter Armor"
