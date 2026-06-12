@@ -31,12 +31,12 @@ func _seat_heroes():
 		if child is Marker2D:
 			seats.append(child)
 
-	seats.shuffle()
+	var assignment = _resolve_seating(seats)
 
-	for i in mini(PlayerRoster.heroes.size(), seats.size()):
+	for seat_name in assignment:
 
-		var template = PlayerRoster.heroes[i]
-		var seat = seats[i]
+		var template = PlayerRoster.heroes[assignment[seat_name]]
+		var seat = seats_root.get_node(NodePath(seat_name))
 
 		var actor = template.actor_scene.instantiate()
 		seat.add_child(actor)
@@ -57,3 +57,33 @@ func _seat_heroes():
 		actor.position = Vector2(0, -ACTOR_FOOT_OFFSET * depth)
 
 		actor.equip_gear(template.starting_gear)
+
+## Rolls fresh random seats, unless the roster asks to keep the
+## previous arrangement (menu-to-camp transition).
+func _resolve_seating(seats) -> Dictionary:
+
+	if PlayerRoster.keep_seating:
+		PlayerRoster.keep_seating = false
+		if _seating_valid(PlayerRoster.saved_seating, seats):
+			return PlayerRoster.saved_seating
+
+	seats.shuffle()
+
+	var assignment = {}
+	for i in mini(PlayerRoster.heroes.size(), seats.size()):
+		assignment[String(seats[i].name)] = i
+
+	PlayerRoster.saved_seating = assignment
+	return assignment
+
+func _seating_valid(assignment, seats) -> bool:
+
+	if assignment.size() != mini(PlayerRoster.heroes.size(), seats.size()):
+		return false
+
+	var seat_names = seats.map(func(seat): return String(seat.name))
+	for seat_name in assignment:
+		if not seat_names.has(seat_name):
+			return false
+
+	return true

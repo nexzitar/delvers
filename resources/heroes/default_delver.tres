@@ -5,11 +5,11 @@
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_ctke7"]
 [ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_iac65"]
 [ext_resource type="Script" uid="uid://bitmblhuwkx5f" path="res://scripts/data/gear_definition.gd" id="4_gear"]
-[ext_resource type="Resource" path="res://resources/gear/starter_sword.tres" id="5_sword"]
-[ext_resource type="Resource" path="res://resources/gear/starter_shield.tres" id="6_shield"]
-[ext_resource type="Resource" path="res://resources/gear/starter_helmet.tres" id="7_helmet"]
-[ext_resource type="Resource" path="res://resources/gear/starter_armor.tres" id="8_armor"]
-[ext_resource type="Texture2D" path="res://art/portraits/icon_delver.png" id="9_icon"]
+[ext_resource type="Resource" uid="uid://o4gr242bpbld" path="res://resources/gear/starter_sword.tres" id="5_sword"]
+[ext_resource type="Resource" uid="uid://cxy7odjkqqudi" path="res://resources/gear/starter_shield.tres" id="6_shield"]
+[ext_resource type="Resource" uid="uid://bgidrpuj17ap4" path="res://resources/gear/starter_helmet.tres" id="7_helmet"]
+[ext_resource type="Resource" uid="uid://dm1bhc7wpjrj4" path="res://resources/gear/starter_armor.tres" id="8_armor"]
+[ext_resource type="Texture2D" uid="uid://cvp38yfw8mns7" path="res://art/portraits/icon_delver.png" id="9_icon"]
 
 [resource]
 resource_name = "HeroTemplate"

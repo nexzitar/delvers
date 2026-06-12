@@ -15,6 +15,12 @@ var battles_fought := 0
 var adventures_completed := 0
 var last_battle_won := false
 
+## Seat assignments (seat node name -> hero index) from the last
+## campfire stage. When keep_seating is set, the next stage reuses
+## them, so the party stays put during the menu-to-camp transition.
+var saved_seating := {}
+var keep_seating := false
+
 ## How lively the camp fire burns, 0..1. Starts as smoldering coals
 ## and grows with the party's size and completed adventures.
 func fire_intensity() -> float:

@@ -10,12 +10,16 @@ class_name Campfire
 
 @onready var glow = $Glow
 @onready var embers = $Embers
+@onready var crackle = $Crackle
 
 # Random start phase so multiple fires never flicker in sync.
 var _time := randf() * 100.0
 
 func _ready():
 	_apply_intensity()
+
+	crackle.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	crackle.play(randf() * crackle.stream.get_length())
 
 func _process(delta):
 	_time += delta
@@ -34,4 +38,8 @@ func _apply_intensity():
 		return
 
 	embers.amount = int(lerpf(5.0, 40.0, intensity))
-	glow.scale = Vector2.ONE * lerpf(1.15, 2.3, intensity)
+	# The glow hugs the ground plane, so it's a squashed ellipse.
+	glow.scale = Vector2(1.0, 0.55) * lerpf(1.15, 2.3, intensity)
+
+	# A livelier fire crackles louder.
+	crackle.volume_db = lerpf(-18.0, -6.0, intensity)

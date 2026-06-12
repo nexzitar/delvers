@@ -18,7 +18,9 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 - **Theater playback** — Combat results are replayed visually: actors spawn on the battlefield, attack animations play, damage numbers float up, and deaths are shown.
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
-- **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds.
+- **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds. Entering camp from the menu plays a zoom-and-fade transition, and the party keeps their seats across it.
+- **Sound** — Procedurally synthesized placeholder audio: looping menu and combat themes, fire-crackle ambience, a creaking sign, UI hover/click feedback, and combat hits, swings, and bow shots. Mixed through Master/Music/SFX/Ambience buses.
+- **Settings** — Fullscreen toggle and four volume sliders, persisted to disk and applied on startup.
 
 ## Game Design
 
@@ -82,7 +84,8 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Dungeon exploration | Not started |
 | Loot / progression | Not started |
 | Multiple skill types | Schema ready, only auto-attack implemented |
-| Sound | Menu audio player present, not wired up |
+| Sound | Procedural placeholder audio with settings (no composed music yet) |
+| Settings | Fullscreen + volume sliders working |
 
 ## Requirements
 
@@ -114,6 +117,7 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 ```
 delvers/
 ├── art/              # Sprites, UI textures, effects, fonts, backgrounds
+├── audio/            # Procedurally synthesized sounds and music loops
 ├── resources/        # Hero, enemy, and skill definitions (.tres)
 ├── scenes/
 │   ├── camp/         # Camp scene, campfire stage, animated fire

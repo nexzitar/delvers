@@ -22,6 +22,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 PlayerRoster="*res://scripts/game/player_roster.gd"
+GameSettings="*res://scripts/game/game_settings.gd"
+UiSounds="*res://scripts/game/ui_sounds.gd"
 
 [display]
 

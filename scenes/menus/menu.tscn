@@ -3,33 +3,32 @@
 [ext_resource type="PackedScene" path="res://scenes/camp/campfire_stage.tscn" id="1_stage"]
 [ext_resource type="FontFile" uid="uid://b70ywrddxgpna" path="res://art/fonts/Herculanum.ttf" id="2_cfcag"]
 [ext_resource type="Texture2D" uid="uid://5qykq0gmd8su" path="res://art/ui/stone_texture.jpeg" id="3_sf4ia"]
-[ext_resource type="Script" path="res://scripts/ui/menu.gd" id="4_menu"]
-[ext_resource type="Texture2D" path="res://art/ui/delvers_logo.png" id="5_logo"]
+[ext_resource type="Script" uid="uid://ckxo7qmhitru0" path="res://scripts/ui/menu.gd" id="4_menu"]
+[ext_resource type="Texture2D" uid="uid://b6hqpsjwmlt0c" path="res://art/ui/delvers_logo.png" id="5_logo"]
+[ext_resource type="Texture2D" path="res://art/ui/rope_strand.png" id="6_rope"]
+[ext_resource type="PackedScene" path="res://scenes/menus/settings_panel.tscn" id="7_settings"]
+[ext_resource type="Script" path="res://scripts/ui/music_player.gd" id="8_music"]
+[ext_resource type="AudioStream" path="res://audio/menu_theme.wav" id="9_theme"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lti8b"]
-content_margin_left = 20.0
-content_margin_top = 12.0
-content_margin_right = 20.0
-content_margin_bottom = 12.0
-bg_color = Color(0.039215688, 0.039215688, 0.039215688, 0.7058824)
-draw_center = false
-border_color = Color(0.40136147, 0.26811507, 0.10675422, 0.8627451)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_board"]
+content_margin_left = 24.0
+content_margin_top = 18.0
+content_margin_right = 24.0
+content_margin_bottom = 18.0
+texture = ExtResource("3_sf4ia")
+modulate_color = Color(0.22, 0.13, 0.06, 1)
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mae5d"]
 texture = ExtResource("3_sf4ia")
 modulate_color = Color(0.529324, 0.30810353, 0.13396725, 1)
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4hy44"]
-texture = ExtResource("3_sf4ia")
-modulate_color = Color(0.66535044, 0.3340578, 0.09230905, 1)
-
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_press"]
 texture = ExtResource("3_sf4ia")
 modulate_color = Color(0.36, 0.2, 0.08, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4hy44"]
+texture = ExtResource("3_sf4ia")
+modulate_color = Color(0.66535044, 0.3340578, 0.09230905, 1)
 
 [node name="menu" type="Control" unique_id=1925184257]
 layout_mode = 3
@@ -40,7 +39,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("4_menu")
 
-[node name="Stage" parent="." instance=ExtResource("1_stage")]
+[node name="Stage" parent="." unique_id=1797901094 instance=ExtResource("1_stage")]
 
 [node name="Logo" type="TextureRect" parent="." unique_id=2022679361]
 layout_mode = 0
@@ -61,78 +60,101 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.09803922)
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1773996351]
+[node name="HangingSign" type="Control" parent="." unique_id=1773996351]
 layout_mode = 0
-offset_left = 53.0
-offset_top = 140.0
-offset_right = 453.0
-offset_bottom = 740.0
+offset_left = 360.0
+offset_top = 285.0
+offset_right = 360.0
+offset_bottom = 285.0
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer" unique_id=1263061402]
-custom_minimum_size = Vector2(400, 600)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-theme_override_styles/panel = SubResource("StyleBoxFlat_lti8b")
+[node name="RopeLeft" type="TextureRect" parent="HangingSign"]
+layout_mode = 0
+offset_left = -158.0
+offset_top = -10.0
+offset_right = -142.0
+offset_bottom = 130.0
+texture = ExtResource("6_rope")
+expand_mode = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer" unique_id=677644827]
-custom_minimum_size = Vector2(300, 500)
+[node name="RopeRight" type="TextureRect" parent="HangingSign"]
+layout_mode = 0
+offset_left = 142.0
+offset_top = -10.0
+offset_right = 158.0
+offset_bottom = 130.0
+texture = ExtResource("6_rope")
+expand_mode = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="HangingSign" unique_id=1263061402]
+layout_mode = 0
+offset_left = -200.0
+offset_top = 124.0
+offset_right = 200.0
+offset_bottom = 463.0
+theme_override_styles/panel = SubResource("StyleBoxTexture_board")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HangingSign/PanelContainer" unique_id=677644827]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-size_flags_stretch_ratio = 0.0
 theme_override_constants/separation = 30
 alignment = 1
 
-[node name="EnterButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=77198958]
+[node name="EnterButton" type="Button" parent="HangingSign/PanelContainer/VBoxContainer" unique_id=77198958]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
-theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
 theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_cfcag")
 theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
-theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Enter"
 
-[node name="SettingsButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1337447855]
+[node name="SettingsButton" type="Button" parent="HangingSign/PanelContainer/VBoxContainer" unique_id=1337447855]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
-theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
 theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_cfcag")
 theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
-theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Settings"
 
-[node name="ExitButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1740202451]
+[node name="ExitButton" type="Button" parent="HangingSign/PanelContainer/VBoxContainer" unique_id=1740202451]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
-theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
 theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_cfcag")
 theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
-theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Exit"
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=775868629]
+[node name="SettingsPanel" parent="." instance=ExtResource("7_settings")]
 
-[connection signal="pressed" from="MarginContainer/PanelContainer/VBoxContainer/EnterButton" to="." method="_on_enter_pressed"]
-[connection signal="pressed" from="MarginContainer/PanelContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=775868629]
+stream = ExtResource("9_theme")
+script = ExtResource("8_music")
+
+[connection signal="pressed" from="HangingSign/PanelContainer/VBoxContainer/EnterButton" to="." method="_on_enter_pressed"]
+[connection signal="pressed" from="HangingSign/PanelContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="HangingSign/PanelContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]

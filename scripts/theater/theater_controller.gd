@@ -11,6 +11,9 @@ const GOBLIN_ARCHER = preload(
 
 const MELEE_STRIKE_DISTANCE = 140
 
+const MELEE_HIT_SOUND = preload("res://audio/melee_hit.wav")
+const ARROW_HIT_SOUND = preload("res://audio/arrow_hit.wav")
+
 
 @export var battlefield: BattlefieldLayout
 
@@ -102,6 +105,12 @@ func play_ranged_attack(source, target, event):
 	apply_hit(target, event)
 
 func apply_hit(target, event):
+
+	var hit_sound = (
+		ARROW_HIT_SOUND if is_projectile(event.skill)
+		else MELEE_HIT_SOUND
+	)
+	UiSounds.play(hit_sound, "SFX", -4.0, randf_range(0.9, 1.1))
 
 	target.play_hit()
 

@@ -1,6 +1,9 @@
 extends Node2D
 class_name TheaterActor
 
+const SWING_SOUND = preload("res://audio/melee_swing.wav")
+const BOW_SOUND = preload("res://audio/bow_release.wav")
+
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
 @export var attack_direction := 1
@@ -248,6 +251,7 @@ func play_arm_attack():
 	await raise.finished
 
 	_spawn_swing_trail(0.15)
+	UiSounds.play(SWING_SOUND, "SFX", -6.0, randf_range(0.9, 1.1))
 
 	var chop = create_tween()
 	chop.tween_property(
@@ -274,6 +278,8 @@ func play_bow_attack():
 	await aim.finished
 
 	await get_tree().create_timer(0.2).timeout
+
+	UiSounds.play(BOW_SOUND, "SFX", -8.0, randf_range(0.9, 1.1))
 
 	var settle = create_tween()
 	settle.tween_property(

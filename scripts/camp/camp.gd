@@ -7,6 +7,8 @@ extends Control
 
 func _ready():
 
+	UiSounds.wire_buttons(self)
+
 	if PlayerRoster.battles_fought == 0:
 		result_label.visible = false
 		return
