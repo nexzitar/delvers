@@ -1,20 +1,12 @@
 extends Node
 class_name TheaterController
 
-const DEFAULT_DELVER = preload(
-	"res://resources/heroes/default_delver.tres"
-)
-
 const GREEN_SLIME = preload(
 	"res://resources/enemies/green_slime.tres"
 )
 
 const GOBLIN_ARCHER = preload(
 	"res://resources/enemies/goblin_archer.tres"
-)
-
-const RANGER_DELVER = preload(
-	"res://resources/heroes/ranger_delver.tres"
 )
 
 const MELEE_STRIKE_DISTANCE = 140
@@ -201,17 +193,14 @@ func _ready():
 	await get_tree().process_frame
 
 	var combat = CombatState.new()
-	
-	
+
 	combat.setup_combat(
-		[DEFAULT_DELVER, DEFAULT_DELVER, RANGER_DELVER],
+		PlayerRoster.heroes,
 		[
 			GREEN_SLIME, GREEN_SLIME, GREEN_SLIME,
 			GOBLIN_ARCHER, GOBLIN_ARCHER
 		]
 	)
-	
-	
 
 	while not combat.combat_over:
 		combat.update(0.1)
@@ -219,6 +208,45 @@ func _ready():
 	var result = combat.build_result()
 
 	await play_combat(result)
+
+	PlayerRoster.battles_fought += 1
+	PlayerRoster.last_battle_won = result.victory
+	if result.victory:
+		PlayerRoster.adventures_completed += 1
+
+	await show_battle_result(result.victory)
+	await get_tree().create_timer(2.2).timeout
+
+	get_tree().change_scene_to_file("res://scenes/camp/camp.tscn")
+
+func show_battle_result(victory):
+
+	var layer = CanvasLayer.new()
+	layer.layer = 10
+	add_child(layer)
+
+	var label = Label.new()
+	label.text = "Victory!" if victory else "Defeat..."
+	label.anchor_right = 1.0
+	label.anchor_bottom = 1.0
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override(
+		"font", load("res://art/fonts/Herculanum.ttf")
+	)
+	label.add_theme_font_size_override("font_size", 150)
+	label.add_theme_color_override(
+		"font_color",
+		Color(0.85, 0.7, 0.25) if victory else Color(0.7, 0.2, 0.15)
+	)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 18)
+	label.modulate.a = 0.0
+	layer.add_child(label)
+
+	var fade = create_tween()
+	fade.tween_property(label, "modulate:a", 1.0, 0.6)
+	await fade.finished
 	
 func spawn_slash(source, target):
 

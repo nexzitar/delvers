@@ -1,0 +1,48 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/camp/campfire_stage.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/campfire_camp.png" id="2_bg"]
+[ext_resource type="PackedScene" path="res://scenes/camp/campfire.tscn" id="3_fire"]
+
+[node name="CampfireStage" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("2_bg")
+centered = false
+
+[node name="Seats" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Campfire" parent="Seats" instance=ExtResource("3_fire")]
+position = Vector2(820, 660)
+
+[node name="Seat1" type="Marker2D" parent="Seats"]
+position = Vector2(470, 645)
+
+[node name="Seat2" type="Marker2D" parent="Seats"]
+position = Vector2(545, 760)
+
+[node name="Seat3" type="Marker2D" parent="Seats"]
+position = Vector2(680, 815)
+
+[node name="Seat4" type="Marker2D" parent="Seats"]
+position = Vector2(960, 815)
+
+[node name="Seat5" type="Marker2D" parent="Seats"]
+position = Vector2(1095, 760)
+
+[node name="Seat6" type="Marker2D" parent="Seats"]
+position = Vector2(1170, 645)
+
+[node name="Seat7" type="Marker2D" parent="Seats"]
+position = Vector2(1080, 560)
+
+[node name="Seat8" type="Marker2D" parent="Seats"]
+position = Vector2(940, 530)
+
+[node name="Seat9" type="Marker2D" parent="Seats"]
+position = Vector2(700, 530)
+
+[node name="Seat10" type="Marker2D" parent="Seats"]
+position = Vector2(560, 560)

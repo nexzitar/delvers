@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://ctc4i51geqd1x"]
 
-[ext_resource type="Texture2D" uid="uid://jtuavc5nholc" path="res://art/backgrounds/campfire_scene.png" id="1_65ltr"]
+[ext_resource type="PackedScene" path="res://scenes/camp/campfire_stage.tscn" id="1_stage"]
 [ext_resource type="FontFile" uid="uid://b70ywrddxgpna" path="res://art/fonts/Herculanum.ttf" id="2_cfcag"]
 [ext_resource type="Texture2D" uid="uid://5qykq0gmd8su" path="res://art/ui/stone_texture.jpeg" id="3_sf4ia"]
+[ext_resource type="Script" path="res://scripts/ui/menu.gd" id="4_menu"]
 
 [sub_resource type="Theme" id="Theme_mae5d"]
 default_font = ExtResource("2_cfcag")
@@ -48,18 +49,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("4_menu")
 
-[node name="Background" type="TextureRect" parent="." unique_id=1842766443]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("1_65ltr")
-expand_mode = 3
+[node name="Stage" parent="." instance=ExtResource("1_stage")]
 
-[node name="Label" type="Label" parent="Background" unique_id=2022679361]
+[node name="Label" type="Label" parent="." unique_id=2022679361]
 layout_mode = 0
 offset_left = 112.0
 offset_top = 112.0
@@ -140,3 +134,6 @@ text = "Exit
 "
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=775868629]
+
+[connection signal="pressed" from="MarginContainer/PanelContainer/VBoxContainer/EnterButton" to="." method="_on_enter_pressed"]
+[connection signal="pressed" from="MarginContainer/PanelContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]

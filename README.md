@@ -6,7 +6,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 | Main menu | Combat theater |
 |-----------|----------------|
-| ![Main menu](art/backgrounds/campfire_scene.png) | ![Combat theater](art/backgrounds/stage_dungeon_hall.png) |
+| ![Main menu](art/backgrounds/campfire_camp.png) | ![Combat theater](art/backgrounds/stage_dungeon_hall.png) |
 
 | Hero — Default Delver | Enemy — Green Slime |
 |-----------------------|---------------------|
@@ -18,7 +18,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 - **Theater playback** — Combat results are replayed visually: actors spawn on the battlefield, attack animations play, damage numbers float up, and deaths are shown.
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
-- **Main menu** — Campfire-themed menu with Enter and Exit actions.
+- **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds.
 
 ## Game Design
 
@@ -34,7 +34,7 @@ Delvers is a party-based dungeon crawler where you send heroes — your *delvers
 4. **Theater** — Results play back as a staged battle scene.
 5. **Rewards** — Collect loot, experience, and progress deeper.
 
-The campfire menu and combat theater are the first pieces of this loop. Dungeon exploration and meta-progression are not yet implemented.
+The loop's skeleton is in place: from the menu you enter the camp, embark on an adventure (one battle for now), and return to camp with a victory or defeat report. Dungeon exploration and meta-progression are not yet implemented.
 
 ### Combat Design
 
@@ -75,7 +75,8 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Combat simulation | Working |
 | Theater playback | Working |
 | Formation slots | Working |
-| Main menu | UI only (Enter not yet linked) |
+| Game loop (menu → camp → battle → camp) | Working |
+| Camp upgrades / recruiting | Not started (camp scene is a placeholder) |
 | Dungeon exploration | Not started |
 | Loot / progression | Not started |
 | Multiple skill types | Schema ready, only auto-attack implemented |
@@ -113,12 +114,15 @@ delvers/
 ├── art/              # Sprites, UI textures, effects, fonts, backgrounds
 ├── resources/        # Hero, enemy, and skill definitions (.tres)
 ├── scenes/
+│   ├── camp/         # Camp scene, campfire stage, animated fire
 │   ├── combat/       # Headless combat simulation scene
 │   ├── menus/        # Main menu
 │   └── theater/      # Battle theater and actor scenes
 └── scripts/
+    ├── camp/         # Camp, campfire stage, and fire scripts
     ├── combat/       # Simulation, entities, events, and results
     ├── data/         # Template classes for heroes, enemies, and skills
+    ├── game/         # PlayerRoster autoload (party and progress)
     └── theater/      # Visual playback of combat events
 ```
 

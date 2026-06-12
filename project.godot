@@ -19,10 +19,15 @@ run/main_scene="res://scenes/menus/menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+PlayerRoster="*res://scripts/game/player_roster.gd"
+
 [display]
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
+window/size/mode=2
 window/size/always_on_top=true
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"

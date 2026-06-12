@@ -69,15 +69,32 @@ func _stop_idle():
 	sprite.position = _idle_sprite_position
 
 func _start_breathe(period):
-	# Subtle chest rise: the sprite stretches a touch taller and back.
+	# Chest rise: the sprite stretches a bit taller, narrows a touch,
+	# and settles back, pivoting around the feet.
 
-	var rest = _idle_sprite_scale.y
+	var rest = _idle_sprite_scale
+	var base = _idle_sprite_position
 	var half = period / 2.0
+	var stretch = 0.035
+
+	# Scaling happens around the sprite center, so lift the sprite
+	# half the added height to keep the feet planted.
+	var rise = sprite.get_rect().size.y * rest.y * stretch / 2.0
 
 	_idle_tween = create_tween().set_loops()
-	_idle_tween.tween_property(sprite, "scale:y", rest * 1.015, half) \
+
+	_idle_tween.tween_property(sprite, "scale:y", rest.y * (1.0 + stretch), half) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_idle_tween.tween_property(sprite, "scale:y", rest, half) \
+	_idle_tween.parallel().tween_property(sprite, "scale:x", rest.x * (1.0 - stretch * 0.4), half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "position:y", base.y - rise, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	_idle_tween.chain().tween_property(sprite, "scale:y", rest.y, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "scale:x", rest.x, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "position:y", base.y, half) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _start_wobble(period):
