@@ -26,7 +26,7 @@ func add_event(event):
 	)
 
 
-func get_target_for(attacker):
+func get_target_for(attacker, skill):
 
 	var possible_targets
 
@@ -35,11 +35,29 @@ func get_target_for(attacker):
 	else:
 		possible_targets = heroes
 
-	for target in possible_targets:
-		if target.alive:
-			return target
+	var living = possible_targets.filter(
+		func(target): return target.alive
+	)
 
-	return null
+	if living.is_empty():
+		return null
+
+	# Melee attacks have to go through the front row while it stands.
+	# Ranged attacks can pick a target from either row.
+	if skill.delivery_type == SkillDefinition.DeliveryType.MELEE:
+
+		var front_row = living.filter(
+			func(target):
+				return (
+					Formation.row_of(target.formation_slot)
+					== Formation.Row.FRONT
+				)
+		)
+
+		if not front_row.is_empty():
+			return front_row.pick_random()
+
+	return living.pick_random()
 	
 func check_victory():
 
@@ -59,10 +77,34 @@ func check_victory():
 	if not heroes_alive or not enemies_alive:
 		combat_over = true
 
+## Picks the first free slot, trying the preferred row first.
+func claim_slot(preferred_row, occupied_slots):
+
+	for slot in Formation.fill_order(preferred_row):
+		if not occupied_slots.has(slot):
+			occupied_slots[slot] = true
+			return slot
+
+	push_error("No free formation slot left")
+	return Formation.Slot.FRONT_CENTER
+
+## Appends a numeral when the same template appears more than once,
+## so the log and nameplates can tell duplicates apart.
+func unique_name(base_name, used_names):
+
+	const NUMERALS = ["", " II", " III", " IV", " V", " VI"]
+
+	var count = used_names.get(base_name, 0)
+	used_names[base_name] = count + 1
+
+	return base_name + NUMERALS[min(count, NUMERALS.size() - 1)]
+
 func setup_combat(hero_templates, enemy_templates):
 
 	var next_entity_id = 1
-	var formation_slot = 0
+	var used_names = {}
+	var hero_slots_taken = {}
+	var enemy_slots_taken = {}
 
 	for hero_template in hero_templates:
 
@@ -75,11 +117,23 @@ func setup_combat(hero_templates, enemy_templates):
 		hero.team = CombatEntity.Team.HERO
 
 		hero.template = hero_template
-		hero.entity_name = hero_template.hero_name
-		hero.formation_slot = formation_slot
-		formation_slot += 1
+		hero.entity_name = unique_name(
+			hero_template.hero_name, used_names
+		)
+		hero.formation_slot = claim_slot(
+			hero_template.preferred_row, hero_slots_taken
+		)
 
-		hero.current_health = hero_template.base_health
+		hero.gear = hero_template.starting_gear.duplicate()
+
+		hero.max_health = hero_template.base_health
+		hero.attack_power = hero_template.base_attack
+
+		for item in hero.gear:
+			hero.max_health += item.health_bonus
+			hero.attack_power += item.attack_bonus
+
+		hero.current_health = hero.max_health
 		hero.current_mana = hero_template.base_mana
 
 		hero.attack_interval = hero_template.base_attack_interval
@@ -89,8 +143,6 @@ func setup_combat(hero_templates, enemy_templates):
 
 		heroes.append(hero)
 		combat_log.add_event(CombatEvent.create_spawn(hero))
-		
-	formation_slot = 0
 
 	for enemy_template in enemy_templates:
 
@@ -100,13 +152,19 @@ func setup_combat(hero_templates, enemy_templates):
 		next_entity_id += 1
 
 		enemy.team = CombatEntity.Team.ENEMY
-		enemy.entity_name = enemy_template.enemy_name
-		enemy.formation_slot = formation_slot
-		formation_slot += 1
+		enemy.entity_name = unique_name(
+			enemy_template.enemy_name, used_names
+		)
+		enemy.formation_slot = claim_slot(
+			enemy_template.preferred_row, enemy_slots_taken
+		)
 
 		enemy.template = enemy_template
 
-		enemy.current_health = enemy_template.base_health
+		enemy.max_health = enemy_template.base_health
+		enemy.attack_power = enemy_template.base_attack
+
+		enemy.current_health = enemy.max_health
 		enemy.current_mana = enemy_template.base_mana
 
 		enemy.attack_interval = enemy_template.base_attack_interval

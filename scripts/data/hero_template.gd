@@ -13,4 +13,5 @@ class_name HeroTemplate
 
 @export var portrait: Texture2D
 @export var starting_skills: Array[SkillDefinition]
-@export var preferred_slots : Array[int]
+@export var starting_gear: Array[GearDefinition]
+@export var preferred_row: Formation.Row = Formation.Row.FRONT

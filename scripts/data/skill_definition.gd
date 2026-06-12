@@ -27,6 +27,11 @@ enum TargetingType {
 	CHAIN
 }
 
+enum DeliveryType {
+	MELEE,
+	PROJECTILE
+}
+
 @export var skill_id: String
 @export var skill_name: String
 @export var icon: Texture2D
@@ -38,6 +43,9 @@ enum TargetingType {
 @export var skill_type: SkillType
 @export var cast_type: CastType
 @export var passive: bool = false
+
+@export var delivery_type: DeliveryType = DeliveryType.MELEE
+@export var projectile_scene: PackedScene
 
 @export var range: float = 1.5
 @export var mana_cost: int = 0

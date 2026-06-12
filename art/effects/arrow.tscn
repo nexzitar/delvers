@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://art/effects/arrow.png" id="1_arrow"]
+
+[node name="Arrow" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.08, 0.08)
+texture = ExtResource("1_arrow")

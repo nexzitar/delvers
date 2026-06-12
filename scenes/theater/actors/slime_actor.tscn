@@ -6,12 +6,16 @@
 [ext_resource type="Texture2D" uid="uid://urtrpxk2oiwb" path="res://art/ui/hp_bar_over.png" id="4_usruf"]
 [ext_resource type="Texture2D" uid="uid://l66ps56ad1hu" path="res://art/ui/hp_bar_fill.png" id="5_n6h1h"]
 [ext_resource type="Texture2D" uid="uid://fdj4y4pvu7ct" path="res://art/portraits/green_slime.png" id="6_svxtc"]
+[ext_resource type="Texture2D" path="res://art/portraits/green_slime_attack.png" id="7_attack"]
 
 [sub_resource type="Theme" id="Theme_kxts0"]
 
 [node name="SlimeActor" type="Node2D" unique_id=704434898]
 script = ExtResource("1_tb2ee")
 attack_direction = -1
+attack_texture = ExtResource("7_attack")
+attack_texture_scale = 0.6
+death_style = 1
 
 [node name="NameLabel" type="Label" parent="." unique_id=1946343976]
 offset_left = -81.0
@@ -72,4 +76,3 @@ region_enabled = true
 region_rect = Rect2(155.74998, 350, 900.7499, 491.99994)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=440008168]
-root_node = NodePath("../../HeroActor")

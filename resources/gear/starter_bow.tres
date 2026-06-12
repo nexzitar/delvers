@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GearDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/starter_bow.png" id="2_tex"]
+
+[resource]
+resource_name = "Starter Bow"
+script = ExtResource("1_gear")
+gear_id = "starter_bow"
+gear_name = "Starter Bow"
+slot = 2
+weapon_type = 3
+texture = ExtResource("2_tex")
+icon = ExtResource("2_tex")
+offset = Vector2(-52, 60)
+scale = 0.45
+rotation_degrees = -90.0
+attack_bonus = 2

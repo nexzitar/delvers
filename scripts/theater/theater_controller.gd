@@ -9,6 +9,18 @@ const GREEN_SLIME = preload(
 	"res://resources/enemies/green_slime.tres"
 )
 
+const GOBLIN_ARCHER = preload(
+	"res://resources/enemies/goblin_archer.tres"
+)
+
+const RANGER_DELVER = preload(
+	"res://resources/heroes/ranger_delver.tres"
+)
+
+const MELEE_STRIKE_DISTANCE = 140
+
+
+@export var battlefield: BattlefieldLayout
 
 var actors = {}
 
@@ -38,14 +50,55 @@ func play_event(event):
 			await play_death(event)
 			
 func play_damage(event):
-	
+
 	var source = actors[event.source_id]
 	var target = actors[event.target_id]
 
+	if is_projectile(event.skill):
+		await play_ranged_attack(source, target, event)
+	else:
+		await play_melee_attack(source, target, event)
 
-	source.play_attack()
+	await get_tree().create_timer(0.3).timeout
+
+func is_projectile(skill):
+	return (
+		skill != null
+		and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
+	)
+
+func play_melee_attack(source, target, event):
+
+	var home = source.position
+	var strike_position = (
+		target.position
+		+ Vector2(-MELEE_STRIKE_DISTANCE * source.attack_direction, 0)
+	)
+
+	await source.jump_to(strike_position)
+	await source.play_windup()
+
+	# play_attack returns at the moment of impact.
+	await source.play_attack()
 	spawn_slash(source, target)
-	await get_tree().create_timer(0.1).timeout
+	await get_tree().create_timer(0.05).timeout
+
+	apply_hit(target, event)
+	await get_tree().create_timer(0.2).timeout
+
+	await source.jump_to(home)
+
+func play_ranged_attack(source, target, event):
+
+	await source.play_windup()
+
+	# play_attack returns at the moment of release.
+	await source.play_attack()
+	await spawn_projectile(source, target, event.skill)
+	apply_hit(target, event)
+
+func apply_hit(target, event):
+
 	target.play_hit()
 
 	target.set_health(
@@ -58,11 +111,35 @@ func play_damage(event):
 		event.amount
 	)
 
-	await get_tree().create_timer(0.5).timeout
+func spawn_projectile(source, target, skill):
+
+	var projectile = skill.projectile_scene.instantiate()
+	add_child(projectile)
+
+	# Launch from the actor's bow position, aim at the target's torso.
+	var from = source.global_position + Vector2(
+		source.projectile_origin.x * source.attack_direction,
+		source.projectile_origin.y
+	)
+	var to = target.global_position + Vector2(0, -20)
+
+	projectile.global_position = from
+	projectile.rotation = (to - from).angle()
+
+	var tween = create_tween()
+	tween.tween_property(projectile, "global_position", to, 0.3)
+
+	await tween.finished
+	projectile.queue_free()
 	
 func play_death(event):
+
 	var target = actors[event.target_id]
-	target.play_death()
+
+	await target.play_death()
+
+	actors.erase(event.target_id)
+	target.queue_free()
 	
 func spawn_damage_number(position, amount):
 
@@ -104,11 +181,19 @@ func spawn_damage_number(position, amount):
 	
 func _ready():
 
+	# Wait one frame so sibling nodes (e.g. BattlefieldLayout) finish _ready
+	# before playback starts querying them.
+	await get_tree().process_frame
+
 	var combat = CombatState.new()
 	
 	
 	combat.setup_combat(
-		[DEFAULT_DELVER],[GREEN_SLIME, GREEN_SLIME]
+		[DEFAULT_DELVER, DEFAULT_DELVER, RANGER_DELVER],
+		[
+			GREEN_SLIME, GREEN_SLIME, GREEN_SLIME,
+			GOBLIN_ARCHER, GOBLIN_ARCHER
+		]
 	)
 	
 	
@@ -166,18 +251,13 @@ func play_spawn(event):
 		event.max_health
 	)
 
+	actor.equip_gear(event.gear)
+
 	actors[event.entity_id] = actor
 	
 func get_slot_position(team, formation_slot):
 
-	var x
-
 	if team == CombatEntity.Team.HERO:
-		x = 350
-	else:
-		x = 1250
+		return battlefield.hero_slot(formation_slot)
 
-	return Vector2(
-		x,
-		400 + formation_slot * 150
-	)
+	return battlefield.enemy_slot(formation_slot)

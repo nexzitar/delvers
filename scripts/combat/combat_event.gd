@@ -27,6 +27,7 @@ var target_id : int
 var formation_slot: int
 
 var skill_name: String
+var skill: SkillDefinition
 var remaining_health: int
 var max_health: int
 
@@ -34,6 +35,8 @@ var amount: int
 var entity_name: String
 
 var team: int
+
+var gear := []
 
 
 static func create_spawn(combat_entity):
@@ -51,6 +54,7 @@ static func create_spawn(combat_entity):
 	event.formation_slot = combat_entity.formation_slot
 
 	event.current_health = combat_entity.current_health
-	event.max_health = combat_entity.template.base_health
+	event.max_health = combat_entity.max_health
+	event.gear = combat_entity.gear
 
 	return event

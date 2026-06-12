@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GearDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/starter_sword.png" id="2_tex"]
+
+[resource]
+resource_name = "Starter Sword"
+script = ExtResource("1_gear")
+gear_id = "starter_sword"
+gear_name = "Starter Sword"
+slot = 2
+weapon_type = 1
+texture = ExtResource("2_tex")
+icon = ExtResource("2_tex")
+offset = Vector2(68, 65)
+scale = 0.35
+rotation_degrees = 90.0
+attack_bonus = 1

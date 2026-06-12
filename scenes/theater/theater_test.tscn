@@ -9,39 +9,52 @@
 [node name="TextureRect" type="TextureRect" parent="." unique_id=724008787]
 texture = ExtResource("1_wce0x")
 
-[node name="TheaterController" type="Node" parent="." unique_id=1941477817]
+[node name="TheaterController" type="Node" parent="." unique_id=1941477817 node_paths=PackedStringArray("battlefield")]
 script = ExtResource("9_t6ngf")
+battlefield = NodePath("../Node2D/BattlefieldLayout")
 
 [node name="Node2D" type="Node2D" parent="." unique_id=1801175047]
 
-[node name="BattlefieldLayout" type="Node" parent="Node2D" unique_id=342698419]
+[node name="BattlefieldLayout" type="Node2D" parent="Node2D" unique_id=342698419]
 script = ExtResource("3_nhugf")
 metadata/_custom_type_script = "uid://16136e040w2v"
 
 [node name="HeroSlots" type="Node2D" parent="Node2D/BattlefieldLayout" unique_id=1301226431]
 
-[node name="Slot0" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2124689907]
+[node name="FrontTop" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2124689907]
+position = Vector2(741, 589)
 
-[node name="Slot1" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2097280847]
+[node name="FrontCenter" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2097280847]
+position = Vector2(659, 668)
 
-[node name="Slot2" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2001287511]
+[node name="FrontBottom" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=2001287511]
+position = Vector2(560, 749)
 
-[node name="Slot3" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=1796374128]
+[node name="BackTop" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=1796374128]
+position = Vector2(616, 581)
 
-[node name="Slot4" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=894962059]
+[node name="BackCenter" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=894962059]
+position = Vector2(527, 662)
 
-[node name="Slot5" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=342455889]
+[node name="BackBottom" type="Marker2D" parent="Node2D/BattlefieldLayout/HeroSlots" unique_id=342455889]
+position = Vector2(407, 756)
 
 [node name="EnemySlots" type="Node2D" parent="Node2D/BattlefieldLayout" unique_id=1114686367]
 
-[node name="Slot0" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1521410739]
+[node name="FrontTop" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1521410739]
+position = Vector2(961, 596)
 
-[node name="Slot1" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1723433260]
+[node name="FrontCenter" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1723433260]
+position = Vector2(981, 669)
 
-[node name="Slot2" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=2107825597]
+[node name="FrontBottom" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=2107825597]
+position = Vector2(1005, 759)
 
-[node name="Slot3" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1539459789]
+[node name="BackTop" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1539459789]
+position = Vector2(1073, 600)
 
-[node name="Slot4" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1246564546]
+[node name="BackCenter" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1246564546]
+position = Vector2(1115, 672)
 
-[node name="Slot5" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1460659039]
+[node name="BackBottom" type="Marker2D" parent="Node2D/BattlefieldLayout/EnemySlots" unique_id=1460659039]
+position = Vector2(1158, 764)

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="GearDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/starter_shield_side.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://art/gear/starter_shield.png" id="3_icon"]
+
+[resource]
+resource_name = "Starter Shield"
+script = ExtResource("1_gear")
+gear_id = "starter_shield"
+gear_name = "Starter Shield"
+slot = 3
+texture = ExtResource("2_tex")
+icon = ExtResource("3_icon")
+offset = Vector2(115, -50)
+scale = 0.3
+health_bonus = 10

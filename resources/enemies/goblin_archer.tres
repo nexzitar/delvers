@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" uid="uid://n275q522x8hb" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/theater/actors/goblin_archer_actor.tscn" id="2_actor"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="3_skill"]
+[ext_resource type="Resource" path="res://resources/skills/arrow_shot.tres" id="4_arrow"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "goblin_archer"
+enemy_name = "Goblin Archer"
+actor_scene = ExtResource("2_actor")
+base_health = 20
+base_attack = 2
+base_attack_interval = 3.5
+skills = Array[ExtResource("3_skill")]([ExtResource("4_arrow")])
+preferred_row = 1

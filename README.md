@@ -44,7 +44,9 @@ Combat is **auto-battler** style: units act on attack timers rather than player 
 - **Formation slot** — Position on the battlefield, used by the theater layer for visual placement.
 - **Skills** — Data-driven abilities with damage ranges, targeting rules, cooldowns, and cast types.
 
-Damage is rolled as `base_attack + random(skill.min_damage, skill.max_damage)`. Heroes target the first living enemy; enemies target the first living hero. Combat ends when one side is wiped out.
+Damage is rolled as `base_attack + random(skill.min_damage, skill.max_damage)`. Combat ends when one side is wiped out.
+
+**Formations and targeting** — Each side has six named slots in two rows (front/back × top/center/bottom). Units fill their template's preferred row first (melee prefer front, archers prefer back), spreading from the center outwards. Melee attacks must target a random living front-row enemy while any remain; ranged attacks pick a random target from either row.
 
 A key architectural choice is **separating simulation from presentation**:
 
@@ -131,9 +133,17 @@ Combat is split into two layers:
 
 | Type   | ID             | Name           | Stats |
 |--------|----------------|----------------|-------|
-| Hero   | Default Delver | Default Delver | 100 HP, 10 mana, 1 ATK, 3.0s interval |
-| Enemy  | green_slime    | Green Slime    | 25 HP, 1 ATK, 4.0s interval |
-| Skill  | auto_attack    | Auto Attack    | 0–9 bonus damage |
+| Hero   | Default Delver | Default Delver | 100 HP, 10 mana, 1 ATK, 3.0s interval, front row |
+| Hero   | ranger_delver  | Ranger Delver  | 80 HP, 10 mana, 2 ATK, 3.0s interval, back row, ranged |
+| Enemy  | green_slime    | Green Slime    | 25 HP, 1 ATK, 4.0s interval, front row |
+| Enemy  | goblin_archer  | Goblin Archer  | 20 HP, 2 ATK, 3.5s interval, back row, ranged |
+| Skill  | auto_attack    | Slash          | 0–9 bonus damage, melee |
+| Skill  | arrow_shot     | Arrow Shot     | 1–7 bonus damage, projectile |
+| Gear   | starter_sword  | Starter Sword  | Main hand, one-handed, +1 ATK |
+| Gear   | starter_bow    | Starter Bow    | Main hand, bow, +2 ATK |
+| Gear   | starter_shield | Starter Shield | Off hand, +10 HP |
+| Gear   | starter_helmet | Starter Helmet | Head, +5 HP |
+| Gear   | starter_armor  | Starter Armor  | Chest, +15 HP |
 
 ## License
 

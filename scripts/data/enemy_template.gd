@@ -15,4 +15,4 @@ class_name EnemyDefinition
 @export var portrait: Texture2D
 
 @export var skills: Array[SkillDefinition]
-@export var preferred_slots : Array[int]
+@export var preferred_row: Formation.Row = Formation.Row.FRONT

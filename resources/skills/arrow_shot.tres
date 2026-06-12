@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="PackedScene" path="res://art/effects/arrow.tscn" id="2_arrow"]
+
+[resource]
+resource_name = "Arrow Shot"
+script = ExtResource("1_skill")
+skill_id = "arrow_shot"
+skill_name = "Arrow Shot"
+delivery_type = 1
+projectile_scene = ExtResource("2_arrow")
+range = 8.0
+base_min_damage = 1
+base_max_damage = 7

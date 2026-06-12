@@ -10,8 +10,11 @@ enum Team {
 var template: Resource
 var entity_name: String
 var current_health: int
+var max_health: int
 var current_mana: int
+var attack_power: int
 var formation_slot: int
+var gear := []
 
 var team: Team
 
@@ -34,15 +37,15 @@ func update(delta, combat_state):
 
 func perform_auto_attack(combat_state):
 
-	var target = combat_state.get_target_for(self)
+	var skill = skills[0]
+
+	var target = combat_state.get_target_for(self, skill)
 
 	if target == null:
 		return
 
-	var skill = skills[0]
-
 	var damage = (
-		template.base_attack +
+		attack_power +
 		randi_range(
 			skill.base_min_damage,
 			skill.base_max_damage
@@ -62,9 +65,10 @@ func perform_auto_attack(combat_state):
 	event.target_name = target.entity_name
 
 	event.remaining_health = target.current_health
-	event.max_health = target.template.base_health
+	event.max_health = target.max_health
 
 	event.skill_name = skill.skill_name
+	event.skill = skill
 	event.amount = damage
 
 	combat_state.add_event(event)
