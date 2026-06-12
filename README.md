@@ -4,13 +4,18 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 ## Screenshots
 
-| Main menu | Combat theater |
-|-----------|----------------|
-| ![Main menu](art/backgrounds/campfire_camp.png) | ![Combat theater](art/backgrounds/stage_dungeon_hall.png) |
+| Main menu | The camp |
+|-----------|----------|
+| ![Main menu](docs/screenshots/main_menu.png) | ![The camp](docs/screenshots/camp.png) |
 
-| Hero — Default Delver | Enemy — Green Slime |
-|-----------------------|---------------------|
-| ![Default Delver](art/portraits/HeroKnight/Idle/HeroKnight_Idle_0.png) | ![Green Slime](art/portraits/green_slime.png) |
+![Combat theater](docs/screenshots/battle.png)
+
+## Meet the Cast
+
+| Default Delver | Ranger Delver | Goblin Archer | Green Slime |
+|:--:|:--:|:--:|:--:|
+| <img src="docs/screenshots/hero_default_delver.png" height="190" alt="Default Delver"> | <img src="docs/screenshots/hero_ranger_delver.png" height="190" alt="Ranger Delver"> | <img src="docs/screenshots/enemy_goblin_archer.png" height="180" alt="Goblin Archer"> | <img src="docs/screenshots/enemy_green_slime.png" height="130" alt="Green Slime"> |
+| Sword-and-board melee | Back-row bow hero | Ranged enemy | Front-row enemy |
 
 ## Features
 
@@ -111,6 +116,7 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 |-------|------|--------------|
 | Combat simulation | `scenes/combat/combat_simulation.tscn` | Runs a headless fight and prints the combat log |
 | Battle theater | `scenes/theater/battle_theater.tscn` | Simulates a fight and plays it back on the battlefield with animations |
+| Screenshot capture | `capture/shots.tscn`, `capture/cast.tscn` | Regenerates the README screenshots and unit renders into `docs/screenshots/` |
 
 ## Project Structure
 
@@ -118,6 +124,8 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 delvers/
 ├── art/              # Sprites, UI textures, effects, fonts, backgrounds
 ├── audio/            # Procedurally synthesized sounds and music loops
+├── capture/          # Harnesses that regenerate the README screenshots
+├── docs/             # README screenshots and unit renders (not imported by Godot)
 ├── resources/        # Hero, enemy, and skill definitions (.tres)
 ├── scenes/
 │   ├── camp/         # Camp scene, campfire stage, animated fire
