@@ -3,12 +3,14 @@
 [ext_resource type="Script" uid="uid://dggjpkobydoq5" path="res://scripts/theater/actors/theater_actor.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://art/portraits/goblin_archer.png" id="6_goblin"]
 [ext_resource type="Texture2D" path="res://art/portraits/goblin_archer_attack.png" id="7_attack"]
+[ext_resource type="AudioStream" path="res://audio/bow_release.wav" id="8_sound"]
 
 [node name="GoblinArcherActor" type="Node2D"]
 script = ExtResource("1_script")
 attack_direction = -1
 attack_texture = ExtResource("7_attack")
 attack_texture_scale = 0.9
+attack_sound = ExtResource("8_sound")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.22, 0.22)

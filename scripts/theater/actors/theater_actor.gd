@@ -13,6 +13,10 @@ const BOW_SOUND = preload("res://audio/bow_release.wav")
 ## Extra scale applied to the attack pose, relative to the idle sprite scale.
 @export var attack_texture_scale := 1.0
 
+## Attack sound for actors without an armed paper-doll rig (the rig
+## picks swing or bow sounds from the equipped weapon by itself).
+@export var attack_sound: AudioStream
+
 enum DeathStyle {
 	FALL,
 	SQUASH
@@ -214,6 +218,9 @@ func play_attack():
 		else:
 			await play_arm_attack()
 		return
+
+	if attack_sound:
+		UiSounds.play(attack_sound, "SFX", -7.0, randf_range(0.9, 1.1))
 
 	swing_weapon()
 

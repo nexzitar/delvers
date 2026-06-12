@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://dggjpkobydoq5" path="res://scripts/theater/actors/theater_actor.gd" id="1_tb2ee"]
 [ext_resource type="Texture2D" uid="uid://fdj4y4pvu7ct" path="res://art/portraits/green_slime.png" id="6_svxtc"]
 [ext_resource type="Texture2D" path="res://art/portraits/green_slime_attack.png" id="7_attack"]
+[ext_resource type="AudioStream" path="res://audio/slime_squish.wav" id="8_sound"]
 
 [node name="SlimeActor" type="Node2D" unique_id=704434898]
 script = ExtResource("1_tb2ee")
@@ -11,6 +12,7 @@ attack_texture = ExtResource("7_attack")
 attack_texture_scale = 0.6
 death_style = 1
 idle_style = 1
+attack_sound = ExtResource("8_sound")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=398983595]
 scale = Vector2(0.29999998, 0.29999998)
