@@ -30,3 +30,6 @@ func _on_embark_pressed():
 	get_tree().change_scene_to_file(
 		"res://scenes/theater/battle_theater.tscn"
 	)
+
+func _on_exit_pressed():
+	get_tree().quit()

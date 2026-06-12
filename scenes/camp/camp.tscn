@@ -91,8 +91,33 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Embark"
 
+[node name="ExitButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = -130.0
+offset_right = 260.0
+offset_bottom = -60.0
+grow_horizontal = 1
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
+theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxTexture_normal")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
+text = "Exit"
+
 [node name="Music" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_theme")
 script = ExtResource("5_music")
 
 [connection signal="pressed" from="EmbarkButton" to="." method="_on_embark_pressed"]
+[connection signal="pressed" from="ExitButton" to="." method="_on_exit_pressed"]

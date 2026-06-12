@@ -18,7 +18,8 @@ var _time := randf() * 100.0
 func _ready():
 	_apply_intensity()
 
-	crackle.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	# The crackle loops via its import settings; start at a random
+	# point so scene changes don't replay the same pops.
 	crackle.play(randf() * crackle.stream.get_length())
 
 func _process(delta):

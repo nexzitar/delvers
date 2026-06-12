@@ -41,16 +41,6 @@ script = ExtResource("4_menu")
 
 [node name="Stage" parent="." unique_id=1797901094 instance=ExtResource("1_stage")]
 
-[node name="Logo" type="TextureRect" parent="." unique_id=2022679361]
-layout_mode = 0
-offset_left = 80.0
-offset_top = 40.0
-offset_right = 640.0
-offset_bottom = 308.0
-texture = ExtResource("5_logo")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1678157854]
 layout_mode = 1
 anchors_preset = 15
@@ -70,7 +60,7 @@ offset_bottom = 285.0
 [node name="RopeLeft" type="TextureRect" parent="HangingSign"]
 layout_mode = 0
 offset_left = -158.0
-offset_top = -10.0
+offset_top = -120.0
 offset_right = -142.0
 offset_bottom = 130.0
 texture = ExtResource("6_rope")
@@ -79,7 +69,7 @@ expand_mode = 1
 [node name="RopeRight" type="TextureRect" parent="HangingSign"]
 layout_mode = 0
 offset_left = 142.0
-offset_top = -10.0
+offset_top = -120.0
 offset_right = 158.0
 offset_bottom = 130.0
 texture = ExtResource("6_rope")
@@ -148,6 +138,16 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
 theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Exit"
+
+[node name="Logo" type="TextureRect" parent="." unique_id=2022679361]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 640.0
+offset_bottom = 308.0
+texture = ExtResource("5_logo")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="SettingsPanel" parent="." instance=ExtResource("7_settings")]
 
