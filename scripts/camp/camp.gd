@@ -3,7 +3,7 @@ extends Control
 ## The camp between adventures. Upgrades and management will live
 ## here later; for now the party rests until it embarks again.
 
-@onready var result_label = $ResultLabel
+@onready var result_label = $UI/ResultLabel
 
 func _ready():
 
@@ -27,9 +27,7 @@ func _ready():
 		)
 
 func _on_embark_pressed():
-	get_tree().change_scene_to_file(
-		"res://scenes/theater/battle_theater.tscn"
-	)
+	SceneFlow.change_scene("res://scenes/theater/battle_theater.tscn")
 
 func _on_exit_pressed():
 	get_tree().quit()

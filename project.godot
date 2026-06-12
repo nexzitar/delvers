@@ -24,6 +24,7 @@ config/icon="res://icon.svg"
 PlayerRoster="*res://scripts/game/player_roster.gd"
 GameSettings="*res://scripts/game/game_settings.gd"
 UiSounds="*res://scripts/game/ui_sounds.gd"
+SceneFlow="*res://scripts/game/scene_flow.gd"
 
 [display]
 

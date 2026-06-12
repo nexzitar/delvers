@@ -7,7 +7,7 @@ const CAMP_SCENE = "res://scenes/camp/camp.tscn"
 const CAMP_ZOOM = 1.12
 
 @onready var stage = $Stage
-@onready var hanging_sign = $HangingSign
+@onready var hanging_sign = $UI/HangingSign
 
 var _sway_time := randf() * 100.0
 var _last_sway_direction := 0
@@ -58,16 +58,16 @@ func _on_enter_pressed():
 		stage, "position", stage.zoom_center * (1.0 - CAMP_ZOOM), 1.0
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	transition.tween_property($Logo, "modulate:a", 0.0, 0.7)
+	transition.tween_property($UI/Logo, "modulate:a", 0.0, 0.7)
 	transition.tween_property(hanging_sign, "modulate:a", 0.0, 0.7)
-	transition.tween_property($ColorRect, "color:a", 0.0, 0.7)
+	transition.tween_property($UI/ColorRect, "color:a", 0.0, 0.7)
 
 	await transition.finished
 
-	get_tree().change_scene_to_file(CAMP_SCENE)
+	SceneFlow.change_scene(CAMP_SCENE)
 
 func _on_settings_pressed():
-	$SettingsPanel.open()
+	$UI/SettingsPanel.open()
 
 func _on_exit_pressed():
 	get_tree().quit()

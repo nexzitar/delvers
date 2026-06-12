@@ -41,7 +41,9 @@ script = ExtResource("4_menu")
 
 [node name="Stage" parent="." unique_id=1797901094 instance=ExtResource("1_stage")]
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1678157854]
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="UI" unique_id=1678157854]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,14 +52,14 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.09803922)
 
-[node name="HangingSign" type="Control" parent="." unique_id=1773996351]
+[node name="HangingSign" type="Control" parent="UI" unique_id=1773996351]
 layout_mode = 0
 offset_left = 360.0
 offset_top = 285.0
 offset_right = 360.0
 offset_bottom = 285.0
 
-[node name="RopeLeft" type="TextureRect" parent="HangingSign"]
+[node name="RopeLeft" type="TextureRect" parent="UI/HangingSign"]
 layout_mode = 0
 offset_left = -158.0
 offset_top = -120.0
@@ -66,7 +68,7 @@ offset_bottom = 130.0
 texture = ExtResource("6_rope")
 expand_mode = 1
 
-[node name="RopeRight" type="TextureRect" parent="HangingSign"]
+[node name="RopeRight" type="TextureRect" parent="UI/HangingSign"]
 layout_mode = 0
 offset_left = 142.0
 offset_top = -120.0
@@ -75,7 +77,7 @@ offset_bottom = 130.0
 texture = ExtResource("6_rope")
 expand_mode = 1
 
-[node name="PanelContainer" type="PanelContainer" parent="HangingSign" unique_id=1263061402]
+[node name="PanelContainer" type="PanelContainer" parent="UI/HangingSign" unique_id=1263061402]
 layout_mode = 0
 offset_left = -200.0
 offset_top = 124.0
@@ -83,7 +85,7 @@ offset_right = 200.0
 offset_bottom = 463.0
 theme_override_styles/panel = SubResource("StyleBoxTexture_board")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HangingSign/PanelContainer" unique_id=677644827]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/HangingSign/PanelContainer" unique_id=677644827]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -91,7 +93,7 @@ size_flags_vertical = 4
 theme_override_constants/separation = 30
 alignment = 1
 
-[node name="EnterButton" type="Button" parent="HangingSign/PanelContainer/VBoxContainer" unique_id=77198958]
+[node name="EnterButton" type="Button" parent="UI/HangingSign/PanelContainer/VBoxContainer" unique_id=77198958]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
@@ -107,7 +109,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Enter"
 
-[node name="SettingsButton" type="Button" parent="HangingSign/PanelContainer/VBoxContainer" unique_id=1337447855]
+[node name="SettingsButton" type="Button" parent="UI/HangingSign/PanelContainer/VBoxContainer" unique_id=1337447855]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
@@ -123,7 +125,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Settings"
 
-[node name="ExitButton" type="Button" parent="HangingSign/PanelContainer/VBoxContainer" unique_id=1740202451]
+[node name="ExitButton" type="Button" parent="UI/HangingSign/PanelContainer/VBoxContainer" unique_id=1740202451]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
@@ -139,7 +141,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Exit"
 
-[node name="Logo" type="TextureRect" parent="." unique_id=2022679361]
+[node name="Logo" type="TextureRect" parent="UI" unique_id=2022679361]
 layout_mode = 0
 offset_left = 80.0
 offset_top = 40.0
@@ -149,12 +151,12 @@ texture = ExtResource("5_logo")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="SettingsPanel" parent="." instance=ExtResource("7_settings")]
+[node name="SettingsPanel" parent="UI" instance=ExtResource("7_settings")]
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=775868629]
 stream = ExtResource("9_theme")
 script = ExtResource("8_music")
 
-[connection signal="pressed" from="HangingSign/PanelContainer/VBoxContainer/EnterButton" to="." method="_on_enter_pressed"]
-[connection signal="pressed" from="HangingSign/PanelContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_pressed"]
-[connection signal="pressed" from="HangingSign/PanelContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="UI/HangingSign/PanelContainer/VBoxContainer/EnterButton" to="." method="_on_enter_pressed"]
+[connection signal="pressed" from="UI/HangingSign/PanelContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="UI/HangingSign/PanelContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]

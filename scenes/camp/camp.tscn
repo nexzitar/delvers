@@ -31,7 +31,9 @@ script = ExtResource("1_script")
 [node name="Stage" parent="." instance=ExtResource("2_stage")]
 zoom = 1.12
 
-[node name="TitleLabel" type="Label" parent="."]
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="TitleLabel" type="Label" parent="UI"]
 layout_mode = 0
 offset_left = 60.0
 offset_top = 40.0
@@ -44,7 +46,7 @@ theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 70
 text = "The Camp"
 
-[node name="ResultLabel" type="Label" parent="."]
+[node name="ResultLabel" type="Label" parent="UI"]
 visible = false
 layout_mode = 1
 anchors_preset = 7
@@ -65,7 +67,7 @@ theme_override_font_sizes/font_size = 38
 text = ""
 horizontal_alignment = 1
 
-[node name="EmbarkButton" type="Button" parent="."]
+[node name="EmbarkButton" type="Button" parent="UI"]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -91,7 +93,7 @@ theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
 theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Embark"
 
-[node name="ExitButton" type="Button" parent="."]
+[node name="ExitButton" type="Button" parent="UI"]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -119,5 +121,5 @@ text = "Exit"
 stream = ExtResource("6_theme")
 script = ExtResource("5_music")
 
-[connection signal="pressed" from="EmbarkButton" to="." method="_on_embark_pressed"]
-[connection signal="pressed" from="ExitButton" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="UI/EmbarkButton" to="." method="_on_embark_pressed"]
+[connection signal="pressed" from="UI/ExitButton" to="." method="_on_exit_pressed"]

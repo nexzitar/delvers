@@ -223,7 +223,7 @@ func _ready():
 	await show_battle_result(result.victory)
 	await get_tree().create_timer(2.2).timeout
 
-	get_tree().change_scene_to_file("res://scenes/camp/camp.tscn")
+	SceneFlow.change_scene("res://scenes/camp/camp.tscn")
 
 ## A random pack of enemies for this adventure.
 func roll_encounter() -> Array:
