@@ -196,10 +196,7 @@ func _ready():
 
 	combat.setup_combat(
 		PlayerRoster.heroes,
-		[
-			GREEN_SLIME, GREEN_SLIME, GREEN_SLIME,
-			GOBLIN_ARCHER, GOBLIN_ARCHER
-		]
+		roll_encounter()
 	)
 
 	while not combat.combat_over:
@@ -218,6 +215,17 @@ func _ready():
 	await get_tree().create_timer(2.2).timeout
 
 	get_tree().change_scene_to_file("res://scenes/camp/camp.tscn")
+
+## A random pack of enemies for this adventure.
+func roll_encounter() -> Array:
+
+	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER]
+	var encounter = []
+
+	for i in randi_range(2, 4):
+		encounter.append(pool.pick_random())
+
+	return encounter
 
 func show_battle_result(victory):
 

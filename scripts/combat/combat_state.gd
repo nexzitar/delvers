@@ -88,6 +88,15 @@ func claim_slot(preferred_row, occupied_slots):
 	push_error("No free formation slot left")
 	return Formation.Slot.FRONT_CENTER
 
+## Most foes are common rabble; an occasional veteran shows up.
+func roll_enemy_level() -> int:
+	return [1, 1, 2, 2, 2, 3].pick_random()
+
+## Stat multiplier for a level, with a touch of individual variance
+## so two enemies of the same level aren't perfectly identical.
+func level_power(level) -> float:
+	return (1.0 + 0.3 * (level - 1)) * randf_range(0.9, 1.1)
+
 ## Appends a numeral when the same template appears more than once,
 ## so the log and nameplates can tell duplicates apart.
 func unique_name(base_name, used_names):
@@ -152,8 +161,10 @@ func setup_combat(hero_templates, enemy_templates):
 		next_entity_id += 1
 
 		enemy.team = CombatEntity.Team.ENEMY
-		enemy.entity_name = unique_name(
-			enemy_template.enemy_name, used_names
+		enemy.level = roll_enemy_level()
+		enemy.entity_name = (
+			unique_name(enemy_template.enemy_name, used_names)
+			+ " Lv %d" % enemy.level
 		)
 		enemy.formation_slot = claim_slot(
 			enemy_template.preferred_row, enemy_slots_taken
@@ -161,8 +172,13 @@ func setup_combat(hero_templates, enemy_templates):
 
 		enemy.template = enemy_template
 
-		enemy.max_health = enemy_template.base_health
-		enemy.attack_power = enemy_template.base_attack
+		var power = level_power(enemy.level)
+		enemy.max_health = maxi(
+			1, roundi(enemy_template.base_health * power)
+		)
+		enemy.attack_power = maxi(
+			1, roundi(enemy_template.base_attack * power)
+		)
 
 		enemy.current_health = enemy.max_health
 		enemy.current_mana = enemy_template.base_mana

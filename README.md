@@ -49,6 +49,8 @@ Damage is rolled as `base_attack + random(skill.min_damage, skill.max_damage)`. 
 
 **Formations and targeting** — Each side has six named slots in two rows (front/back × top/center/bottom). Units fill their template's preferred row first (melee prefer front, archers prefer back), spreading from the center outwards. Melee attacks must target a random living front-row enemy while any remain; ranged attacks pick a random target from either row.
 
+**Encounters and enemy levels** — Each adventure rolls a random pack of 2–4 enemies. Every enemy rolls a level (mostly 1–2, occasionally 3) that scales its health and attack, with a little individual variance on top, and the level is shown in its name (e.g. *Green Slime Lv 2*).
+
 A key architectural choice is **separating simulation from presentation**:
 
 ```

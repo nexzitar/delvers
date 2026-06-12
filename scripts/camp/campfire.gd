@@ -34,4 +34,4 @@ func _apply_intensity():
 		return
 
 	embers.amount = int(lerpf(5.0, 40.0, intensity))
-	glow.scale = Vector2.ONE * lerpf(0.9, 1.9, intensity)
+	glow.scale = Vector2.ONE * lerpf(1.15, 2.3, intensity)

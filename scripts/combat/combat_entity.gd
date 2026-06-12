@@ -9,6 +9,7 @@ enum Team {
 
 var template: Resource
 var entity_name: String
+var level := 1
 var current_health: int
 var max_health: int
 var current_mana: int

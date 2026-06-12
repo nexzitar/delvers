@@ -8,7 +8,6 @@ const RANGER_DELVER = preload("res://resources/heroes/ranger_delver.tres")
 
 var heroes: Array = [
 	DEFAULT_DELVER,
-	DEFAULT_DELVER,
 	RANGER_DELVER,
 ]
 

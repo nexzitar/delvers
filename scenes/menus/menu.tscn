@@ -4,22 +4,7 @@
 [ext_resource type="FontFile" uid="uid://b70ywrddxgpna" path="res://art/fonts/Herculanum.ttf" id="2_cfcag"]
 [ext_resource type="Texture2D" uid="uid://5qykq0gmd8su" path="res://art/ui/stone_texture.jpeg" id="3_sf4ia"]
 [ext_resource type="Script" path="res://scripts/ui/menu.gd" id="4_menu"]
-
-[sub_resource type="Theme" id="Theme_mae5d"]
-default_font = ExtResource("2_cfcag")
-default_font_size = 150
-
-[sub_resource type="LabelSettings" id="LabelSettings_4hy44"]
-font = ExtResource("2_cfcag")
-font_size = 125
-font_color = Color(0, 0, 0, 1)
-outline_size = 10
-outline_color = Color(0.64980674, 0.06987181, 0, 1)
-stacked_outline_count = 2
-stacked_outline_0/size = 10
-stacked_outline_0/color = Color(0.3419999, 0.14356893, 7.219613e-08, 0.3372549)
-stacked_outline_1/size = 10
-stacked_outline_1/color = Color(0.69411767, 0.19607843, 0, 0.6666667)
+[ext_resource type="Texture2D" path="res://art/ui/delvers_logo.png" id="5_logo"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lti8b"]
 content_margin_left = 20.0
@@ -42,6 +27,10 @@ modulate_color = Color(0.529324, 0.30810353, 0.13396725, 1)
 texture = ExtResource("3_sf4ia")
 modulate_color = Color(0.66535044, 0.3340578, 0.09230905, 1)
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_press"]
+texture = ExtResource("3_sf4ia")
+modulate_color = Color(0.36, 0.2, 0.08, 1)
+
 [node name="menu" type="Control" unique_id=1925184257]
 layout_mode = 3
 anchors_preset = 15
@@ -53,20 +42,15 @@ script = ExtResource("4_menu")
 
 [node name="Stage" parent="." instance=ExtResource("1_stage")]
 
-[node name="Label" type="Label" parent="." unique_id=2022679361]
+[node name="Logo" type="TextureRect" parent="." unique_id=2022679361]
 layout_mode = 0
-offset_left = 112.0
-offset_top = 112.0
-offset_right = 901.0
-offset_bottom = 312.0
-theme = SubResource("Theme_mae5d")
-theme_type_variation = &"HeaderLarge"
-theme_override_colors/font_color = Color(0.42384627, 0.25345564, 0.013036936, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7294118)
-theme_override_fonts/font = ExtResource("2_cfcag")
-theme_override_font_sizes/font_size = 150
-text = "Delvers"
-label_settings = SubResource("LabelSettings_4hy44")
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 640.0
+offset_bottom = 308.0
+texture = ExtResource("5_logo")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1678157854]
 layout_mode = 1
@@ -105,33 +89,48 @@ custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
 theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
+theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_cfcag")
 theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
 theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
 text = "Enter"
 
-[node name="Button2" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1337447855]
+[node name="SettingsButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1337447855]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
+theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_cfcag")
 theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
-text = "Placeholder
-"
+theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
+text = "Settings"
 
 [node name="ExitButton" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1740202451]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.59942013, 0.48804992, 0.040900744, 1)
+theme_override_colors/font_hover_color = Color(0.65511304, 0.53171724, 0.045338944, 1)
+theme_override_colors/font_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.5, 0.4, 0.034, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_cfcag")
 theme_override_font_sizes/font_size = 45
 theme_override_styles/normal = SubResource("StyleBoxTexture_mae5d")
-text = "Exit
-"
+theme_override_styles/hover = SubResource("StyleBoxTexture_4hy44")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_styles/hover_pressed = SubResource("StyleBoxTexture_press")
+text = "Exit"
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=775868629]
 
