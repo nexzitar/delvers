@@ -88,6 +88,7 @@ func add_unit(event):
 	info.add_child(hp.bar)
 
 	var mana = _make_stat_bar(MANA_FILL, 12, 10)
+	mana.bar.visible = event.max_mana > 0
 	info.add_child(mana.bar)
 
 	unit_list.add_child(row)

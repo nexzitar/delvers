@@ -15,7 +15,13 @@ enum DeathStyle {
 	SQUASH
 }
 
+enum IdleStyle {
+	BREATHE,
+	WOBBLE
+}
+
 @export var death_style: DeathStyle = DeathStyle.FALL
+@export var idle_style: IdleStyle = IdleStyle.BREATHE
 
 ## Where projectiles leave this actor, relative to its origin.
 ## The x component is flipped by attack_direction.
@@ -30,12 +36,77 @@ var arm_pivot: Node2D
 var _idle_texture: Texture2D
 var _idle_region_enabled: bool
 var _idle_sprite_scale: Vector2
+var _idle_sprite_position: Vector2
+var _idle_tween: Tween
 
 func _ready():
 	_idle_texture = sprite.texture
 	_idle_region_enabled = sprite.region_enabled
 	_idle_sprite_scale = sprite.scale
+	_idle_sprite_position = sprite.position
 	arm_pivot = sprite.get_node_or_null("ArmPivot")
+	_start_idle()
+
+func _start_idle():
+
+	_stop_idle()
+
+	# Slightly randomized period so units don't move in lockstep.
+	var period = randf_range(0.9, 1.1)
+
+	if idle_style == IdleStyle.WOBBLE:
+		_start_wobble(period * 1.4)
+	else:
+		_start_breathe(period * 2.6)
+
+func _stop_idle():
+
+	if _idle_tween:
+		_idle_tween.kill()
+		_idle_tween = null
+
+	sprite.scale = _idle_sprite_scale
+	sprite.position = _idle_sprite_position
+
+func _start_breathe(period):
+	# Subtle chest rise: the sprite stretches a touch taller and back.
+
+	var rest = _idle_sprite_scale.y
+	var half = period / 2.0
+
+	_idle_tween = create_tween().set_loops()
+	_idle_tween.tween_property(sprite, "scale:y", rest * 1.015, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.tween_property(sprite, "scale:y", rest, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _start_wobble(period):
+	# Slime-style squash and stretch, compensating the position so
+	# the base stays planted on the ground.
+
+	var rest = _idle_sprite_scale
+	var base = _idle_sprite_position
+	var half = period / 2.0
+	var squish = 0.05
+
+	var half_height = sprite.get_rect().size.y * rest.y / 2.0
+	var sink = half_height * squish
+
+	_idle_tween = create_tween().set_loops()
+
+	_idle_tween.tween_property(sprite, "scale:y", rest.y * (1.0 - squish), half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "scale:x", rest.x * (1.0 + squish * 0.8), half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "position:y", base.y + sink, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	_idle_tween.chain().tween_property(sprite, "scale:y", rest.y, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "scale:x", rest.x, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_tween.parallel().tween_property(sprite, "position:y", base.y, half) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func equip_gear(gear_list):
 
@@ -74,6 +145,8 @@ func play_windup():
 	if attack_texture == null:
 		return
 
+	_stop_idle()
+
 	sprite.texture = attack_texture
 	sprite.region_enabled = false
 	sprite.scale = _idle_sprite_scale * attack_texture_scale
@@ -86,7 +159,13 @@ func end_windup():
 	sprite.region_enabled = _idle_region_enabled
 	sprite.scale = _idle_sprite_scale
 
+	if _idle_tween == null:
+		_start_idle()
+
 func jump_to(target_position):
+
+	# The hop animates the sprite directly, so pause the idle motion.
+	_stop_idle()
 
 	var move = create_tween()
 	move.set_trans(Tween.TRANS_QUAD)
@@ -101,6 +180,9 @@ func jump_to(target_position):
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).as_relative()
 
 	await move.finished
+
+	if _idle_tween == null:
+		_start_idle()
 
 func play_attack():
 
@@ -229,6 +311,7 @@ func play_hit():
 func play_death():
 
 	end_windup()
+	_stop_idle()
 
 	if animation_player.has_animation("death"):
 		animation_player.play("death")

@@ -10,6 +10,7 @@ attack_direction = -1
 attack_texture = ExtResource("7_attack")
 attack_texture_scale = 0.6
 death_style = 1
+idle_style = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=398983595]
 scale = Vector2(0.29999998, 0.29999998)
