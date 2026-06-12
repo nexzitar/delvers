@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://qc10uvmc02qs"
-path="res://.godot/imported/dungeon_theater.png-0e4b0b97f44b220606f6a501cf87048e.ctex"
+uid="uid://bn27p3bt4ytyx"
+path="res://.godot/imported/stage_cavern.png-39bb96c1b5741e08af28b0327104ffd7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/backgrounds/dungeon_theater.png"
-dest_files=["res://.godot/imported/dungeon_theater.png-0e4b0b97f44b220606f6a501cf87048e.ctex"]
+source_file="res://art/backgrounds/stage_cavern.png"
+dest_files=["res://.godot/imported/stage_cavern.png-39bb96c1b5741e08af28b0327104ffd7.ctex"]
 
 [params]
 

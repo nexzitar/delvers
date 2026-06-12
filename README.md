@@ -6,7 +6,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 | Main menu | Combat theater |
 |-----------|----------------|
-| ![Main menu](art/backgrounds/campfire_scene.png) | ![Combat theater](art/backgrounds/combat_theater.png) |
+| ![Main menu](art/backgrounds/campfire_scene.png) | ![Combat theater](art/backgrounds/stage_dungeon_hall.png) |
 
 | Hero — Default Delver | Enemy — Green Slime |
 |-----------------------|---------------------|
@@ -102,8 +102,8 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 
 | Scene | Path | What it does |
 |-------|------|--------------|
-| Combat test | `scenes/testscenes/combat_test.tscn` | Runs a 1v2 fight (Default Delver vs two Green Slimes) and prints the log |
-| Theater test | `scenes/theater/theater_test.tscn` | Plays back a combat result on the battlefield with animations |
+| Combat simulation | `scenes/combat/combat_simulation.tscn` | Runs a headless fight and prints the combat log |
+| Battle theater | `scenes/theater/battle_theater.tscn` | Simulates a fight and plays it back on the battlefield with animations |
 
 ## Project Structure
 
@@ -112,9 +112,9 @@ delvers/
 ├── art/              # Sprites, UI textures, effects, fonts, backgrounds
 ├── resources/        # Hero, enemy, and skill definitions (.tres)
 ├── scenes/
+│   ├── combat/       # Headless combat simulation scene
 │   ├── menus/        # Main menu
-│   ├── theater/      # Battlefield and actor scenes
-│   └── testscenes/   # Combat and theater test scenes
+│   └── theater/      # Battle theater and actor scenes
 └── scripts/
     ├── combat/       # Simulation, entities, events, and results
     ├── data/         # Template classes for heroes, enemies, and skills

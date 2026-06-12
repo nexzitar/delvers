@@ -22,6 +22,10 @@ const MELEE_STRIKE_DISTANCE = 140
 
 @export var battlefield: BattlefieldLayout
 
+## Y-sorted container the actors spawn into, so units lower on the
+## screen draw in front of units behind them.
+@export var actors_root: Node2D
+
 var actors = {}
 
 var slash_scene = preload("res://art/effects/slash.tscn")
@@ -237,7 +241,7 @@ func play_spawn(event):
 
 	var actor = event.template.actor_scene.instantiate()
 
-	add_child(actor)
+	actors_root.add_child(actor)
 
 	actor.position = get_slot_position(
 		event.team,

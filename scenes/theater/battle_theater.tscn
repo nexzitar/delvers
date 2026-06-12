@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://cl23t0ysayiyk"]
+
+[ext_resource type="Texture2D" path="res://art/backgrounds/stage_dungeon_hall.png" id="1_hall"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/stage_cavern.png" id="2_cavern"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/stage_crypt.png" id="3_crypt"]
+[ext_resource type="Script" path="res://scripts/theater/stage_backdrop.gd" id="4_backdrop"]
+[ext_resource type="Script" uid="uid://16136e040w2v" path="res://scripts/theater/battlefield_layout.gd" id="5_layout"]
+[ext_resource type="Script" uid="uid://bers3kwnsupbt" path="res://scripts/theater/theater_controller.gd" id="6_controller"]
+
+[node name="BattleTheater" type="Node2D"]
+
+[node name="Backdrop" type="TextureRect" parent="."]
+texture = ExtResource("1_hall")
+script = ExtResource("4_backdrop")
+backdrops = Array[Texture2D]([ExtResource("1_hall"), ExtResource("2_cavern"), ExtResource("3_crypt")])
+backdrop_index = 0
+
+[node name="Stage" type="Node2D" parent="."]
+
+[node name="BattlefieldLayout" type="Node2D" parent="Stage"]
+script = ExtResource("5_layout")
+metadata/_custom_type_script = "uid://16136e040w2v"
+
+[node name="HeroSlots" type="Node2D" parent="Stage/BattlefieldLayout"]
+
+[node name="FrontTop" type="Marker2D" parent="Stage/BattlefieldLayout/HeroSlots"]
+position = Vector2(710, 620)
+
+[node name="FrontCenter" type="Marker2D" parent="Stage/BattlefieldLayout/HeroSlots"]
+position = Vector2(650, 730)
+
+[node name="FrontBottom" type="Marker2D" parent="Stage/BattlefieldLayout/HeroSlots"]
+position = Vector2(590, 840)
+
+[node name="BackTop" type="Marker2D" parent="Stage/BattlefieldLayout/HeroSlots"]
+position = Vector2(470, 620)
+
+[node name="BackCenter" type="Marker2D" parent="Stage/BattlefieldLayout/HeroSlots"]
+position = Vector2(410, 730)
+
+[node name="BackBottom" type="Marker2D" parent="Stage/BattlefieldLayout/HeroSlots"]
+position = Vector2(350, 840)
+
+[node name="EnemySlots" type="Node2D" parent="Stage/BattlefieldLayout"]
+
+[node name="FrontTop" type="Marker2D" parent="Stage/BattlefieldLayout/EnemySlots"]
+position = Vector2(890, 620)
+
+[node name="FrontCenter" type="Marker2D" parent="Stage/BattlefieldLayout/EnemySlots"]
+position = Vector2(950, 730)
+
+[node name="FrontBottom" type="Marker2D" parent="Stage/BattlefieldLayout/EnemySlots"]
+position = Vector2(1010, 840)
+
+[node name="BackTop" type="Marker2D" parent="Stage/BattlefieldLayout/EnemySlots"]
+position = Vector2(1130, 620)
+
+[node name="BackCenter" type="Marker2D" parent="Stage/BattlefieldLayout/EnemySlots"]
+position = Vector2(1190, 730)
+
+[node name="BackBottom" type="Marker2D" parent="Stage/BattlefieldLayout/EnemySlots"]
+position = Vector2(1250, 840)
+
+[node name="Actors" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="TheaterController" type="Node" parent="." node_paths=PackedStringArray("battlefield", "actors_root")]
+script = ExtResource("6_controller")
+battlefield = NodePath("../Stage/BattlefieldLayout")
+actors_root = NodePath("../Actors")

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ba21hvuaxsj2m"
-path="res://.godot/imported/combat_theater.png-5af5a2cd813aec35bac56fd57a806b06.ctex"
+uid="uid://ckub672jhkwmf"
+path="res://.godot/imported/stage_crypt.png-e74a0c4fc6ab8470308ed3da3d50a00b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/backgrounds/combat_theater.png"
-dest_files=["res://.godot/imported/combat_theater.png-5af5a2cd813aec35bac56fd57a806b06.ctex"]
+source_file="res://art/backgrounds/stage_crypt.png"
+dest_files=["res://.godot/imported/stage_crypt.png-e74a0c4fc6ab8470308ed3da3d50a00b.ctex"]
 
 [params]
 
