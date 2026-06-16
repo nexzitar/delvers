@@ -52,7 +52,29 @@ func _run():
 	print("occupied slot can_drop=%s" % equipped_icon._can_drop_data(Vector2.ZERO, data))
 	equipped_icon._drop_data(Vector2.ZERO, data)
 	await get_tree().create_timer(0.4).timeout
-	await _snap("loadout_equipped_bow")
 	print("after drop on occupied slot: ranged=%s" % PlayerRoster.is_ranged(0))
+
+	# Bow is two-handed: the off-hand should now show a dimmed ghost.
+	var off = camp.loadout._equip_slots[GearDefinition.Slot.OFF_HAND]
+	var ghost = off.get_child(0) if off.get_child_count() > 0 else null
+	print("offhand ghost present=%s alpha=%s" % [
+		ghost != null,
+		(ghost.modulate.a if ghost else -1.0),
+	])
+	await _snap("loadout_equipped_bow")
+
+	# Auto-drop: drop a stash one-handed sword anywhere on the hero panel
+	# (not a specific slot) and it should equip + flip back to melee.
+	var sword = null
+	for g in PlayerRoster.gear_stash:
+		if g.slot == GearDefinition.Slot.MAIN_HAND \
+				and g.weapon_type == GearDefinition.WeaponType.ONE_HANDED:
+			sword = g
+			break
+	var sdata = {"kind": "gear", "res": sword, "origin": "stash"}
+	print("auto can_accept sword=%s" % camp.loadout.can_accept("auto", sdata))
+	camp.loadout.accept_drop("auto", sdata)
+	await get_tree().create_timer(0.4).timeout
+	print("after auto-drop sword: ranged=%s" % PlayerRoster.is_ranged(0))
 
 	get_tree().quit()

@@ -76,19 +76,22 @@ func _build():
 	_build_tooltip()
 	_build_close_button()
 
+func _place(ctrl, l, t, r, b, ax, ay, az, aw):
+	ctrl.anchor_left = ax
+	ctrl.anchor_top = ay
+	ctrl.anchor_right = az
+	ctrl.anchor_bottom = aw
+	ctrl.offset_left = l
+	ctrl.offset_top = t
+	ctrl.offset_right = r
+	ctrl.offset_bottom = b
+	add_child(ctrl)
+	return ctrl
+
 func _panel(l, t, r, b, ax, ay, az, aw) -> Panel:
 	var p = Panel.new()
 	p.add_theme_stylebox_override("panel", _panel_style())
-	p.anchor_left = ax
-	p.anchor_top = ay
-	p.anchor_right = az
-	p.anchor_bottom = aw
-	p.offset_left = l
-	p.offset_top = t
-	p.offset_right = r
-	p.offset_bottom = b
-	add_child(p)
-	return p
+	return _place(p, l, t, r, b, ax, ay, az, aw)
 
 func _panel_style() -> StyleBoxFlat:
 	var s = StyleBoxFlat.new()
@@ -115,15 +118,24 @@ func _title(text) -> Label:
 	l.add_theme_color_override("font_color", GOLD)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	l.add_theme_constant_override("outline_size", 6)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
 func _build_left_panel():
 
-	var panel = _panel(40, 50, 600, -40, 0, 0, 0, 1)
+	# The whole hero panel accepts gear/skill drops and routes them to
+	# the right slot, so you can just drop onto the character.
+	var panel = DROP.new()
+	panel.screen = self
+	panel.target_kind = "auto"
+	panel.add_theme_stylebox_override("panel", _panel_style())
+	_place(panel, 40, 50, 600, -40, 0, 0, 0, 1)
 
 	var vbox = VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vbox.add_theme_constant_override("separation", 12)
+	# Let drops fall through the layout to the panel's auto target.
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(vbox)
 
 	vbox.add_child(_title("Hero"))
@@ -144,6 +156,7 @@ func _build_left_panel():
 	_preview_holder = Control.new()
 	_preview_holder.custom_minimum_size = Vector2(0, 300)
 	_preview_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_preview_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_preview_holder)
 
 	_role_label = Label.new()
@@ -151,6 +164,7 @@ func _build_left_panel():
 	_role_label.add_theme_font_size_override("font_size", 22)
 	_role_label.add_theme_color_override("font_color", PARCHMENT)
 	_role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_role_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_role_label)
 
 	vbox.add_child(_title("Equipment"))
@@ -158,6 +172,7 @@ func _build_left_panel():
 	var equip_row = HBoxContainer.new()
 	equip_row.add_theme_constant_override("separation", 14)
 	equip_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	equip_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(equip_row)
 
 	for slot in SLOT_ORDER:
@@ -167,6 +182,7 @@ func _build_left_panel():
 
 	var skill_row = HBoxContainer.new()
 	skill_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	skill_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(skill_row)
 	skill_row.add_child(_build_skill_slot())
 
@@ -174,11 +190,13 @@ func _slot_cell(label_text) -> VBoxContainer:
 	var cell = VBoxContainer.new()
 	cell.add_theme_constant_override("separation", 4)
 	cell.alignment = BoxContainer.ALIGNMENT_CENTER
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var caption = Label.new()
 	caption.text = label_text
 	caption.add_theme_font_size_override("font_size", 14)
 	caption.add_theme_color_override("font_color", DIM)
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cell.add_child(caption)
 	return cell
 
@@ -308,19 +326,32 @@ func _clear(node):
 	for child in node.get_children():
 		child.queue_free()
 
-func _fill_equip_slot(slot_enum):
-	var slot = _equip_slots[slot_enum]
-	_clear(slot)
-	var item = PlayerRoster.equipped_item(hero_index, slot_enum)
-	if item == null:
-		return
-	var icon = _make_icon("gear", item, "equipped")
+func _inset_icon(slot, icon):
 	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	icon.offset_left = 6
 	icon.offset_top = 6
 	icon.offset_right = -6
 	icon.offset_bottom = -6
 	slot.add_child(icon)
+
+func _fill_equip_slot(slot_enum):
+	var slot = _equip_slots[slot_enum]
+	_clear(slot)
+	var item = PlayerRoster.equipped_item(hero_index, slot_enum)
+	if item == null:
+		# Show the two-handed weapon ghosted in the off-hand so it's clear
+		# why a shield can't go there.
+		if slot_enum == GearDefinition.Slot.OFF_HAND and _offhand_blocked():
+			var main = PlayerRoster.equipped_item(
+				hero_index, GearDefinition.Slot.MAIN_HAND
+			)
+			var ghost = _make_icon("twohand", main, "twohand")
+			ghost.draggable = false
+			ghost.modulate.a = 0.32
+			_inset_icon(slot, ghost)
+		return
+	var icon = _make_icon("gear", item, "equipped")
+	_inset_icon(slot, icon)
 
 func _fill_skill_slot():
 	_clear(_skill_slot)
@@ -353,6 +384,7 @@ func _update_preview():
 
 	var container = SubViewportContainer.new()
 	container.stretch = false
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Centered horizontally in the panel, regardless of its width.
 	container.anchor_left = 0.5
 	container.anchor_right = 0.5
@@ -379,6 +411,14 @@ func can_accept(target_kind, data) -> bool:
 	if target_kind == "gear_stash":
 		return data.kind == "gear" and data.origin == "equipped"
 
+	# Anywhere on the hero panel: route the drop to its obvious home.
+	if target_kind == "auto":
+		if data.kind == "skill":
+			return true
+		if data.kind == "gear" and data.origin == "stash":
+			return _can_equip_gear(data.res)
+		return false
+
 	if target_kind.begins_with("equip:"):
 		if data.kind != "gear":
 			return false
@@ -387,27 +427,34 @@ func can_accept(target_kind, data) -> bool:
 			return false
 		if data.origin != "stash":
 			return false
-		# Can't strap an off-hand on over a bow or two-hander.
-		if slot_enum == GearDefinition.Slot.OFF_HAND:
-			var main = PlayerRoster.equipped_item(
-				hero_index, GearDefinition.Slot.MAIN_HAND
-			)
-			if main and main.weapon_type in [
-				GearDefinition.WeaponType.TWO_HANDED,
-				GearDefinition.WeaponType.BOW,
-			]:
-				return false
-		return true
+		return _can_equip_gear(data.res)
 
 	return false
 
+## Whether a stash gear item can be equipped right now. Off-hand items
+## are blocked while a bow or two-hander occupies the main hand.
+func _can_equip_gear(gear: GearDefinition) -> bool:
+	if gear.slot == GearDefinition.Slot.OFF_HAND:
+		return not _offhand_blocked()
+	return true
+
+func _offhand_blocked() -> bool:
+	var main = PlayerRoster.equipped_item(
+		hero_index, GearDefinition.Slot.MAIN_HAND
+	)
+	return main != null and main.weapon_type in [
+		GearDefinition.WeaponType.TWO_HANDED,
+		GearDefinition.WeaponType.BOW,
+	]
+
 func accept_drop(target_kind, data):
 
-	if target_kind == "skill_slot":
+	if data.kind == "skill":
 		PlayerRoster.set_attack_skill(hero_index, data.res)
 	elif target_kind == "gear_stash":
 		PlayerRoster.unequip_gear(hero_index, data.res.slot)
-	elif target_kind.begins_with("equip:"):
+	else:
+		# "auto" and "equip:<slot>" both equip the gear in its own slot.
 		PlayerRoster.equip_gear(hero_index, data.res)
 
 	hide_tooltip()
@@ -426,6 +473,8 @@ func show_tooltip(kind, res):
 		_tooltip_gear(res)
 	elif kind == "skill":
 		_tooltip_skill(res)
+	elif kind == "twohand":
+		_tooltip_twohand(res)
 
 	_tooltip_panel.visible = true
 
@@ -481,6 +530,17 @@ func _stat_summary(gear: GearDefinition) -> String:
 	if gear.health_bonus != 0:
 		parts.append("+%d HP" % gear.health_bonus)
 	return ", ".join(parts) if not parts.is_empty() else "no bonuses"
+
+func _tooltip_twohand(main: GearDefinition):
+	_tip_line("Off Hand occupied", GOLD, 26)
+	_tip_line("Both hands are busy wielding:", DIM, 17)
+	if main:
+		_tip_line(main.gear_name, PARCHMENT, 20)
+	_divider()
+	_tip_line(
+		"Swap the two-handed weapon for a one-handed one to free the off hand.",
+		DIM, 16
+	)
 
 func _tooltip_skill(skill: SkillDefinition):
 	_tip_line(skill.skill_name, GOLD, 26)
