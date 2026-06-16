@@ -59,7 +59,9 @@ static func category_of(pos: int) -> int:
 		Position.FEET: return GearDefinition.Slot.FEET
 		Position.MAIN_HAND: return GearDefinition.Slot.MAIN_HAND
 		Position.OFF_HAND: return GearDefinition.Slot.OFF_HAND
-	return GearDefinition.Slot.HEAD
+	# -1 sentinel: an unrecognized position is misuse. Returning HEAD (0) would
+	# silently resolve to a real category; -1 errors visibly at the call site.
+	return -1
 
 ## Positions an item of this category can occupy (before weapon rules).
 static func positions_for(category: int) -> Array:
@@ -76,9 +78,10 @@ static func positions_for(category: int) -> Array:
 ## Positions an actual gear item accepts, applying the dual-wield rule:
 ## a one-handed weapon may also go in the off hand.
 static func accepted_positions(gear: GearDefinition) -> Array:
+	# positions_for already returns a fresh array, so appending here never
+	# mutates the shared constants.
 	var positions = positions_for(gear.slot)
 	if gear.slot == GearDefinition.Slot.MAIN_HAND \
 			and gear.weapon_type == GearDefinition.WeaponType.ONE_HANDED:
-		positions = positions.duplicate()
 		positions.append(Position.OFF_HAND)
 	return positions

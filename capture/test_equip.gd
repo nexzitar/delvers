@@ -28,5 +28,20 @@ func _ready():
 	bow.weapon_type = GearDefinition.WeaponType.BOW
 	_ok("bow accepts only main", Equip.accepted_positions(bow).size() == 1)
 
+	# Trinkets, like rings, have two positions.
+	_ok("trinket -> 2 positions",
+		Equip.positions_for(GearDefinition.Slot.TRINKET).size() == 2)
+
+	# Two-handed weapons cannot go in the off hand.
+	var axe = GearDefinition.new()
+	axe.slot = GearDefinition.Slot.MAIN_HAND
+	axe.weapon_type = GearDefinition.WeaponType.TWO_HANDED
+	_ok("2H accepts only main", Equip.accepted_positions(axe).size() == 1)
+
+	# accepted_positions must not grow the shared constants.
+	Equip.accepted_positions(sword)
+	_ok("WEAPON_ROW unchanged", Equip.WEAPON_ROW.size() == 2)
+	_ok("ALL unchanged", Equip.ALL.size() == 16)
+
 	_ok("16 positions total", Equip.ALL.size() == 16)
 	get_tree().quit()
