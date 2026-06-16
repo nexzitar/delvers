@@ -4,8 +4,6 @@ extends Node
 ## party's progress. Shared by the camp scenes and the battle theater.
 
 const DEFAULT_DELVER = preload("res://resources/heroes/default_delver.tres")
-const RANGER_DELVER = preload("res://resources/heroes/ranger_delver.tres")
-
 const AUTO_ATTACK = preload("res://resources/skills/auto_attack.tres")
 const ARROW_SHOT = preload("res://resources/skills/arrow_shot.tres")
 
