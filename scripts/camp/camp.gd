@@ -11,8 +11,13 @@ func _ready():
 
 	UiSounds.wire_buttons(self)
 
+	# This full-screen root Control would otherwise swallow the cursor;
+	# let it pass through so the stage can poll the mouse over heroes.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	stage.hero_selected.connect(_on_hero_selected)
 	loadout.hero_changed.connect(stage.refresh_hero)
+	loadout.closed.connect(func(): stage.set_picking(true))
 
 	if PlayerRoster.battles_fought == 0:
 		result_label.visible = false
@@ -33,7 +38,7 @@ func _ready():
 
 func _on_hero_selected(hero_index):
 	UiSounds.click()
-	stage.clear_hover()
+	stage.set_picking(false)
 	loadout.open(hero_index)
 
 func _on_embark_pressed():

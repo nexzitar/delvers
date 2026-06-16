@@ -48,6 +48,20 @@ func _get_drag_data(_at_position):
 
 	return {"kind": kind, "res": res, "origin": origin}
 
+## When this icon fills a slot, a drop landing on it should be handled
+## by the slot underneath (Godot doesn't bubble drops to parents on its
+## own), so an occupied slot can swap its item without unequipping first.
+func _can_drop_data(at_position, data):
+	var parent = get_parent()
+	if parent and parent.has_method("_can_drop_data"):
+		return parent._can_drop_data(at_position, data)
+	return false
+
+func _drop_data(at_position, data):
+	var parent = get_parent()
+	if parent and parent.has_method("_drop_data"):
+		parent._drop_data(at_position, data)
+
 func _icon_texture() -> Texture2D:
 	if res is GearDefinition:
 		return res.icon if res.icon else res.texture

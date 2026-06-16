@@ -7,6 +7,7 @@ class_name LoadoutScreen
 ## bottom-right corner.
 
 signal hero_changed(hero_index: int)
+signal closed
 
 const ICON = preload("res://scripts/camp/loadout/loadout_icon.gd")
 const DROP = preload("res://scripts/camp/loadout/drop_target.gd")
@@ -56,6 +57,7 @@ func open(index: int):
 func close():
 	visible = false
 	hero_index = -1
+	closed.emit()
 
 # --- Construction ----------------------------------------------------
 

@@ -26,8 +26,18 @@ const NAMEPLATE_FONT = preload("res://art/fonts/Herculanum.ttf")
 @onready var seats_root = $Seats
 @onready var campfire = $Seats/Campfire
 
-# hero_index -> { "seat": Marker2D, "actor": Node2D, "plate": Control }
+# hero_index -> {
+#   "seat": Marker2D, "actor": Node2D, "plate": Control,
+#   "center": Vector2, "half": Vector2  (hit box in seats_root space)
+# }
 var _seated := {}
+
+## Mouse hover/click hit-testing is done by polling in _process (rather
+## than Area2D physics picking), so it works regardless of window focus
+## quirks and overlapping Control mouse filters.
+var _picking_enabled := true
+var _hovered := -1
+var _was_pressed := false
 
 func _ready():
 
@@ -93,9 +103,15 @@ func _spawn_seated(seat, hero_index):
 	if interactive:
 		plate = _make_nameplate(template.hero_name, depth)
 		seat.add_child(plate)
-		_add_picker(actor, hero_index)
 
-	_seated[hero_index] = {"seat": seat, "actor": actor, "plate": plate}
+	# Hit box covering the body, in seats_root-local space.
+	var center = seat.position + Vector2(0, -(ACTOR_FOOT_OFFSET + 25) * depth)
+	var half = Vector2(48, 125) * depth
+
+	_seated[hero_index] = {
+		"seat": seat, "actor": actor, "plate": plate,
+		"center": center, "half": half,
+	}
 
 func _make_nameplate(text, depth) -> Control:
 	var plate = Label.new()
@@ -112,43 +128,58 @@ func _make_nameplate(text, depth) -> Control:
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return plate
 
-func _add_picker(actor, hero_index):
+func _process(_delta):
+	if not interactive or not _picking_enabled:
+		return
 
-	# A rectangle roughly covering the body so the hero is clickable.
-	var area = Area2D.new()
-	area.input_pickable = true
-	var shape = CollisionShape2D.new()
-	var rect = RectangleShape2D.new()
-	rect.size = Vector2(120, 250)
-	shape.shape = rect
-	shape.position = Vector2(0, -25)
-	area.add_child(shape)
-	actor.add_child(area)
+	var hovered = hit_test(seats_root.get_local_mouse_position())
 
-	area.mouse_entered.connect(_on_hero_hover.bind(hero_index, true))
-	area.mouse_exited.connect(_on_hero_hover.bind(hero_index, false))
-	area.input_event.connect(_on_hero_input.bind(hero_index))
+	if hovered != _hovered:
+		_set_hover(_hovered, false)
+		_set_hover(hovered, true)
+		_hovered = hovered
 
-func _on_hero_hover(hero_index, entered):
-	if not _seated.has(hero_index):
+	# Edge-detect a left click on the hovered hero.
+	var pressed = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	if pressed and not _was_pressed and hovered != -1:
+		hero_selected.emit(hovered)
+	_was_pressed = pressed
+
+## Returns the hero index whose body box contains the given point
+## (in seats_root-local space), or -1. When boxes overlap (adjacent
+## seats), the hero whose center is nearest the point wins.
+func hit_test(local_pos: Vector2) -> int:
+	var best := -1
+	var best_dist := INF
+	for hero_index in _seated:
+		var record = _seated[hero_index]
+		var d = local_pos - record.center
+		if absf(d.x) <= record.half.x and absf(d.y) <= record.half.y:
+			var dist = d.length_squared()
+			if dist < best_dist:
+				best_dist = dist
+				best = hero_index
+	return best
+
+func _set_hover(hero_index, on):
+	if hero_index == -1 or not _seated.has(hero_index):
 		return
 	var record = _seated[hero_index]
-	_set_outline(record.actor, entered)
+	_set_outline(record.actor, on)
 	if is_instance_valid(record.plate):
-		record.plate.visible = entered
+		record.plate.visible = on
 
-func _on_hero_input(_viewport, event, _shape_idx, hero_index):
-	if event is InputEventMouseButton and event.pressed \
-			and event.button_index == MOUSE_BUTTON_LEFT:
-		hero_selected.emit(hero_index)
+## Turns hero picking on or off (the camp disables it while the loadout
+## modal is open) and clears any active highlight.
+func set_picking(enabled):
+	_picking_enabled = enabled
+	if not enabled:
+		clear_hover()
 
 ## Clears any active hover highlight (used when a modal takes over).
 func clear_hover():
-	for hero_index in _seated:
-		var record = _seated[hero_index]
-		_set_outline(record.actor, false)
-		if is_instance_valid(record.plate):
-			record.plate.visible = false
+	_set_hover(_hovered, false)
+	_hovered = -1
 
 func _set_outline(actor, on):
 	if not is_instance_valid(actor):

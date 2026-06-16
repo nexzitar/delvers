@@ -21,9 +21,9 @@ func _run():
 	await get_tree().create_timer(0.8).timeout
 
 	# Hover the melee hero so the outline + nameplate show.
-	camp.stage._on_hero_hover(0, true)
+	camp.stage._set_hover(0, true)
 	await _snap("camp_hover")
-	camp.stage._on_hero_hover(0, false)
+	camp.stage._set_hover(0, false)
 
 	# Open the loadout for the melee hero.
 	camp.loadout.open(0)
@@ -42,10 +42,17 @@ func _run():
 			bow = g
 			break
 	camp.loadout.hide_tooltip()
-	camp.loadout.accept_drop("equip:%d" % GearDefinition.Slot.MAIN_HAND,
-		{"kind": "gear", "res": bow, "origin": "stash"})
+
+	# Drop the bow directly on the OCCUPIED main-hand slot's icon, the
+	# way a real drag lands. The icon should forward to its slot and
+	# swap sword -> bow without unequipping first.
+	var slot = camp.loadout._equip_slots[GearDefinition.Slot.MAIN_HAND]
+	var equipped_icon = slot.get_child(0)
+	var data = {"kind": "gear", "res": bow, "origin": "stash"}
+	print("occupied slot can_drop=%s" % equipped_icon._can_drop_data(Vector2.ZERO, data))
+	equipped_icon._drop_data(Vector2.ZERO, data)
 	await get_tree().create_timer(0.4).timeout
 	await _snap("loadout_equipped_bow")
-	print("after drop: ranged=%s" % PlayerRoster.is_ranged(0))
+	print("after drop on occupied slot: ranged=%s" % PlayerRoster.is_ranged(0))
 
 	get_tree().quit()
