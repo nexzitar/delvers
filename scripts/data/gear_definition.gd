@@ -1,11 +1,23 @@
 extends Resource
 class_name GearDefinition
 
+# Indices 0-3 are frozen: existing .tres files store slot = 2 (MAIN_HAND),
+# slot = 3 (OFF_HAND). New categories are appended.
 enum Slot {
-	HEAD,
-	CHEST,
-	MAIN_HAND,
-	OFF_HAND
+	HEAD = 0,
+	CHEST = 1,
+	MAIN_HAND = 2,
+	OFF_HAND = 3,
+	NECK,
+	SHOULDER,
+	BACK,
+	WRIST,
+	HANDS,
+	WAIST,
+	LEGS,
+	FEET,
+	RING,
+	TRINKET,
 }
 
 enum WeaponType {
@@ -33,3 +45,5 @@ enum WeaponType {
 @export_group("Stats")
 @export var attack_bonus: int = 0
 @export var health_bonus: int = 0
+## Seconds per swing. Only meaningful for weapons; 0 elsewhere.
+@export var attack_speed: float = 0.0
