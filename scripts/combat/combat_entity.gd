@@ -25,6 +25,15 @@ var combat_log := []
 
 var skills := []
 
+# Per-hand attack model. base_attack_power excludes weapon damage so the
+# off-hand swing can be computed independently.
+var base_attack_power: int = 0
+var main_weapon: GearDefinition = null
+var off_weapon: GearDefinition = null
+var off_attack_timer: float = 0.0
+const OFF_HAND_FACTOR := 0.5
+const UNARMED_INTERVAL := 2.0
+
 var alive := true
 
 func update(delta, combat_state):
