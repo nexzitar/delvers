@@ -32,7 +32,6 @@ var main_weapon: GearDefinition = null
 var off_weapon: GearDefinition = null
 var off_attack_timer: float = 0.0
 const OFF_HAND_FACTOR := 0.5
-const UNARMED_INTERVAL := 2.0
 
 var alive := true
 
