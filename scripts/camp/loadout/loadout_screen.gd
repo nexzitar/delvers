@@ -32,6 +32,12 @@ const EMPTY_ICONS := {
 }
 const EMPTY_SKILL := preload("res://art/ui/slots/empty_skill.png")
 const SKILL_SLOTS := 6
+const SLOT_SIZE := 50
+const STASH_ICON_SIZE := 42
+const STASH_COLUMNS := 10
+## hero_actor.tscn body sprite: 906px tall at scale 0.23.
+const PREVIEW_BODY_HALF := 906.0 * 0.23 * 0.5
+const PREVIEW_FOOT_DROP := 14
 
 const GOLD = Color(0.85, 0.7, 0.28)
 const PARCHMENT = Color(0.88, 0.82, 0.68)
@@ -47,7 +53,10 @@ var _skill_slots := []        # the SKILL_SLOTS skill DropTarget panels
 var _gear_grid: GridContainer
 var _preview_holder: Control
 var _tooltip_panel: Panel
-var _tooltip_box: VBoxContainer
+var _tooltip_left: VBoxContainer
+var _tooltip_right: VBoxContainer
+var _tooltip_compare_panel: Panel
+var _tooltip_compare_box: VBoxContainer
 
 # Click-to-carry: an alternative to dragging. Click an icon to pick it
 # up onto the cursor, then click a slot or the hero panel to place it.
@@ -139,11 +148,21 @@ func _build_left_panel():
 	panel.add_theme_stylebox_override("panel", _panel_style())
 	_place(panel, 40, 50, 640, -40, 0, 0, 0, 1)
 
+	var margin = MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(margin)
+
 	var vbox = VBoxContainer.new()
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 8)
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(vbox)
+	margin.add_child(vbox)
 
 	vbox.add_child(_title("Hero"))
 
@@ -169,7 +188,8 @@ func _build_left_panel():
 	mid.add_child(_build_slot_column(Equip.COLUMN_LEFT))
 
 	_preview_holder = Control.new()
-	_preview_holder.custom_minimum_size = Vector2(190, 300)
+	_preview_holder.custom_minimum_size = Vector2(120, int(PREVIEW_BODY_HALF * 2.0) + 24)
+	_preview_holder.clip_contents = false
 	_preview_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_preview_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_preview_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -204,7 +224,7 @@ func _build_left_panel():
 	_skill_slots.clear()
 	for i in range(SKILL_SLOTS):
 		var slot = _make_slot("skill_view")  # read-only: rejects drops
-		slot.custom_minimum_size = Vector2(64, 64)
+		slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 		_skill_slots.append(slot)
 		skills.add_child(slot)
 
@@ -221,19 +241,18 @@ func _make_slot(target_kind) -> DropTarget:
 	slot.screen = self
 	slot.target_kind = target_kind
 	slot.add_theme_stylebox_override("panel", _slot_style())
-	slot.custom_minimum_size = Vector2(86, 86)
+	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 	return slot
 
 func _build_equip_slot(position: int) -> Control:
 	var slot = _make_slot("equip:%d" % position)
-	slot.custom_minimum_size = Vector2(64, 64)
 	_equip_slots[position] = slot
 	return slot
 
 func _build_right_tabs():
 	var tabs = TabContainer.new()
 	tabs.add_theme_font_override("font", FONT)
-	_place(tabs, -480, 50, -40, -40, 1, 0, 1, 1)
+	_place(tabs, -580, 50, -40, -40, 1, 0, 1, 1)
 
 	# Gear tab: the stash grid in a scroll.
 	var gear_tab = ScrollContainer.new()
@@ -248,12 +267,14 @@ func _build_right_tabs():
 	bin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	gear_tab.add_child(bin)
 	_gear_grid = GridContainer.new()
-	_gear_grid.columns = 4
-	_gear_grid.add_theme_constant_override("h_separation", 10)
-	_gear_grid.add_theme_constant_override("v_separation", 10)
+	_gear_grid.columns = STASH_COLUMNS
+	_gear_grid.add_theme_constant_override("h_separation", 6)
+	_gear_grid.add_theme_constant_override("v_separation", 6)
 	_gear_grid.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_gear_grid.offset_left = 10
-	_gear_grid.offset_top = 10
+	_gear_grid.offset_left = 12
+	_gear_grid.offset_top = 12
+	_gear_grid.offset_right = -12
+	_gear_grid.offset_bottom = -12
 	bin.add_child(_gear_grid)
 
 	# Skills tab: the known catalog (sparse for now).
@@ -275,12 +296,45 @@ func _build_right_tabs():
 		grid.add_child(_make_icon("skill", skill, "catalog"))
 
 func _build_tooltip():
-	_tooltip_panel = _panel(-480, -300, -40, -40, 1, 1, 1, 1)
+	_tooltip_compare_panel = _panel(660, -270, -520, -40, 0, 1, 1, 1)
+	_tooltip_compare_panel.visible = false
+	_tooltip_compare_box = VBoxContainer.new()
+	_tooltip_compare_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_tooltip_compare_box.offset_left = 14
+	_tooltip_compare_box.offset_top = 12
+	_tooltip_compare_box.offset_right = -14
+	_tooltip_compare_box.offset_bottom = -12
+	_tooltip_compare_box.add_theme_constant_override("separation", 6)
+	_tooltip_compare_panel.add_child(_tooltip_compare_box)
+
+	_tooltip_panel = _panel(-580, -270, -40, -40, 1, 1, 1, 1)
 	_tooltip_panel.visible = false
-	_tooltip_box = VBoxContainer.new()
-	_tooltip_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_tooltip_box.add_theme_constant_override("separation", 6)
-	_tooltip_panel.add_child(_tooltip_box)
+
+	var margin = MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	_tooltip_panel.add_child(margin)
+
+	var cols = HBoxContainer.new()
+	cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	cols.add_theme_constant_override("separation", 18)
+	margin.add_child(cols)
+
+	_tooltip_left = VBoxContainer.new()
+	_tooltip_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tooltip_left.custom_minimum_size = Vector2(200, 0)
+	_tooltip_left.add_theme_constant_override("separation", 6)
+	cols.add_child(_tooltip_left)
+
+	_tooltip_right = VBoxContainer.new()
+	_tooltip_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tooltip_right.custom_minimum_size = Vector2(180, 0)
+	_tooltip_right.add_theme_constant_override("separation", 6)
+	cols.add_child(_tooltip_right)
 
 func _build_close_button():
 	var btn = Button.new()
@@ -303,7 +357,7 @@ func _make_icon(kind, res, origin) -> LoadoutIcon:
 	icon.kind = kind
 	icon.res = res
 	icon.origin = origin
-	icon.custom_minimum_size = Vector2(78, 78)
+	icon.custom_minimum_size = Vector2(STASH_ICON_SIZE, STASH_ICON_SIZE)
 	return icon
 
 # --- Refresh ---------------------------------------------------------
@@ -332,10 +386,10 @@ func _clear(node):
 
 func _inset_icon(slot, icon):
 	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	icon.offset_left = 6
-	icon.offset_top = 6
-	icon.offset_right = -6
-	icon.offset_bottom = -6
+	icon.offset_left = 3
+	icon.offset_top = 3
+	icon.offset_right = -3
+	icon.offset_bottom = -3
 	slot.add_child(icon)
 
 func _fill_equip_slot(position: int):
@@ -363,6 +417,7 @@ func _fill_equip_slot(position: int):
 	_inset_icon(slot, hint)
 
 func _fill_skill_slots():
+	var hero = PlayerRoster.heroes[hero_index]
 	var skill = PlayerRoster.attack_skill(hero_index)
 	for i in range(_skill_slots.size()):
 		var slot = _skill_slots[i]
@@ -370,6 +425,11 @@ func _fill_skill_slots():
 		if i == 0 and skill:
 			var icon = _make_icon("skill", skill, "skill_view")
 			icon.draggable = false
+			_inset_icon(slot, icon)
+		elif i > 0 and i - 1 < hero.bonus_skills.size() \
+				and hero.bonus_skills[i - 1] != null:
+			var bonus = hero.bonus_skills[i - 1]
+			var icon = _make_icon("skill", bonus, "skill:%d" % i)
 			_inset_icon(slot, icon)
 		else:
 			var hint = TextureRect.new()
@@ -390,29 +450,47 @@ func _update_preview():
 
 	var hero = PlayerRoster.heroes[hero_index]
 
+	var vp_w := 120
+	var vp_h := int(PREVIEW_BODY_HALF * 2.0) + 24
+	var foot_pad := PREVIEW_FOOT_DROP
+
 	var vp = SubViewport.new()
-	vp.size = Vector2i(320, 340)
+	vp.size = Vector2i(vp_w, vp_h)
 	vp.transparent_bg = true
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+
+	var shadow = _make_ground_shadow()
+	shadow.position = Vector2(vp_w / 2.0, vp_h - foot_pad + 2)
+	vp.add_child(shadow)
+
+	var actor = hero.actor_scene.instantiate()
+	actor.position = Vector2(vp_w / 2.0, vp_h - PREVIEW_BODY_HALF - foot_pad + 10)
+	actor.scale = Vector2(1.0, 1.0)
+	vp.add_child(actor)
 
 	var container = SubViewportContainer.new()
 	container.stretch = false
 	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Centered horizontally in the panel, regardless of its width.
+	container.clip_contents = false
 	container.anchor_left = 0.5
 	container.anchor_right = 0.5
-	container.offset_left = -160
-	container.offset_right = 160
+	container.offset_left = -vp_w / 2.0
+	container.offset_right = vp_w / 2.0
 	container.offset_top = 0
-	container.offset_bottom = 340
+	container.offset_bottom = vp_h
 	container.add_child(vp)
 	_preview_holder.add_child(container)
-
-	var actor = hero.actor_scene.instantiate()
-	actor.position = Vector2(160, 312)
-	actor.scale = Vector2(1.25, 1.25)
-	vp.add_child(actor)
 	actor.equip_gear(hero.equipped.values())
+
+func _make_ground_shadow() -> Polygon2D:
+	var pts := PackedVector2Array()
+	for i in range(20):
+		var a := TAU * float(i) / 20.0
+		pts.append(Vector2(cos(a) * 34.0, sin(a) * 9.0))
+	var shadow = Polygon2D.new()
+	shadow.polygon = pts
+	shadow.color = Color(0, 0, 0, 0.32)
+	return shadow
 
 # --- Drag-and-drop policy --------------------------------------------
 
@@ -457,7 +535,7 @@ func show_tooltip(kind, res):
 	if res == null:
 		return
 
-	_clear(_tooltip_box)
+	_clear_tooltips()
 
 	if kind == "gear":
 		_tooltip_gear(res)
@@ -467,55 +545,96 @@ func show_tooltip(kind, res):
 		_tooltip_twohand(res)
 
 	_tooltip_panel.visible = true
+	_tooltip_compare_panel.visible = _tooltip_compare_box.get_child_count() > 0
 
 func hide_tooltip():
 	if _tooltip_panel:
 		_tooltip_panel.visible = false
+	if _tooltip_compare_panel:
+		_tooltip_compare_panel.visible = false
 
-func _tip_line(text, color := PARCHMENT, size := 20):
+func _clear_tooltips():
+	_clear(_tooltip_left)
+	_clear(_tooltip_right)
+	_clear(_tooltip_compare_box)
+
+func _tip_line(text, color := PARCHMENT, size := 20, column := 0):
+	var box = _tooltip_left if column == 0 else _tooltip_right
 	var l = Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_tooltip_box.add_child(l)
+	box.add_child(l)
 
-func _divider():
-	var sep = HSeparator.new()
-	_tooltip_box.add_child(sep)
+func _tip_cmp(text, color := PARCHMENT, size := 20):
+	var l = Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tooltip_compare_box.add_child(l)
+
+func _divider(column := 0):
+	var box = _tooltip_left if column == 0 else _tooltip_right
+	box.add_child(HSeparator.new())
+
+func _cmp_divider():
+	_tooltip_compare_box.add_child(HSeparator.new())
 
 func _tooltip_gear(gear: GearDefinition):
-	_tip_line(gear.gear_name, GOLD, 26)
-	_tip_line(_gear_subtitle(gear), DIM, 17)
-	if gear.attack_bonus != 0:
-		_tip_line("+%d Attack" % gear.attack_bonus)
+	_tip_line(gear.gear_name, ItemQuality.color(gear.quality), 26, 0)
+	_tip_line(ItemQuality.tier_name(gear.quality), ItemQuality.color(gear.quality), 16, 0)
+	_tip_line(_gear_subtitle(gear), DIM, 17, 0)
+
+	var is_weapon := gear.attack_speed > 0.0 \
+		or gear.weapon_type != GearDefinition.WeaponType.NONE
+	if is_weapon:
+		_tip_line("%d - %d Damage" % [
+			gear.effective_damage_min(), gear.effective_damage_max()], PARCHMENT, 18, 0)
+		if gear.attack_speed > 0.0:
+			_tip_line("Speed: %.1fs" % gear.attack_speed, PARCHMENT, 18, 0)
+			_tip_line("~%.1f DPS (avg)" % gear.weapon_dps(), DIM, 15, 0)
+	elif gear.attack_bonus != 0:
+		_tip_line("+%d Attack" % gear.attack_bonus, PARCHMENT, 18, 0)
+
 	if gear.health_bonus != 0:
-		_tip_line("+%d Health" % gear.health_bonus)
-	if gear.attack_speed > 0.0:
-		_tip_line("Speed: %.1fs" % gear.attack_speed, PARCHMENT, 18)
-		_tip_line("(~%.1f dmg/s from the weapon)" %
-			(float(gear.attack_bonus) / gear.attack_speed), DIM, 15)
-	_divider()
-	# For weapons, show what's in BOTH hands right now.
+		_tip_line("+%d Health" % gear.health_bonus, PARCHMENT, 18, 1)
+
+	_tip_line("Item level %d" % gear.item_level(), DIM, 16, 1)
+
+	_fill_gear_compare(gear)
+
+func _fill_gear_compare(gear: GearDefinition):
 	if gear.slot == GearDefinition.Slot.MAIN_HAND \
-			or gear.weapon_type == GearDefinition.WeaponType.ONE_HANDED:
+			or gear.weapon_type == GearDefinition.WeaponType.ONE_HANDED \
+			or gear.weapon_type == GearDefinition.WeaponType.TWO_HANDED \
+			or gear.weapon_type == GearDefinition.WeaponType.BOW:
+		_tip_cmp("Equipped weapons", GOLD, 22)
 		var main = PlayerRoster.equipped_item(hero_index, Equip.Position.MAIN_HAND)
-		var off = PlayerRoster.equipped_item(hero_index, Equip.Position.OFF_HAND)
-		_tip_line("Main hand: %s" % (main.gear_name if main else "empty"), PARCHMENT, 18)
-		if not _offhand_blocked():
-			_tip_line("Off hand: %s%s" % [
-				off.gear_name if off else "empty",
-				"  (50% dmg)" if off and off.attack_speed > 0.0 else "",
-			], PARCHMENT, 18)
+		_tip_cmp_line("Main hand", main)
+		if _offhand_blocked():
+			_tip_cmp("Off hand occupied (two-handed)", DIM, 16)
 		else:
-			_tip_line("Off hand: occupied (two-handed)", DIM, 16)
+			var off = PlayerRoster.equipped_item(hero_index, Equip.Position.OFF_HAND)
+			_tip_cmp_line("Off hand", off, off and off.attack_speed > 0.0)
 	else:
 		var equipped = _first_equipped_of_category(gear.slot)
+		_tip_cmp("Equipped (%s)" % _category_label(gear.slot), GOLD, 22)
 		if equipped:
-			_tip_line("Equipped (%s):" % _category_label(gear.slot), DIM, 16)
-			_tip_line("%s   %s" % [equipped.gear_name, _stat_summary(equipped)], PARCHMENT, 18)
+			_tip_cmp_line("Currently", equipped)
 		else:
-			_tip_line("%s: empty" % _category_label(gear.slot), DIM, 16)
+			_tip_cmp("Slot is empty", DIM, 16)
+
+func _tip_cmp_line(label: String, item: GearDefinition, is_weapon := false):
+	if item == null:
+		_tip_cmp("%s: empty" % label, DIM, 17)
+		return
+	var extra := ""
+	if is_weapon:
+		extra = "  (50% dmg)"
+	_tip_cmp("%s: %s" % [label, item.gear_name], PARCHMENT, 18)
+	_tip_cmp("  %s%s" % [_stat_summary(item), extra], DIM, 15)
 
 func _first_equipped_of_category(category: int) -> GearDefinition:
 	for pos in Equip.positions_for(category):
@@ -542,36 +661,42 @@ func _gear_subtitle(gear: GearDefinition) -> String:
 
 func _stat_summary(gear: GearDefinition) -> String:
 	var parts = []
-	if gear.attack_bonus != 0:
+	if gear.attack_speed > 0.0 \
+			or gear.weapon_type != GearDefinition.WeaponType.NONE:
+		parts.append("%d-%d DMG" % [
+			gear.effective_damage_min(), gear.effective_damage_max()])
+	elif gear.attack_bonus != 0:
 		parts.append("+%d ATK" % gear.attack_bonus)
 	if gear.health_bonus != 0:
 		parts.append("+%d HP" % gear.health_bonus)
 	return ", ".join(parts) if not parts.is_empty() else "no bonuses"
 
 func _tooltip_twohand(main: GearDefinition):
-	_tip_line("Off Hand occupied", GOLD, 26)
-	_tip_line("Both hands are busy wielding:", DIM, 17)
+	_tip_line("Off Hand occupied", GOLD, 26, 0)
+	_tip_line("Both hands are busy wielding:", DIM, 17, 0)
 	if main:
-		_tip_line(main.gear_name, PARCHMENT, 20)
-	_divider()
+		_tip_line(main.gear_name, PARCHMENT, 20, 0)
 	_tip_line(
 		"Swap the two-handed weapon for a one-handed one to free the off hand.",
-		DIM, 16
-	)
+		DIM, 16, 1)
+	if main:
+		_tip_cmp("Equipped weapons", GOLD, 22)
+		_tip_cmp_line("Main hand", main, true)
 
 func _tooltip_skill(skill: SkillDefinition):
-	_tip_line(skill.skill_name, GOLD, 26)
+	_tip_line(skill.skill_name, ItemQuality.color(skill.quality), 26, 0)
+	_tip_line(ItemQuality.tier_name(skill.quality), ItemQuality.color(skill.quality), 16, 0)
 	var ranged = skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
-	_tip_line("Ranged attack" if ranged else "Melee attack", DIM, 17)
-	_tip_line("Damage: +%d to +%d" % [skill.base_min_damage, skill.base_max_damage])
-	_tip_line("Sets the hero to the %s row" % ("back" if ranged else "front"), DIM, 16)
-
-	_divider()
+	_tip_line("Ranged attack" if ranged else "Melee attack", DIM, 17, 0)
+	_tip_line("Damage: +%d to +%d" % [
+		skill.base_min_damage, skill.base_max_damage], PARCHMENT, 18, 0)
+	_tip_line("Sets the hero to the %s row" % (
+		"back" if ranged else "front"), DIM, 16, 1)
 
 	var current = PlayerRoster.attack_skill(hero_index)
 	if current:
-		_tip_line("Current attack:", DIM, 16)
-		_tip_line(current.skill_name, PARCHMENT, 18)
+		_tip_line("Current attack:", DIM, 16, 1)
+		_tip_line(current.skill_name, PARCHMENT, 18, 1)
 
 # --- Click-to-carry --------------------------------------------------
 
@@ -608,6 +733,35 @@ func on_icon_clicked(icon):
 	if icon.draggable and icon.res != null:
 		begin_carry(icon)
 
+## Right-click: equip from stash/catalog, unequip from worn slots.
+func on_icon_right_clicked(icon):
+	if icon.kind == "gear":
+		if icon.origin == "stash":
+			var data = {"kind": "gear", "res": icon.res, "origin": "stash"}
+			if can_accept("auto", data):
+				accept_drop("auto", data)
+		elif String(icon.origin).begins_with("equipped:"):
+			var pos = int(String(icon.origin).split(":")[1])
+			PlayerRoster.unequip_gear(hero_index, pos)
+			hide_tooltip()
+			refresh()
+			hero_changed.emit(hero_index)
+	elif icon.kind == "skill":
+		if icon.origin == "catalog":
+			var slot = PlayerRoster.first_empty_bonus_skill_slot(hero_index)
+			if slot != -1:
+				PlayerRoster.equip_bonus_skill(hero_index, icon.res, slot)
+				hide_tooltip()
+				refresh()
+				hero_changed.emit(hero_index)
+		elif String(icon.origin).begins_with("skill:"):
+			var slot = int(String(icon.origin).split(":")[1])
+			if slot > 0:
+				PlayerRoster.unequip_bonus_skill(hero_index, slot)
+				hide_tooltip()
+				refresh()
+				hero_changed.emit(hero_index)
+
 func begin_carry(icon):
 	_carried = {"kind": icon.kind, "res": icon.res, "origin": icon.origin}
 	_carry_source = icon
@@ -615,10 +769,11 @@ func begin_carry(icon):
 	hide_tooltip()
 
 	var v = TextureRect.new()
-	v.texture = icon.texture
+	var tex: Texture2D = icon.display_texture() if icon.has_method("display_texture") else icon.texture
+	v.texture = tex
 	v.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	v.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	v.size = Vector2(66, 66)
+	v.size = Vector2(48, 48)
 	v.modulate.a = 0.9
 	# Must not eat the click that places it.
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE

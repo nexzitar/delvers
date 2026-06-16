@@ -49,11 +49,13 @@ func _ready():
 func _build_heroes():
 	var melee = DEFAULT_DELVER.duplicate(true)
 	melee.equipped = {}
+	melee.bonus_skills = [null, null, null, null, null]
 	_seed_loadout(melee, [SWORD.duplicate(), SHIELD.duplicate(),
 		HELMET.duplicate(), ARMOR.duplicate()])
 
 	var archer = DEFAULT_DELVER.duplicate(true)
 	archer.equipped = {}
+	archer.bonus_skills = [null, null, null, null, null]
 	_seed_loadout(archer, [BOW.duplicate(), HELMET.duplicate(),
 		ARMOR.duplicate()])
 
@@ -82,6 +84,19 @@ func _build_stash():
 		FAST_DAGGER.duplicate(),
 		HEAVY_AXE.duplicate(),
 	]
+	sort_gear_stash()
+
+## Stash display order: equipment category, then rarity (high first), then item level.
+func sort_gear_stash() -> void:
+	gear_stash.sort_custom(func(a: GearDefinition, b: GearDefinition) -> bool:
+		if a.slot != b.slot:
+			return a.slot < b.slot
+		if a.quality != b.quality:
+			return a.quality > b.quality
+		if a.item_level() != b.item_level():
+			return a.item_level() > b.item_level()
+		return a.gear_name < b.gear_name
+	)
 
 ## How lively the camp fire burns, 0..1. Starts as smoldering coals
 ## and grows with the party's size and completed adventures.
@@ -105,6 +120,30 @@ func is_ranged(hero_index: int) -> bool:
 	var skill = attack_skill(hero_index)
 	return skill != null \
 		and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
+
+## First empty bonus-skill slot (1-5), or -1 if full.
+func first_empty_bonus_skill_slot(hero_index: int) -> int:
+	var hero = heroes[hero_index]
+	for i in range(5):
+		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
+			return i + 1
+	return -1
+
+func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
+	if slot < 1 or slot > 5:
+		return false
+	var hero = heroes[hero_index]
+	while hero.bonus_skills.size() < 5:
+		hero.bonus_skills.append(null)
+	hero.bonus_skills[slot - 1] = skill
+	return true
+
+func unequip_bonus_skill(hero_index: int, slot: int) -> void:
+	if slot < 1 or slot > 5:
+		return
+	var hero = heroes[hero_index]
+	if slot - 1 < hero.bonus_skills.size():
+		hero.bonus_skills[slot - 1] = null
 
 ## Positions a stash item may go into right now (off hand is blocked by a
 ## two-hander/bow in the main hand).
@@ -165,6 +204,7 @@ func equip_gear(hero_index: int, gear: GearDefinition, position := -1) -> bool:
 	if position in [Equip.Position.MAIN_HAND, Equip.Position.OFF_HAND]:
 		_sync_role(hero)
 
+	sort_gear_stash()
 	return true
 
 func unequip_gear(hero_index: int, position: int) -> void:
@@ -176,6 +216,7 @@ func unequip_gear(hero_index: int, position: int) -> void:
 	gear_stash.append(item)
 	if position in [Equip.Position.MAIN_HAND, Equip.Position.OFF_HAND]:
 		_sync_role(hero)
+	sort_gear_stash()
 
 func rename_hero(hero_index: int, new_name: String) -> void:
 	var trimmed = new_name.strip_edges()

@@ -155,8 +155,6 @@ func setup_combat(hero_templates, enemy_templates):
 				hero.base_attack_power += item.attack_bonus
 
 		hero.attack_power = hero.base_attack_power
-		if hero.main_weapon:
-			hero.attack_power += hero.main_weapon.attack_bonus
 
 		hero.current_health = hero.max_health
 		hero.current_mana = hero_template.base_mana

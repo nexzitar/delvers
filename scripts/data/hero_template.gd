@@ -19,3 +19,6 @@ class_name HeroTemplate
 ## Runtime, position-keyed loadout (Equip.Position -> GearDefinition).
 ## Built by PlayerRoster from starting_gear; not exported/saved.
 var equipped := {}
+
+## Optional skills in loadout slots 2-6 (indices 0-4). Slot 1 is weapon-driven.
+var bonus_skills: Array = []

@@ -49,13 +49,18 @@ func update(delta, combat_state):
 
 
 func perform_auto_attack(combat_state):
-	var damage = attack_power + randi_range(
+	var weapon_hit := 0
+	if main_weapon:
+		weapon_hit = main_weapon.roll_weapon_damage()
+	var damage = attack_power + weapon_hit + randi_range(
 		skills[0].base_min_damage, skills[0].base_max_damage)
 	_strike(combat_state, skills[0], damage)
 
 func perform_off_hand_attack(combat_state):
-	# Off hand uses base power (no main-hand weapon) + its own weapon, halved.
-	var raw = base_attack_power + off_weapon.attack_bonus + randi_range(
+	var weapon_hit := 0
+	if off_weapon:
+		weapon_hit = off_weapon.roll_weapon_damage()
+	var raw = base_attack_power + weapon_hit + randi_range(
 		skills[0].base_min_damage, skills[0].base_max_damage)
 	var damage = maxi(1, floori(OFF_HAND_FACTOR * raw))
 	_strike(combat_state, skills[0], damage)

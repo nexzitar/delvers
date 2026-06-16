@@ -14,8 +14,10 @@ func _run():
 	for i in PlayerRoster.heroes.size():
 		var template = PlayerRoster.heroes[i]
 		var actor = template.actor_scene.instantiate()
-		var file = "hero_%s" % template.hero_id
-		await _shoot(actor, file, template.starting_gear)
+		var names = ["hero_default_delver", "hero_default_delver_archer"]
+		var file = names[i] if i < names.size() else template.hero_id
+		var gear: Array = template.equipped.values()
+		await _shoot(actor, file, gear)
 
 	await _shoot(
 		load("res://scenes/theater/actors/slime_actor.tscn").instantiate(),

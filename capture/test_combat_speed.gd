@@ -20,8 +20,8 @@ func _ready():
 
 	var hero = state.heroes[0]
 	_ok("interval = sword speed", is_equal_approx(hero.attack_interval, 2.6))
-	_ok("attack power includes weapon",
-		hero.attack_power == hero_t.base_attack + sword.attack_bonus)
+	_ok("attack power excludes weapon roll",
+		hero.attack_power == hero_t.base_attack)
 
 	# Unarmed falls back to template interval.
 	var unarmed_t = _make_hero(null)
