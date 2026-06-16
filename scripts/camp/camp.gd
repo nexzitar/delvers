@@ -4,10 +4,15 @@ extends Control
 ## here later; for now the party rests until it embarks again.
 
 @onready var result_label = $UI/ResultLabel
+@onready var stage = $Stage
+@onready var loadout = $HeroLoadout
 
 func _ready():
 
 	UiSounds.wire_buttons(self)
+
+	stage.hero_selected.connect(_on_hero_selected)
+	loadout.hero_changed.connect(stage.refresh_hero)
 
 	if PlayerRoster.battles_fought == 0:
 		result_label.visible = false
@@ -25,6 +30,11 @@ func _ready():
 		result_label.add_theme_color_override(
 			"font_color", Color(0.7, 0.25, 0.2)
 		)
+
+func _on_hero_selected(hero_index):
+	UiSounds.click()
+	stage.clear_hover()
+	loadout.open(hero_index)
 
 func _on_embark_pressed():
 	SceneFlow.change_scene("res://scenes/theater/battle_theater.tscn")

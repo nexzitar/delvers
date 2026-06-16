@@ -10,6 +10,10 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 ![Combat theater](docs/screenshots/battle.png)
 
+| Hero loadout | Item tooltip |
+|--------------|--------------|
+| ![Hero loadout](docs/screenshots/loadout_open.png) | ![Item tooltip](docs/screenshots/loadout_tooltip.png) |
+
 ## Meet the Cast
 
 | Default Delver | Ranger Delver | Goblin Archer | Green Slime |
@@ -24,6 +28,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
 - **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds. Entering camp from the menu plays a zoom-and-fade transition, and the party keeps their seats across it.
+- **Hero loadout** — Hover a hero at camp for an outline and nameplate, then click to open their loadout: a live paper-doll preview, an editable name, four equipment slots and a skill slot, a gear stash, and a skill list. Drag gear and skills into place; a bottom-right tooltip shows each item's stats alongside what's already equipped. Equipping a bow turns a hero into a back-row archer, a one-handed weapon into a front-row fighter — changes that carry straight into the next battle.
 - **Sound** — Procedurally synthesized placeholder audio: looping menu and combat themes, fire-crackle ambience, a creaking sign, UI hover/click feedback, and combat hits, swings, and bow shots. Mixed through Master/Music/SFX/Ambience buses.
 - **Settings** — Fullscreen toggle and four volume sliders, persisted to disk and applied on startup.
 
@@ -58,6 +63,8 @@ Damage is rolled as `base_attack + random(skill.min_damage, skill.max_damage)`. 
 
 **Encounters and enemy levels** — Each adventure rolls a random pack of 2–4 enemies. Every enemy rolls a level (mostly 1–2, occasionally 3) that scales its health and attack, with a little individual variance on top, and the level is shown in its name (e.g. *Green Slime Lv 2*).
 
+**Loadout and roles** — A hero's combat role is driven by what they wield. Equipping a bow assigns the Arrow Shot skill and a back-row slot; equipping a one-handed weapon assigns Slash and a front-row slot, and bows/two-handers free the off-hand. Gear lives in a shared stash (each item is a single physical object), skills are a known catalog, and every change a hero makes is read directly off its template by the next battle. Loadout edits persist for the session.
+
 A key architectural choice is **separating simulation from presentation**:
 
 ```
@@ -85,7 +92,8 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Theater playback | Working |
 | Formation slots | Working |
 | Game loop (menu → camp → battle → camp) | Working |
-| Camp upgrades / recruiting | Not started (camp scene is a placeholder) |
+| Hero loadout (equipment, skills, naming) | Working (session-only, no save yet) |
+| Camp upgrades / recruiting | Not started |
 | Dungeon exploration | Not started |
 | Loot / progression | Not started |
 | Multiple skill types | Schema ready, only auto-attack implemented |
@@ -116,13 +124,13 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 |-------|------|--------------|
 | Combat simulation | `scenes/combat/combat_simulation.tscn` | Runs a headless fight and prints the combat log |
 | Battle theater | `scenes/theater/battle_theater.tscn` | Simulates a fight and plays it back on the battlefield with animations |
-| Screenshot capture | `capture/shots.tscn`, `capture/cast.tscn` | Regenerates the README screenshots and unit renders into `docs/screenshots/` |
+| Screenshot capture | `capture/shots.tscn`, `capture/cast.tscn`, `capture/loadout_shot.tscn` | Regenerates the README screenshots and unit renders into `docs/screenshots/` |
 
 ## Project Structure
 
 ```
 delvers/
-├── art/              # Sprites, UI textures, effects, fonts, backgrounds
+├── art/              # Sprites, UI textures, gear/skill icons, shaders, fonts, backgrounds
 ├── audio/            # Procedurally synthesized sounds and music loops
 ├── capture/          # Harnesses that regenerate the README screenshots
 ├── docs/             # README screenshots and unit renders (not imported by Godot)
@@ -133,10 +141,10 @@ delvers/
 │   ├── menus/        # Main menu
 │   └── theater/      # Battle theater and actor scenes
 └── scripts/
-    ├── camp/         # Camp, campfire stage, and fire scripts
+    ├── camp/         # Camp, campfire stage, fire, and hero-loadout screen
     ├── combat/       # Simulation, entities, events, and results
     ├── data/         # Template classes for heroes, enemies, and skills
-    ├── game/         # PlayerRoster autoload (party and progress)
+    ├── game/         # Autoloads: roster/loadout, settings, sounds, scene flow
     └── theater/      # Visual playback of combat events
 ```
 

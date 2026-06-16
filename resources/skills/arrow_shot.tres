@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
 [ext_resource type="PackedScene" path="res://art/effects/arrow.tscn" id="2_arrow"]
+[ext_resource type="Texture2D" path="res://art/skills/skill_arrow_shot.png" id="3_icon"]
 
 [resource]
 resource_name = "Arrow Shot"
 script = ExtResource("1_skill")
 skill_id = "arrow_shot"
 skill_name = "Arrow Shot"
+icon = ExtResource("3_icon")
 delivery_type = 1
 projectile_scene = ExtResource("2_arrow")
 range = 8.0
