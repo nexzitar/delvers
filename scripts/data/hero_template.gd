@@ -15,3 +15,7 @@ class_name HeroTemplate
 @export var starting_skills: Array[SkillDefinition]
 @export var starting_gear: Array[GearDefinition]
 @export var preferred_row: Formation.Row = Formation.Row.FRONT
+
+## Runtime, position-keyed loadout (Equip.Position -> GearDefinition).
+## Built by PlayerRoster from starting_gear; not exported/saved.
+var equipped := {}
