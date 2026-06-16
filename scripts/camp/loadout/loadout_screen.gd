@@ -44,6 +44,12 @@ var _preview_holder: Control
 var _tooltip_panel: Panel
 var _tooltip_box: VBoxContainer
 
+# Click-to-carry: an alternative to dragging. Click an icon to pick it
+# up onto the cursor, then click a slot or the hero panel to place it.
+var _carried = null           # drag-style data dict, or null
+var _carry_visual: Control    # icon following the cursor while carrying
+var _carry_source             # LoadoutIcon picked up (dimmed while carried)
+
 func _ready():
 	layer = 12
 	visible = false
@@ -55,6 +61,7 @@ func open(index: int):
 	refresh()
 
 func close():
+	cancel_carry()
 	visible = false
 	hero_index = -1
 	closed.emit()
@@ -556,12 +563,101 @@ func _tooltip_skill(skill: SkillDefinition):
 		_tip_line("Current attack:", DIM, 16)
 		_tip_line(current.skill_name, PARCHMENT, 18)
 
+# --- Click-to-carry --------------------------------------------------
+
+func is_carrying() -> bool:
+	return _carried != null
+
+func _process(_delta):
+	if _carry_visual and is_instance_valid(_carry_visual):
+		var m = _carry_visual.get_global_mouse_position()
+		_carry_visual.global_position = m - _carry_visual.size * 0.5
+
+func _input(event):
+	if _carried == null:
+		return
+	# Right-click or Escape puts the carried item back down.
+	if event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_RIGHT:
+		cancel_carry()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		cancel_carry()
+		get_viewport().set_input_as_handled()
+
+## Called by an icon when it's clicked (not dragged).
+func on_icon_clicked(icon):
+	if _carried != null:
+		if icon == _carry_source:
+			cancel_carry()
+			return
+		var target = _ancestor_target_kind(icon)
+		if target != "":
+			place_on(target)
+		return
+	if icon.draggable and icon.res != null:
+		begin_carry(icon)
+
+func begin_carry(icon):
+	_carried = {"kind": icon.kind, "res": icon.res, "origin": icon.origin}
+	_carry_source = icon
+	icon.modulate.a = 0.35
+	hide_tooltip()
+
+	var v = TextureRect.new()
+	v.texture = icon.texture
+	v.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	v.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	v.size = Vector2(66, 66)
+	v.modulate.a = 0.9
+	# Must not eat the click that places it.
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(v)
+	_carry_visual = v
+	_process(0.0)
+
+## Try to place the carried item onto a target. Keeps carrying on a
+## rejected target so the player can aim at another one.
+func place_on(target_kind) -> bool:
+	if _carried == null:
+		return false
+	if not can_accept(target_kind, _carried):
+		return false
+	var data = _carried
+	_clear_carry()
+	accept_drop(target_kind, data)
+	return true
+
+func cancel_carry():
+	if _carry_source and is_instance_valid(_carry_source):
+		_carry_source.modulate.a = 1.0
+	_clear_carry()
+
+func _clear_carry():
+	if _carry_visual and is_instance_valid(_carry_visual):
+		_carry_visual.queue_free()
+	_carry_visual = null
+	_carried = null
+	_carry_source = null
+
+func _ancestor_target_kind(node) -> String:
+	var n = node.get_parent()
+	while n:
+		if n is DropTarget:
+			return n.target_kind
+		n = n.get_parent()
+	return ""
+
 # --- Input -----------------------------------------------------------
 
 func _on_dim_input(event):
 	if event is InputEventMouseButton and event.pressed \
 			and event.button_index == MOUSE_BUTTON_LEFT:
-		close()
+		# A click on the backdrop drops a carried item; otherwise closes.
+		if _carried != null:
+			cancel_carry()
+		else:
+			close()
 
 func _on_name_submitted(text):
 	PlayerRoster.rename_hero(hero_index, text)

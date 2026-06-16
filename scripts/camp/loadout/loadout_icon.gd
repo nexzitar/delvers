@@ -26,6 +26,16 @@ func _on_exit():
 	if screen:
 		screen.hide_tooltip()
 
+## A plain click (no drag) picks the item up onto the cursor, or places
+## a carried item here. Drags consume the release, so this only fires on
+## genuine clicks.
+func _gui_input(event):
+	if event is InputEventMouseButton and not event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT:
+		if screen and screen.has_method("on_icon_clicked"):
+			screen.on_icon_clicked(self)
+			accept_event()
+
 func _get_drag_data(_at_position):
 
 	if not draggable or res == null:

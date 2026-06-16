@@ -70,4 +70,33 @@ func _run():
 		var shdata2 = {"kind": "gear", "res": shield, "origin": "stash"}
 		_ok("off-hand accepted once one-handed", loadout.can_accept("auto", shdata2))
 
+	# --- Click-to-carry --------------------------------------------------
+	# Pick up a stash head item by "clicking" its icon, then place it.
+	var head_icon = null
+	for icon in loadout._gear_grid.get_children():
+		if icon.res and icon.res.slot == GearDefinition.Slot.HEAD:
+			head_icon = icon
+			break
+	_ok("found a stash head icon", head_icon != null)
+	loadout.on_icon_clicked(head_icon)
+	_ok("carrying after click", loadout.is_carrying())
+	_ok("carry visual present", loadout._carry_visual != null)
+	_ok("source dimmed while carried", head_icon.modulate.a < 0.5)
+
+	# Clicking the source again cancels the carry.
+	loadout.on_icon_clicked(head_icon)
+	_ok("click source again cancels", not loadout.is_carrying())
+	_ok("source restored after cancel", head_icon.modulate.a > 0.9)
+
+	# Pick it up again and place it via the hero panel.
+	loadout.on_icon_clicked(head_icon)
+	_ok("carrying again", loadout.is_carrying())
+	var head_res = head_icon.res
+	loadout.place_on("auto")
+	await get_tree().process_frame
+	_ok("carry cleared after place", not loadout.is_carrying())
+	_ok("carry visual gone after place", loadout._carry_visual == null)
+	_ok("head equipped via carry",
+		PlayerRoster.equipped_item(0, GearDefinition.Slot.HEAD) == head_res)
+
 	get_tree().quit()

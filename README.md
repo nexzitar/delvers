@@ -14,6 +14,10 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 |--------------|--------------|
 | ![Hero loadout](docs/screenshots/loadout_open.png) | ![Item tooltip](docs/screenshots/loadout_tooltip.png) |
 
+| Two-handed weapon blocks the off-hand | Click-to-carry an item |
+|---------------------------------------|------------------------|
+| ![Bow equipped](docs/screenshots/loadout_equipped_bow.png) | ![Carrying an item](docs/screenshots/loadout_carry.png) |
+
 ## Meet the Cast
 
 | Default Delver | Ranger Delver | Goblin Archer | Green Slime |
@@ -28,7 +32,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
 - **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds. Entering camp from the menu plays a zoom-and-fade transition, and the party keeps their seats across it.
-- **Hero loadout** — Hover a hero at camp for an outline and nameplate, then click to open their loadout: a live paper-doll preview, an editable name, four equipment slots and a skill slot, a gear stash, and a skill list. Drag gear and skills into place; a bottom-right tooltip shows each item's stats alongside what's already equipped. Equipping a bow turns a hero into a back-row archer, a one-handed weapon into a front-row fighter — changes that carry straight into the next battle.
+- **Hero loadout** — Hover a hero at camp for an outline and nameplate, then click to open their loadout: a live paper-doll preview, an editable name, four equipment slots and a skill slot, a gear stash, and a skill list. Move gear and skills two ways — drag-and-drop, or click an item to pick it up onto the cursor and click again to place it (handy on a trackpad). Dropping an item anywhere on the hero panel sends it to its proper slot, swapping out whatever was there; a bottom-right tooltip shows each item's stats alongside what's already equipped. A two-handed weapon (the bow) shows a dimmed ghost in the off-hand to explain why a shield won't fit. Equipping a bow turns a hero into a back-row archer, a one-handed weapon into a front-row fighter — changes that carry straight into the next battle.
 - **Sound** — Procedurally synthesized placeholder audio: looping menu and combat themes, fire-crackle ambience, a creaking sign, UI hover/click feedback, and combat hits, swings, and bow shots. Mixed through Master/Music/SFX/Ambience buses.
 - **Settings** — Fullscreen toggle and four volume sliders, persisted to disk and applied on startup.
 

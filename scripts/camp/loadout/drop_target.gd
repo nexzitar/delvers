@@ -14,3 +14,12 @@ func _can_drop_data(_at_position, data):
 
 func _drop_data(_at_position, data):
 	screen.accept_drop(target_kind, data)
+
+## When the player is carrying an item (click-to-carry), a click here
+## tries to place it.
+func _gui_input(event):
+	if event is InputEventMouseButton and not event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT:
+		if screen and screen.is_carrying():
+			screen.place_on(target_kind)
+			accept_event()

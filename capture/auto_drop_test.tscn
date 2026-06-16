@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://b2q0auto0drop0test"]
+[gd_scene format=3 uid="uid://pnga2pr1cymh"]
 
 [ext_resource type="Script" path="res://capture/auto_drop_test.gd" id="1_adt"]
 

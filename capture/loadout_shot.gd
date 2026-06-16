@@ -34,6 +34,16 @@ func _run():
 	camp.loadout.show_tooltip("gear", PlayerRoster.BOW)
 	await _snap("loadout_tooltip")
 
+	# Click-to-carry: pick up a stash item and let it ride the cursor.
+	camp.loadout.hide_tooltip()
+	var carry_icon = camp.loadout._gear_grid.get_child(0)
+	camp.loadout.on_icon_clicked(carry_icon)
+	# Park the cursor over the equipment row so the carried icon shows there.
+	get_viewport().warp_mouse(Vector2(250, 470))
+	await get_tree().process_frame
+	await _snap("loadout_carry")
+	camp.loadout.cancel_carry()
+
 	# Drive a real drop through the screen: equip the stash bow on the
 	# melee hero. The preview should swap to a bow and the role flip.
 	var bow = null
