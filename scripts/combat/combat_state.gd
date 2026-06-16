@@ -133,20 +133,40 @@ func setup_combat(hero_templates, enemy_templates):
 			hero_template.preferred_row, hero_slots_taken
 		)
 
-		hero.gear = hero_template.starting_gear.duplicate()
+		var loadout = hero_template.equipped.values()
+		hero.gear = loadout.duplicate()
+
+		hero.main_weapon = hero_template.equipped.get(
+			Equip.Position.MAIN_HAND, null)
+		hero.off_weapon = hero_template.equipped.get(
+			Equip.Position.OFF_HAND, null)
+		# A shield (no attack_speed) is not a weapon.
+		if hero.off_weapon and hero.off_weapon.attack_speed <= 0.0:
+			hero.off_weapon = null
 
 		hero.max_health = hero_template.base_health
-		hero.attack_power = hero_template.base_attack
-
-		for item in hero.gear:
+		for item in loadout:
 			hero.max_health += item.health_bonus
-			hero.attack_power += item.attack_bonus
+
+		# Attack power excluding weapons, then add the main-hand weapon.
+		hero.base_attack_power = hero_template.base_attack
+		for item in loadout:
+			if item != hero.main_weapon and item != hero.off_weapon:
+				hero.base_attack_power += item.attack_bonus
+
+		hero.attack_power = hero.base_attack_power
 
 		hero.current_health = hero.max_health
 		hero.current_mana = hero_template.base_mana
 
-		hero.attack_interval = hero_template.base_attack_interval
+		# Main-hand weapon speed sets the interval; unarmed falls back.
+		hero.attack_interval = (
+			hero.main_weapon.attack_speed if hero.main_weapon
+			and hero.main_weapon.attack_speed > 0.0
+			else hero_template.base_attack_interval
+		)
 		hero.attack_timer = hero.attack_interval
+		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
 
 		hero.skills = hero_template.starting_skills.duplicate()
 

@@ -1,7 +1,7 @@
 extends Node
 
 ## Opens the camp, pops the loadout screen for a hero, and screenshots
-## it (plus a hover state) for verification.
+## it (plus hover, tooltip, carry, bow, and dual-wield states) for verification.
 
 var out_dir := ProjectSettings.globalize_path("res://docs/screenshots")
 
@@ -14,6 +14,12 @@ func _snap(name):
 	await RenderingServer.frame_post_draw
 	var img = get_viewport().get_texture().get_image()
 	img.save_png("%s/%s.png" % [out_dir, name])
+
+func _stash_one_handed() -> GearDefinition:
+	for g in PlayerRoster.gear_stash:
+		if g.weapon_type == GearDefinition.WeaponType.ONE_HANDED:
+			return g
+	return null
 
 func _run():
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
@@ -30,22 +36,20 @@ func _run():
 	await get_tree().create_timer(0.5).timeout
 	await _snap("loadout_open")
 
-	# Show a tooltip for the bow in the stash.
-	camp.loadout.show_tooltip("gear", PlayerRoster.BOW)
+	# Tooltip on a weapon (damage range + compare panel).
+	camp.loadout.show_tooltip("gear", PlayerRoster.SWORD)
 	await _snap("loadout_tooltip")
 
 	# Click-to-carry: pick up a stash item and let it ride the cursor.
 	camp.loadout.hide_tooltip()
 	var carry_icon = camp.loadout._gear_grid.get_child(0)
 	camp.loadout.on_icon_clicked(carry_icon)
-	# Park the cursor over the equipment row so the carried icon shows there.
-	get_viewport().warp_mouse(Vector2(250, 470))
+	get_viewport().warp_mouse(Vector2(280, 500))
 	await get_tree().process_frame
 	await _snap("loadout_carry")
 	camp.loadout.cancel_carry()
 
-	# Drive a real drop through the screen: equip the stash bow on the
-	# melee hero. The preview should swap to a bow and the role flip.
+	# Equip the stash bow on the occupied main-hand slot (swap sword -> bow).
 	var bow = null
 	for g in PlayerRoster.gear_stash:
 		if g.weapon_type == GearDefinition.WeaponType.BOW:
@@ -53,19 +57,12 @@ func _run():
 			break
 	camp.loadout.hide_tooltip()
 
-	# Drop the bow directly on the OCCUPIED main-hand slot's icon, the
-	# way a real drag lands. The icon should forward to its slot and
-	# swap sword -> bow without unequipping first.
-	var slot = camp.loadout._equip_slots[GearDefinition.Slot.MAIN_HAND]
-	var equipped_icon = slot.get_child(0)
-	var data = {"kind": "gear", "res": bow, "origin": "stash"}
-	print("occupied slot can_drop=%s" % equipped_icon._can_drop_data(Vector2.ZERO, data))
-	equipped_icon._drop_data(Vector2.ZERO, data)
+	camp.loadout.accept_drop("equip:%d" % Equip.Position.MAIN_HAND, {
+		"kind": "gear", "res": bow, "origin": "stash",
+	})
 	await get_tree().create_timer(0.4).timeout
-	print("after drop on occupied slot: ranged=%s" % PlayerRoster.is_ranged(0))
 
-	# Bow is two-handed: the off-hand should now show a dimmed ghost.
-	var off = camp.loadout._equip_slots[GearDefinition.Slot.OFF_HAND]
+	var off = camp.loadout._equip_slots[Equip.Position.OFF_HAND]
 	var ghost = off.get_child(0) if off.get_child_count() > 0 else null
 	print("offhand ghost present=%s alpha=%s" % [
 		ghost != null,
@@ -73,18 +70,20 @@ func _run():
 	])
 	await _snap("loadout_equipped_bow")
 
-	# Auto-drop: drop a stash one-handed sword anywhere on the hero panel
-	# (not a specific slot) and it should equip + flip back to melee.
-	var sword = null
-	for g in PlayerRoster.gear_stash:
-		if g.slot == GearDefinition.Slot.MAIN_HAND \
-				and g.weapon_type == GearDefinition.WeaponType.ONE_HANDED:
-			sword = g
-			break
+	# Auto-drop a one-handed sword back to melee.
+	var sword = _stash_one_handed()
 	var sdata = {"kind": "gear", "res": sword, "origin": "stash"}
-	print("auto can_accept sword=%s" % camp.loadout.can_accept("auto", sdata))
 	camp.loadout.accept_drop("auto", sdata)
 	await get_tree().create_timer(0.4).timeout
-	print("after auto-drop sword: ranged=%s" % PlayerRoster.is_ranged(0))
+
+	# Dual-wield: equip another 1H weapon in the off hand.
+	var off_weapon = _stash_one_handed()
+	if off_weapon:
+		camp.loadout.accept_drop("equip:%d" % Equip.Position.OFF_HAND, {
+			"kind": "gear", "res": off_weapon, "origin": "stash",
+		})
+		await get_tree().create_timer(0.4).timeout
+		camp.loadout.show_tooltip("gear", PlayerRoster.equipped_item(0, Equip.Position.MAIN_HAND))
+		await _snap("loadout_dualwield")
 
 	get_tree().quit()

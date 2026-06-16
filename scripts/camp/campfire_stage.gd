@@ -97,7 +97,7 @@ func _spawn_seated(seat, hero_index):
 	# feet land on the marker.
 	actor.position = Vector2(0, -ACTOR_FOOT_OFFSET * depth)
 
-	actor.equip_gear(template.starting_gear)
+	actor.equip_gear(template.equipped.values())
 
 	var plate = null
 	if interactive:

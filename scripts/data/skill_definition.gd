@@ -34,6 +34,7 @@ enum DeliveryType {
 
 @export var skill_id: String
 @export var skill_name: String
+@export var quality: ItemQuality.Tier = ItemQuality.Tier.COMMON
 @export var icon: Texture2D
 @export var animation_id: String
 @export var sfx_id: String

@@ -4,8 +4,6 @@ extends Node
 ## party's progress. Shared by the camp scenes and the battle theater.
 
 const DEFAULT_DELVER = preload("res://resources/heroes/default_delver.tres")
-const RANGER_DELVER = preload("res://resources/heroes/ranger_delver.tres")
-
 const AUTO_ATTACK = preload("res://resources/skills/auto_attack.tres")
 const ARROW_SHOT = preload("res://resources/skills/arrow_shot.tres")
 
@@ -14,11 +12,10 @@ const BOW = preload("res://resources/gear/starter_bow.tres")
 const SHIELD = preload("res://resources/gear/starter_shield.tres")
 const HELMET = preload("res://resources/gear/starter_helmet.tres")
 const ARMOR = preload("res://resources/gear/starter_armor.tres")
+const FAST_DAGGER = preload("res://resources/gear/fast_dagger.tres")
+const HEAVY_AXE = preload("res://resources/gear/heavy_axe.tres")
 
-var heroes: Array = [
-	DEFAULT_DELVER,
-	RANGER_DELVER,
-]
+var heroes: Array = []
 
 ## Spare gear the player can drag onto heroes. Each entry is a single
 ## physical item: equipping it moves it onto a hero, unequipping puts
@@ -44,7 +41,36 @@ var saved_seating := {}
 var keep_seating := false
 
 func _ready():
+	_build_heroes()
 	_build_stash()
+
+## Both starting heroes are the same Default Delver, told apart only by
+## the gear they hold. Duplicated so their loadouts are independent.
+func _build_heroes():
+	var melee = DEFAULT_DELVER.duplicate(true)
+	melee.equipped = {}
+	melee.bonus_skills = [null, null, null, null, null]
+	_seed_loadout(melee, [SWORD.duplicate(), SHIELD.duplicate(),
+		HELMET.duplicate(), ARMOR.duplicate()])
+
+	var archer = DEFAULT_DELVER.duplicate(true)
+	archer.equipped = {}
+	archer.bonus_skills = [null, null, null, null, null]
+	_seed_loadout(archer, [BOW.duplicate(), HELMET.duplicate(),
+		ARMOR.duplicate()])
+
+	heroes = [melee, archer]
+	for hero in heroes:
+		_sync_role(hero)
+
+## Places seed items into their first accepted free position.
+func _seed_loadout(hero, items: Array):
+	hero.equipped = {}
+	for item in items:
+		for pos in Equip.accepted_positions(item):
+			if not hero.equipped.has(pos):
+				hero.equipped[pos] = item
+				break
 
 func _build_stash():
 	# Distinct duplicates so a stash spare is its own physical item,
@@ -55,7 +81,22 @@ func _build_stash():
 		SHIELD.duplicate(),
 		HELMET.duplicate(),
 		ARMOR.duplicate(),
+		FAST_DAGGER.duplicate(),
+		HEAVY_AXE.duplicate(),
 	]
+	sort_gear_stash()
+
+## Stash display order: equipment category, then rarity (high first), then item level.
+func sort_gear_stash() -> void:
+	gear_stash.sort_custom(func(a: GearDefinition, b: GearDefinition) -> bool:
+		if a.slot != b.slot:
+			return a.slot < b.slot
+		if a.quality != b.quality:
+			return a.quality > b.quality
+		if a.item_level() != b.item_level():
+			return a.item_level() > b.item_level()
+		return a.gear_name < b.gear_name
+	)
 
 ## How lively the camp fire burns, 0..1. Starts as smoldering coals
 ## and grows with the party's size and completed adventures.
@@ -66,18 +107,10 @@ func fire_intensity() -> float:
 		1.0
 	)
 
-# --- Loadout editing -------------------------------------------------
-#
-# Heroes store their loadout directly on the (shared, in-memory) hero
-# template. Combat reads `starting_gear` / `starting_skills` /
-# `preferred_row` straight off the template, so edits here take effect
-# on the next battle. Changes last for the session only.
+# --- Loadout queries -------------------------------------------------
 
-func equipped_item(hero_index: int, slot: int) -> GearDefinition:
-	for item in heroes[hero_index].starting_gear:
-		if item.slot == slot:
-			return item
-	return null
+func equipped_item(hero_index: int, position: int) -> GearDefinition:
+	return heroes[hero_index].equipped.get(position, null)
 
 func attack_skill(hero_index: int) -> SkillDefinition:
 	var skills = heroes[hero_index].starting_skills
@@ -88,70 +121,102 @@ func is_ranged(hero_index: int) -> bool:
 	return skill != null \
 		and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
 
-## Moves a stash item onto a hero. The displaced same-slot item (if
-## any) returns to the stash. Two-handed/bow main hands clear the
-## off-hand. Returns false if the move isn't allowed.
-func equip_gear(hero_index: int, gear: GearDefinition) -> bool:
+## First empty bonus-skill slot (1-5), or -1 if full.
+func first_empty_bonus_skill_slot(hero_index: int) -> int:
+	var hero = heroes[hero_index]
+	for i in range(5):
+		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
+			return i + 1
+	return -1
 
+func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
+	if slot < 1 or slot > 5:
+		return false
+	var hero = heroes[hero_index]
+	while hero.bonus_skills.size() < 5:
+		hero.bonus_skills.append(null)
+	hero.bonus_skills[slot - 1] = skill
+	return true
+
+func unequip_bonus_skill(hero_index: int, slot: int) -> void:
+	if slot < 1 or slot > 5:
+		return
+	var hero = heroes[hero_index]
+	if slot - 1 < hero.bonus_skills.size():
+		hero.bonus_skills[slot - 1] = null
+
+## Positions a stash item may go into right now (off hand is blocked by a
+## two-hander/bow in the main hand).
+func acceptable_positions(hero_index: int, gear: GearDefinition) -> Array:
+	var hero = heroes[hero_index]
+	var out := []
+	for pos in Equip.accepted_positions(gear):
+		if pos == Equip.Position.OFF_HAND and _main_hand_two_handed(hero):
+			continue
+		out.append(pos)
+	return out
+
+## Best position for a "drop anywhere" gesture: first free acceptable
+## position, else the first acceptable one (to swap).
+func default_position(hero_index: int, gear: GearDefinition) -> int:
+	var options = acceptable_positions(hero_index, gear)
+	if options.is_empty():
+		return -1
+	for pos in options:
+		if not heroes[hero_index].equipped.has(pos):
+			return pos
+	return options[0]
+
+# --- Loadout edits ---------------------------------------------------
+
+## Moves a stash item onto a hero at a position (or its default position).
+## Displaced item returns to the stash. Returns false if not allowed.
+func equip_gear(hero_index: int, gear: GearDefinition, position := -1) -> bool:
 	if not gear_stash.has(gear):
 		return false
 
 	var hero = heroes[hero_index]
 
-	# Can't strap an off-hand on while wielding a bow or two-hander.
-	if gear.slot == GearDefinition.Slot.OFF_HAND and _main_hand_two_handed(hero):
+	if position == -1:
+		position = default_position(hero_index, gear)
+	if position == -1:
+		return false
+	if not acceptable_positions(hero_index, gear).has(position):
 		return false
 
-	var displaced = equipped_item(hero_index, gear.slot)
+	var displaced = hero.equipped.get(position, null)
 	if displaced:
-		hero.starting_gear.erase(displaced)
+		hero.equipped.erase(position)
 		gear_stash.append(displaced)
 
 	gear_stash.erase(gear)
-	hero.starting_gear.append(gear)
+	hero.equipped[position] = gear
 
-	if gear.slot == GearDefinition.Slot.MAIN_HAND:
-		if gear.weapon_type in [
-			GearDefinition.WeaponType.TWO_HANDED,
-			GearDefinition.WeaponType.BOW,
-		]:
-			var off = equipped_item(hero_index, GearDefinition.Slot.OFF_HAND)
-			if off:
-				hero.starting_gear.erase(off)
-				gear_stash.append(off)
+	# A two-handed/bow main hand clears the off hand.
+	if position == Equip.Position.MAIN_HAND and gear.weapon_type in [
+		GearDefinition.WeaponType.TWO_HANDED, GearDefinition.WeaponType.BOW,
+	]:
+		var off = hero.equipped.get(Equip.Position.OFF_HAND, null)
+		if off:
+			hero.equipped.erase(Equip.Position.OFF_HAND)
+			gear_stash.append(off)
+
+	if position in [Equip.Position.MAIN_HAND, Equip.Position.OFF_HAND]:
 		_sync_role(hero)
 
+	sort_gear_stash()
 	return true
 
-## Removes the item in a slot and returns it to the stash.
-func unequip_gear(hero_index: int, slot: int) -> void:
-
+func unequip_gear(hero_index: int, position: int) -> void:
 	var hero = heroes[hero_index]
-	var item = equipped_item(hero_index, slot)
+	var item = hero.equipped.get(position, null)
 	if item == null:
 		return
-
-	hero.starting_gear.erase(item)
+	hero.equipped.erase(position)
 	gear_stash.append(item)
-
-	if slot == GearDefinition.Slot.MAIN_HAND:
+	if position in [Equip.Position.MAIN_HAND, Equip.Position.OFF_HAND]:
 		_sync_role(hero)
-
-## Assigns a known skill as the hero's primary attack and aligns the
-## formation row to its delivery type (ranged drifts to the back row).
-func set_attack_skill(hero_index: int, skill: SkillDefinition) -> void:
-
-	var hero = heroes[hero_index]
-
-	var skills: Array[SkillDefinition] = []
-	skills.append(skill)
-	hero.starting_skills = skills
-
-	hero.preferred_row = (
-		Formation.Row.BACK
-		if skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
-		else Formation.Row.FRONT
-	)
+	sort_gear_stash()
 
 func rename_hero(hero_index: int, new_name: String) -> void:
 	var trimmed = new_name.strip_edges()
@@ -159,31 +224,20 @@ func rename_hero(hero_index: int, new_name: String) -> void:
 		heroes[hero_index].hero_name = trimmed
 
 func _main_hand_two_handed(hero) -> bool:
-	for item in hero.starting_gear:
-		if item.slot == GearDefinition.Slot.MAIN_HAND:
-			return item.weapon_type in [
-				GearDefinition.WeaponType.TWO_HANDED,
-				GearDefinition.WeaponType.BOW,
-			]
-	return false
+	var main = hero.equipped.get(Equip.Position.MAIN_HAND, null)
+	return main != null and main.weapon_type in [
+		GearDefinition.WeaponType.TWO_HANDED, GearDefinition.WeaponType.BOW,
+	]
 
-## Keeps combat behaviour consistent with the equipped weapon: a bow
-## makes the hero a back-row archer, anything else a front-row fighter.
+## Combat behaviour follows the main-hand weapon: a bow makes a back-row
+## archer; anything else a front-row fighter.
 func _sync_role(hero) -> void:
-
-	var main: GearDefinition = null
-	for item in hero.starting_gear:
-		if item.slot == GearDefinition.Slot.MAIN_HAND:
-			main = item
-			break
-
+	var main = hero.equipped.get(Equip.Position.MAIN_HAND, null)
 	var skills: Array[SkillDefinition] = []
-
 	if main != null and main.weapon_type == GearDefinition.WeaponType.BOW:
 		skills.append(ARROW_SHOT)
 		hero.preferred_row = Formation.Row.BACK
 	else:
 		skills.append(AUTO_ATTACK)
 		hero.preferred_row = Formation.Row.FRONT
-
 	hero.starting_skills = skills

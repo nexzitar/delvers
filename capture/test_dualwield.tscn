@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3 uid="uid://b4dual0test0001"]
+[ext_resource type="Script" path="res://capture/test_dualwield.gd" id="1_t"]
+[node name="TestDual" type="Node"]
+script = ExtResource("1_t")
