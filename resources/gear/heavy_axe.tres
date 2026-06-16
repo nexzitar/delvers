@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GearDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/heavy_axe.png" id="2_tex"]
+
+[resource]
+resource_name = "Heavy Axe"
+script = ExtResource("1_gear")
+gear_id = "heavy_axe"
+gear_name = "Heavy Axe"
+slot = 2
+weapon_type = 2
+texture = ExtResource("2_tex")
+icon = ExtResource("2_tex")
+offset = Vector2(60, 55)
+scale = 0.5
+rotation_degrees = 90.0
+attack_bonus = 5
+attack_speed = 3.4

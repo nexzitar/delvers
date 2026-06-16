@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GearDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/fast_dagger.png" id="2_tex"]
+
+[resource]
+resource_name = "Fast Dagger"
+script = ExtResource("1_gear")
+gear_id = "fast_dagger"
+gear_name = "Fast Dagger"
+slot = 2
+weapon_type = 1
+texture = ExtResource("2_tex")
+icon = ExtResource("2_tex")
+offset = Vector2(68, 70)
+scale = 0.28
+rotation_degrees = 90.0
+attack_bonus = 1
+attack_speed = 1.5

@@ -12,6 +12,8 @@ const BOW = preload("res://resources/gear/starter_bow.tres")
 const SHIELD = preload("res://resources/gear/starter_shield.tres")
 const HELMET = preload("res://resources/gear/starter_helmet.tres")
 const ARMOR = preload("res://resources/gear/starter_armor.tres")
+const FAST_DAGGER = preload("res://resources/gear/fast_dagger.tres")
+const HEAVY_AXE = preload("res://resources/gear/heavy_axe.tres")
 
 var heroes: Array = []
 
@@ -77,6 +79,8 @@ func _build_stash():
 		SHIELD.duplicate(),
 		HELMET.duplicate(),
 		ARMOR.duplicate(),
+		FAST_DAGGER.duplicate(),
+		HEAVY_AXE.duplicate(),
 	]
 
 ## How lively the camp fire burns, 0..1. Starts as smoldering coals
