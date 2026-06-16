@@ -16,3 +16,4 @@ offset = Vector2(68, 65)
 scale = 0.35
 rotation_degrees = 90.0
 attack_bonus = 1
+attack_speed = 2.6
