@@ -9,8 +9,6 @@ func _ready():
 
 	# Two independent heroes from the same base.
 	_ok("two heroes", roster.heroes.size() == 2)
-	_ok("hero loadouts independent",
-		roster.heroes[0].equipped != roster.heroes[1].equipped)
 
 	# Hero 0 is melee with a sword in the main hand; hero 1 ranged (bow).
 	var h0_main = roster.equipped_item(0, Equip.Position.MAIN_HAND)
@@ -41,5 +39,25 @@ func _ready():
 	_ok("bow cleared off hand",
 		roster.equipped_item(0, Equip.Position.OFF_HAND) == null)
 	_ok("bow flips hero0 to ranged", roster.is_ranged(0))
+
+	# Displacing hero0's main-hand weapon returns it to the stash.
+	_ok("displaced main-hand weapon returned to stash",
+		roster.gear_stash.has(h0_main))
+
+	# Hero 1's loadout is untouched by edits to hero 0.
+	_ok("hero1 loadout untouched by hero0 edits",
+		roster.equipped_item(1, Equip.Position.MAIN_HAND) != null \
+		and roster.equipped_item(1, Equip.Position.MAIN_HAND) \
+			!= roster.equipped_item(0, Equip.Position.MAIN_HAND))
+
+	# A fresh HEAD-category stash item resolves to the HEAD position.
+	var spare_head = null
+	for g in roster.gear_stash:
+		if g.slot == GearDefinition.Slot.HEAD:
+			spare_head = g
+			break
+	_ok("found spare HEAD item", spare_head != null)
+	_ok("default_position routes HEAD item to HEAD",
+		roster.default_position(1, spare_head) == Equip.Position.HEAD)
 
 	get_tree().quit()
