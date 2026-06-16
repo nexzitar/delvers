@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5loadui0test01"]
+
+[ext_resource type="Script" path="res://capture/test_loadout_ui.gd" id="1_t"]
+
+[node name="TestLoadUI" type="Node"]
+script = ExtResource("1_t")
