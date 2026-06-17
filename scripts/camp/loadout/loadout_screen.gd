@@ -478,7 +478,7 @@ func _update_preview():
 	container.offset_bottom = vp_h / 2.0
 	container.add_child(vp)
 	_preview_holder.add_child(container)
-	actor.equip_gear(hero.equipped.values())
+	actor.equip_gear(hero.equipped)
 
 # --- Drag-and-drop policy --------------------------------------------
 

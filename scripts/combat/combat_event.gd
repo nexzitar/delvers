@@ -40,6 +40,8 @@ var entity_name: String
 var team: int
 
 var gear := []
+var equipped := {}
+var off_hand := false
 
 
 static func create_spawn(combat_entity):
@@ -61,5 +63,6 @@ static func create_spawn(combat_entity):
 	event.current_mana = combat_entity.current_mana
 	event.max_mana = combat_entity.template.base_mana
 	event.gear = combat_entity.gear
+	event.equipped = combat_entity.equipped
 
 	return event

@@ -83,15 +83,23 @@ func play_melee_attack(source, target, event):
 	)
 
 	await source.jump_to(strike_position)
-	await source.play_windup()
 
-	# play_attack returns at the moment of impact.
-	await source.play_attack()
-	spawn_slash(source, target)
-	await get_tree().create_timer(0.05).timeout
+	if event.off_hand:
+		await source.play_attack(true)
+		spawn_slash(source, target)
+		await get_tree().create_timer(0.05).timeout
+		apply_hit(target, event)
+		await get_tree().create_timer(0.15).timeout
+	else:
+		await source.play_windup()
 
-	apply_hit(target, event)
-	await get_tree().create_timer(0.2).timeout
+		# play_attack returns at the moment of impact.
+		await source.play_attack()
+		spawn_slash(source, target)
+		await get_tree().create_timer(0.05).timeout
+
+		apply_hit(target, event)
+		await get_tree().create_timer(0.2).timeout
 
 	await source.jump_to(home)
 
@@ -305,7 +313,10 @@ func play_spawn(event):
 	)
 
 	actor.setup_spawn(event.entity_id)
-	actor.equip_gear(event.gear)
+	if not event.equipped.is_empty():
+		actor.equip_gear(event.equipped)
+	else:
+		actor.equip_gear(event.gear)
 
 	actors[event.entity_id] = actor
 

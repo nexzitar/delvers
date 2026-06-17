@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="GearDefinition" format=3]
+[gd_resource type="Resource" script_class="GearDefinition" format=3 uid="uid://btfllqjx0huua"]
 
-[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
-[ext_resource type="Texture2D" path="res://art/gear/starter_bow.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://bitmblhuwkx5f" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" uid="uid://ymkkc0g1nocc" path="res://art/gear/starter_bow.png" id="2_tex"]
 
 [resource]
 resource_name = "Starter Bow"
@@ -15,7 +15,6 @@ icon = ExtResource("2_tex")
 offset = Vector2(-52, 60)
 scale = 0.45
 rotation_degrees = -90.0
-attack_bonus = 0
 damage_min = 1
 damage_max = 4
 attack_speed = 2.8

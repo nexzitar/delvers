@@ -16,6 +16,7 @@ var current_mana: int
 var attack_power: int
 var formation_slot: int
 var gear := []
+var equipped := {}
 
 var team: Team
 
@@ -63,9 +64,9 @@ func perform_off_hand_attack(combat_state):
 	var raw = base_attack_power + weapon_hit + randi_range(
 		skills[0].base_min_damage, skills[0].base_max_damage)
 	var damage = maxi(1, floori(OFF_HAND_FACTOR * raw))
-	_strike(combat_state, skills[0], damage)
+	_strike(combat_state, skills[0], damage, true)
 
-func _strike(combat_state, skill, damage):
+func _strike(combat_state, skill, damage, off_hand := false):
 	var target = combat_state.get_target_for(self, skill)
 	if target == null:
 		return
@@ -84,6 +85,7 @@ func _strike(combat_state, skill, damage):
 	event.skill_name = skill.skill_name
 	event.skill = skill
 	event.amount = damage
+	event.off_hand = off_hand
 	combat_state.add_event(event)
 
 	if died:
