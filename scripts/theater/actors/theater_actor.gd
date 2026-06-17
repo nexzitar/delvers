@@ -3,6 +3,7 @@ class_name TheaterActor
 
 const SWING_SOUND = preload("res://audio/melee_swing.wav")
 const BOW_SOUND = preload("res://audio/bow_release.wav")
+const GROUND_SHADOW = preload("res://scripts/theater/ground_shadow.gd")
 
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
@@ -34,6 +35,13 @@ enum IdleStyle {
 ## The x component is flipped by attack_direction.
 @export var projectile_origin := Vector2(70, -10)
 
+## Distance from the actor origin down to the ground contact point.
+## Leave at -1 to derive from the idle sprite bounds.
+@export var ground_shadow_feet_y := -1.0
+
+## Optional hair sheet (same canvas as the body). Hidden under FULL head gear.
+@export var hair_texture: Texture2D
+
 var entity_id : int
 
 var weapon_type := GearDefinition.WeaponType.NONE
@@ -42,17 +50,36 @@ var arm_pivot: Node2D
 
 var _idle_texture: Texture2D
 var _idle_region_enabled: bool
+var _idle_region_rect: Rect2
 var _idle_sprite_scale: Vector2
 var _idle_sprite_position: Vector2
 var _idle_tween: Tween
+var _gear_nodes: Array = []
+var _equipped_head: GearDefinition
+var _hair_sprite: Sprite2D
 
 func _ready():
 	_idle_texture = sprite.texture
 	_idle_region_enabled = sprite.region_enabled
+	_idle_region_rect = sprite.region_rect
 	_idle_sprite_scale = sprite.scale
 	_idle_sprite_position = sprite.position
 	arm_pivot = sprite.get_node_or_null("ArmPivot")
+	if hair_texture:
+		_hair_sprite = Sprite2D.new()
+		_hair_sprite.texture = hair_texture
+		_hair_sprite.z_index = 1
+		sprite.add_child(_hair_sprite)
+	GROUND_SHADOW.attach_to_actor(self, _ground_shadow_feet_y())
 	_start_idle()
+
+func _ground_shadow_feet_y() -> float:
+	if ground_shadow_feet_y > 0.0:
+		return ground_shadow_feet_y
+	var rect: Rect2 = sprite.get_rect()
+	var half_w: float = rect.size.x * abs(sprite.scale.x) * 0.5
+	var half_h: float = rect.size.y * abs(sprite.scale.y) * 0.5
+	return maxf(half_w, half_h) - sprite.position.y
 
 func _start_idle():
 
@@ -74,6 +101,69 @@ func _stop_idle():
 
 	sprite.scale = _idle_sprite_scale
 	sprite.position = _idle_sprite_position
+
+func _apply_hair_for_head(head_gear: GearDefinition) -> void:
+	_equipped_head = head_gear
+	if _hair_sprite == null:
+		return
+	var hide_hair := head_gear != null \
+		and head_gear.slot == GearDefinition.Slot.HEAD \
+		and head_gear.head_style == GearDefinition.HeadStyle.FULL
+	_hair_sprite.visible = not hide_hair
+
+func _clear_gear():
+	for node in _gear_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_gear_nodes.clear()
+	weapon_node = null
+	weapon_type = GearDefinition.WeaponType.NONE
+	_equipped_head = null
+	_apply_hair_for_head(null)
+
+func equip_gear(gear_list):
+	_clear_gear()
+
+	var sorted: Array = gear_list.duplicate()
+	sorted.sort_custom(func(a, b):
+		return GearDefinition.paper_doll_layer(a.slot) \
+			< GearDefinition.paper_doll_layer(b.slot)
+	)
+
+	var head_gear: GearDefinition = null
+	for item in sorted:
+		if item.texture == null:
+			continue
+		if item.slot == GearDefinition.Slot.HEAD:
+			head_gear = item
+
+		var piece = Sprite2D.new()
+		piece.texture = item.texture
+		piece.position = item.offset
+		piece.scale = Vector2(item.scale, item.scale)
+		piece.rotation_degrees = item.rotation_degrees
+		piece.z_index = GearDefinition.paper_doll_layer(item.slot)
+
+		if item.slot == GearDefinition.Slot.MAIN_HAND and arm_pivot:
+			# Weapon goes into the hand so it swings with the arm.
+			# Gear offsets are body-local, so re-express relative to the pivot.
+			piece.position = item.offset - arm_pivot.position
+			# Layered above the shield (z 1) but below the arm (z 2),
+			# so the fist grips the hilt while the blade clears the shield.
+			piece.z_index = 1
+			arm_pivot.add_child(piece)
+			_gear_nodes.append(piece)
+		else:
+			sprite.add_child(piece)
+			_gear_nodes.append(piece)
+
+		if item.slot == GearDefinition.Slot.MAIN_HAND:
+			weapon_node = piece
+			weapon_type = item.weapon_type
+
+	_apply_hair_for_head(head_gear)
+	_stop_idle()
+	_start_idle()
 
 func _start_breathe(period):
 	# Chest rise: the sprite stretches a bit taller, narrows a touch,
@@ -132,38 +222,6 @@ func _start_wobble(period):
 	_idle_tween.parallel().tween_property(sprite, "position:y", base.y, half) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-func equip_gear(gear_list):
-
-	for item in gear_list:
-
-		if item.texture == null:
-			continue
-
-		var piece = Sprite2D.new()
-		piece.texture = item.texture
-		piece.position = item.offset
-		piece.scale = Vector2(item.scale, item.scale)
-		piece.rotation_degrees = item.rotation_degrees
-
-		# The shield arm faces the enemy, strapped outside the armor.
-		if item.slot == GearDefinition.Slot.OFF_HAND:
-			piece.z_index = 1
-
-		if item.slot == GearDefinition.Slot.MAIN_HAND and arm_pivot:
-			# Weapon goes into the hand so it swings with the arm.
-			# Gear offsets are body-local, so re-express relative to the pivot.
-			piece.position = item.offset - arm_pivot.position
-			# Layered above the shield (z 1) but below the arm (z 2),
-			# so the fist grips the hilt while the blade clears the shield.
-			piece.z_index = 1
-			arm_pivot.add_child(piece)
-		else:
-			sprite.add_child(piece)
-
-		if item.slot == GearDefinition.Slot.MAIN_HAND:
-			weapon_node = piece
-			weapon_type = item.weapon_type
-
 func play_windup():
 
 	if attack_texture == null:
@@ -180,8 +238,12 @@ func play_windup():
 func end_windup():
 
 	sprite.texture = _idle_texture
+	_apply_hair_for_head(_equipped_head)
 	sprite.region_enabled = _idle_region_enabled
+	if _idle_region_enabled:
+		sprite.region_rect = _idle_region_rect
 	sprite.scale = _idle_sprite_scale
+	sprite.position = _idle_sprite_position
 
 	if _idle_tween == null:
 		_start_idle()

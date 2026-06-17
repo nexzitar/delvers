@@ -1,12 +1,14 @@
 [gd_scene format=3 uid="uid://ypyclgsx45sk"]
 
 [ext_resource type="Script" uid="uid://dggjpkobydoq5" path="res://scripts/theater/actors/theater_actor.gd" id="1_hu7a4"]
-[ext_resource type="Texture2D" path="res://art/portraits/delver_body.png" id="6_6b85c"]
+[ext_resource type="Texture2D" path="res://art/portraits/delver_body_bald.png" id="6_6b85c"]
+[ext_resource type="Texture2D" path="res://art/portraits/delver_hair.png" id="6_hair"]
 [ext_resource type="Texture2D" path="res://art/portraits/delver_arm.png" id="7_arm"]
 
 [node name="HeroActor" type="Node2D" unique_id=2008116614]
 script = ExtResource("1_hu7a4")
 projectile_origin = Vector2(60, -50)
+hair_texture = ExtResource("6_hair")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=268767453]
 scale = Vector2(0.23, 0.23)
