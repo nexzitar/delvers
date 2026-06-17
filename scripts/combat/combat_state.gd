@@ -134,6 +134,7 @@ func setup_combat(hero_templates, enemy_templates):
 		)
 
 		var loadout = hero_template.equipped.values()
+		hero.equipped = hero_template.equipped.duplicate()
 		hero.gear = loadout.duplicate()
 
 		hero.main_weapon = hero_template.equipped.get(

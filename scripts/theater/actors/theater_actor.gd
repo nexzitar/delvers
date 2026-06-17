@@ -42,11 +42,17 @@ enum IdleStyle {
 ## Optional hair sheet (same canvas as the body). Hidden under FULL head gear.
 @export var hair_texture: Texture2D
 
+## Fine-tune off-hand weapon grip in body-local pixels (right, up).
+@export var off_hand_weapon_nudge := Vector2(260, -30)
+
 var entity_id : int
 
 var weapon_type := GearDefinition.WeaponType.NONE
 var weapon_node: Sprite2D
+var off_weapon_node: Sprite2D
+var off_weapon_type := GearDefinition.WeaponType.NONE
 var arm_pivot: Node2D
+var off_arm_pivot: Node2D
 
 var _idle_texture: Texture2D
 var _idle_region_enabled: bool
@@ -65,6 +71,7 @@ func _ready():
 	_idle_sprite_scale = sprite.scale
 	_idle_sprite_position = sprite.position
 	arm_pivot = sprite.get_node_or_null("ArmPivot")
+	off_arm_pivot = _ensure_off_arm_pivot()
 	if hair_texture:
 		_hair_sprite = Sprite2D.new()
 		_hair_sprite.texture = hair_texture
@@ -80,6 +87,33 @@ func _ground_shadow_feet_y() -> float:
 	var half_w: float = rect.size.x * abs(sprite.scale.x) * 0.5
 	var half_h: float = rect.size.y * abs(sprite.scale.y) * 0.5
 	return maxf(half_w, half_h) - sprite.position.y
+
+func _ensure_off_arm_pivot() -> Node2D:
+	var pivot = sprite.get_node_or_null("OffHandPivot")
+	if pivot:
+		return pivot
+	if arm_pivot == null:
+		return null
+	pivot = Node2D.new()
+	pivot.name = "OffHandPivot"
+	pivot.position = Vector2(-arm_pivot.position.x, arm_pivot.position.y)
+	sprite.add_child(pivot)
+	return pivot
+
+func _is_off_hand_weapon_at(pos: int, item: GearDefinition) -> bool:
+	return pos == Equip.Position.OFF_HAND \
+		and item.weapon_type == GearDefinition.WeaponType.ONE_HANDED
+
+func _attach_off_hand_weapon(piece: Sprite2D, item: GearDefinition) -> void:
+	# Mirror the main-hand grip onto the opposite arm pivot.
+	piece.position = Vector2(
+		arm_pivot.position.x - item.offset.x,
+		item.offset.y - arm_pivot.position.y
+	) + off_hand_weapon_nudge
+	piece.scale = Vector2(-abs(item.scale), item.scale)
+	piece.rotation_degrees = item.rotation_degrees
+	piece.z_index = 1
+	off_arm_pivot.add_child(piece)
 
 func _start_idle():
 
@@ -118,22 +152,36 @@ func _clear_gear():
 	_gear_nodes.clear()
 	weapon_node = null
 	weapon_type = GearDefinition.WeaponType.NONE
+	off_weapon_node = null
+	off_weapon_type = GearDefinition.WeaponType.NONE
 	_equipped_head = null
 	_apply_hair_for_head(null)
 
-func equip_gear(gear_list):
+func equip_gear(loadout):
 	_clear_gear()
 
-	var sorted: Array = gear_list.duplicate()
-	sorted.sort_custom(func(a, b):
-		return GearDefinition.paper_doll_layer(a.slot) \
-			< GearDefinition.paper_doll_layer(b.slot)
+	var entries: Array = []
+	if loadout is Dictionary:
+		for pos in loadout:
+			var item: GearDefinition = loadout[pos]
+			if item != null and item.texture != null:
+				entries.append({"pos": pos, "item": item})
+	elif loadout is Array:
+		for item in loadout:
+			if item != null and item.texture != null:
+				entries.append({"pos": -1, "item": item})
+	else:
+		return
+
+	entries.sort_custom(func(a, b):
+		return GearDefinition.paper_doll_layer(a.item.slot) \
+			< GearDefinition.paper_doll_layer(b.item.slot)
 	)
 
 	var head_gear: GearDefinition = null
-	for item in sorted:
-		if item.texture == null:
-			continue
+	for entry in entries:
+		var pos: int = entry.pos
+		var item: GearDefinition = entry.item
 		if item.slot == GearDefinition.Slot.HEAD:
 			head_gear = item
 
@@ -144,7 +192,7 @@ func equip_gear(gear_list):
 		piece.rotation_degrees = item.rotation_degrees
 		piece.z_index = GearDefinition.paper_doll_layer(item.slot)
 
-		if item.slot == GearDefinition.Slot.MAIN_HAND and arm_pivot:
+		if pos == Equip.Position.MAIN_HAND and arm_pivot:
 			# Weapon goes into the hand so it swings with the arm.
 			# Gear offsets are body-local, so re-express relative to the pivot.
 			piece.position = item.offset - arm_pivot.position
@@ -153,13 +201,19 @@ func equip_gear(gear_list):
 			piece.z_index = 1
 			arm_pivot.add_child(piece)
 			_gear_nodes.append(piece)
-		else:
-			sprite.add_child(piece)
-			_gear_nodes.append(piece)
-
-		if item.slot == GearDefinition.Slot.MAIN_HAND:
 			weapon_node = piece
 			weapon_type = item.weapon_type
+		elif _is_off_hand_weapon_at(pos, item) and off_arm_pivot:
+			_attach_off_hand_weapon(piece, item)
+			_gear_nodes.append(piece)
+			off_weapon_node = piece
+			off_weapon_type = item.weapon_type
+		else:
+			if pos == Equip.Position.OFF_HAND or item.slot == GearDefinition.Slot.OFF_HAND:
+				# Shield strapped outside the armor on the off-side arm.
+				piece.z_index = 1
+			sprite.add_child(piece)
+			_gear_nodes.append(piece)
 
 	_apply_hair_for_head(head_gear)
 	_stop_idle()
@@ -270,9 +324,15 @@ func jump_to(target_position):
 	if _idle_tween == null:
 		_start_idle()
 
-func play_attack():
+func play_attack(off_hand := false):
 
 	end_windup()
+
+	if off_hand:
+		if off_arm_pivot and off_weapon_node \
+				and off_weapon_node.get_parent() == off_arm_pivot:
+			await play_off_hand_attack()
+		return
 
 	if arm_pivot and weapon_node and weapon_node.get_parent() == arm_pivot:
 		if weapon_type == GearDefinition.WeaponType.BOW:
@@ -305,32 +365,51 @@ func play_attack():
 	)
 
 func play_arm_attack():
-	# Raise the arm up over the shoulder, then chop down through the
-	# target. Returns at the moment of impact; the arm settles back
-	# to rest afterwards on its own.
+	await _play_arm_swing(arm_pivot, weapon_node, attack_direction, weapon_type)
 
-	var dir = attack_direction
-	var heavy = weapon_type == GearDefinition.WeaponType.TWO_HANDED
-	var raise_time = 0.35 if heavy else 0.25
+func play_off_hand_attack():
+	# Quick mirrored chop from the off-side pivot; no step forward.
+	await _play_arm_swing(
+		off_arm_pivot, off_weapon_node, -attack_direction,
+		off_weapon_type, -0.06, 0.12, 100.0, -100.0, 0.0
+	)
+
+func _play_arm_swing(
+		pivot: Node2D,
+		weapon: Sprite2D,
+		dir: float,
+		wtype: int,
+		raise_time := -1.0,
+		chop_time := 0.12,
+		raise_angle := 155.0,
+		chop_angle := 185.0,
+		settle_angle := 20.0,
+	) -> void:
+	if pivot == null or weapon == null:
+		return
+
+	var heavy = wtype == GearDefinition.WeaponType.TWO_HANDED
+	if raise_time < 0.0:
+		raise_time = 0.35 if heavy else 0.25
 
 	var raise = create_tween()
 	raise.tween_property(
-		arm_pivot, "rotation_degrees", 155.0 * dir, raise_time
+		pivot, "rotation_degrees", raise_angle * dir, raise_time
 	).as_relative().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await raise.finished
 
-	_spawn_swing_trail(0.15)
+	_spawn_swing_trail(0.12, weapon)
 	UiSounds.play(SWING_SOUND, "SFX", -6.0, randf_range(0.9, 1.1))
 
 	var chop = create_tween()
 	chop.tween_property(
-		arm_pivot, "rotation_degrees", 185.0 * dir, 0.12
+		pivot, "rotation_degrees", chop_angle * dir, chop_time
 	).as_relative().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await chop.finished
 
 	var settle = create_tween()
 	settle.tween_property(
-		arm_pivot, "rotation_degrees", 20.0 * dir, 0.25
+		pivot, "rotation_degrees", settle_angle * dir, 0.25
 	).as_relative().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func play_bow_attack():
@@ -356,19 +435,19 @@ func play_bow_attack():
 	).as_relative().set_trans(Tween.TRANS_QUAD) \
 		.set_ease(Tween.EASE_OUT).set_delay(0.15)
 
-func _spawn_swing_trail(duration):
+func _spawn_swing_trail(duration, weapon: Sprite2D = null):
 	# Fading afterimages of the weapon while it swings.
-
+	var blade = weapon if weapon else weapon_node
 	var steps = int(duration / 0.03)
 
 	for i in steps:
-		if weapon_node:
+		if blade:
 			var ghost = Sprite2D.new()
-			ghost.texture = weapon_node.texture
+			ghost.texture = blade.texture
 			ghost.modulate = Color(1, 1, 1, 0.4)
 			ghost.z_index = 1
 			get_parent().add_child(ghost)
-			ghost.global_transform = weapon_node.global_transform
+			ghost.global_transform = blade.global_transform
 
 			var fade = ghost.create_tween()
 			fade.tween_property(ghost, "modulate:a", 0.0, 0.18)

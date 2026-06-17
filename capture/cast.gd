@@ -16,8 +16,8 @@ func _run():
 		var actor = template.actor_scene.instantiate()
 		var names = ["hero_default_delver", "hero_default_delver_archer"]
 		var file = names[i] if i < names.size() else template.hero_id
-		var gear: Array = template.equipped.values()
-		await _shoot(actor, file, gear)
+		var equipped = template.equipped
+		await _shoot(actor, file, equipped)
 
 	await _shoot(
 		load("res://scenes/theater/actors/slime_actor.tscn").instantiate(),
@@ -30,7 +30,7 @@ func _run():
 
 	get_tree().quit()
 
-func _shoot(actor, file, gear):
+func _shoot(actor, file, loadout):
 
 	var viewport = SubViewport.new()
 	viewport.size = Vector2i(700, 700)
@@ -40,8 +40,10 @@ func _shoot(actor, file, gear):
 
 	actor.position = Vector2(350, 480)
 	viewport.add_child(actor)
-	if not gear.is_empty():
-		actor.equip_gear(gear)
+	if loadout is Dictionary and not loadout.is_empty():
+		actor.equip_gear(loadout)
+	elif loadout is Array and not loadout.is_empty():
+		actor.equip_gear(loadout)
 
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw

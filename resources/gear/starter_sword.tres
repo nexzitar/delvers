@@ -15,7 +15,6 @@ icon = ExtResource("2_tex")
 offset = Vector2(68, 65)
 scale = 0.35
 rotation_degrees = 90.0
-attack_bonus = 0
 damage_min = 1
 damage_max = 3
 attack_speed = 2.6
