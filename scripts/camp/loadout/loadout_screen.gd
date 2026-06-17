@@ -35,9 +35,11 @@ const SKILL_SLOTS := 6
 const SLOT_SIZE := 50
 const STASH_ICON_SIZE := 42
 const STASH_COLUMNS := 10
-## hero_actor.tscn body sprite: 906px tall at scale 0.23.
-const PREVIEW_BODY_HALF := 906.0 * 0.23 * 0.5
-const PREVIEW_FOOT_DROP := 14
+## hero_actor body sprite is 906×389 at scale 0.23; gear extends past the body bounds.
+const PREVIEW_BODY_WIDTH := 906.0 * 0.23
+const PREVIEW_BODY_HEIGHT := 389.0 * 0.23
+const PREVIEW_VIEWPORT_W := 128
+const PREVIEW_VIEWPORT_H := int(PREVIEW_BODY_WIDTH) + 24
 
 const GOLD = Color(0.85, 0.7, 0.28)
 const PARCHMENT = Color(0.88, 0.82, 0.68)
@@ -188,7 +190,7 @@ func _build_left_panel():
 	mid.add_child(_build_slot_column(Equip.COLUMN_LEFT))
 
 	_preview_holder = Control.new()
-	_preview_holder.custom_minimum_size = Vector2(120, int(PREVIEW_BODY_HALF * 2.0) + 24)
+	_preview_holder.custom_minimum_size = Vector2(PREVIEW_VIEWPORT_W, PREVIEW_VIEWPORT_H)
 	_preview_holder.clip_contents = false
 	_preview_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_preview_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -450,21 +452,18 @@ func _update_preview():
 
 	var hero = PlayerRoster.heroes[hero_index]
 
-	var vp_w := 120
-	var vp_h := int(PREVIEW_BODY_HALF * 2.0) + 24
-	var foot_pad := PREVIEW_FOOT_DROP
+	var vp_w := PREVIEW_VIEWPORT_W
+	var vp_h := PREVIEW_VIEWPORT_H
 
 	var vp = SubViewport.new()
 	vp.size = Vector2i(vp_w, vp_h)
 	vp.transparent_bg = true
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 
-	var shadow = _make_ground_shadow()
-	shadow.position = Vector2(vp_w / 2.0, vp_h - foot_pad + 2)
-	vp.add_child(shadow)
+	var actor_y := vp_h * 0.5
 
 	var actor = hero.actor_scene.instantiate()
-	actor.position = Vector2(vp_w / 2.0, vp_h - PREVIEW_BODY_HALF - foot_pad + 10)
+	actor.position = Vector2(vp_w / 2.0, actor_y)
 	actor.scale = Vector2(1.0, 1.0)
 	vp.add_child(actor)
 
@@ -472,25 +471,14 @@ func _update_preview():
 	container.stretch = false
 	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	container.clip_contents = false
-	container.anchor_left = 0.5
-	container.anchor_right = 0.5
+	container.set_anchors_preset(Control.PRESET_CENTER)
 	container.offset_left = -vp_w / 2.0
 	container.offset_right = vp_w / 2.0
-	container.offset_top = 0
-	container.offset_bottom = vp_h
+	container.offset_top = -vp_h / 2.0
+	container.offset_bottom = vp_h / 2.0
 	container.add_child(vp)
 	_preview_holder.add_child(container)
 	actor.equip_gear(hero.equipped.values())
-
-func _make_ground_shadow() -> Polygon2D:
-	var pts := PackedVector2Array()
-	for i in range(20):
-		var a := TAU * float(i) / 20.0
-		pts.append(Vector2(cos(a) * 34.0, sin(a) * 9.0))
-	var shadow = Polygon2D.new()
-	shadow.polygon = pts
-	shadow.color = Color(0, 0, 0, 0.32)
-	return shadow
 
 # --- Drag-and-drop policy --------------------------------------------
 

@@ -27,6 +27,12 @@ enum WeaponType {
 	BOW
 }
 
+## How head-slot gear interacts with the actor's hair.
+enum HeadStyle {
+	OPEN,  # circlet, halo, crown — hair stays visible
+	FULL,  # enclosing helm — swap to the actor's bald body texture
+}
+
 @export var gear_id: String
 @export var gear_name: String
 @export var slot: Slot
@@ -42,6 +48,8 @@ enum WeaponType {
 @export var offset: Vector2
 @export var scale: float = 1.0
 @export var rotation_degrees: float = 0.0
+## Head-slot only: OPEN keeps hair, FULL uses the actor's bald body under the piece.
+@export var head_style: HeadStyle = HeadStyle.FULL
 
 @export_group("Stats")
 ## Flat attack bonus for armor and accessories. Weapons use damage_min/max.
@@ -73,6 +81,26 @@ func weapon_dps() -> float:
 	if attack_speed <= 0.0:
 		return 0.0
 	return damage_average() / attack_speed
+
+## Draw order for paper-doll pieces on the body sprite. Higher draws in front.
+static func paper_doll_layer(category: Slot) -> int:
+	match category:
+		Slot.BACK:
+			return -1
+		Slot.CHEST, Slot.WRIST, Slot.HANDS, Slot.WAIST, Slot.LEGS, Slot.FEET:
+			return 0
+		Slot.RING, Slot.TRINKET:
+			return 0
+		Slot.NECK:
+			return 1
+		Slot.SHOULDER:
+			return 2
+		Slot.HEAD:
+			return 3
+		Slot.MAIN_HAND, Slot.OFF_HAND:
+			return 1
+		_:
+			return 0
 
 ## Rough power rating from stats (for sorting and future loot tables).
 func item_level() -> int:
