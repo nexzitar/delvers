@@ -11,6 +11,8 @@ const HP_FILL = Color(0.33, 0.6, 0.24)
 const MANA_FILL = Color(0.23, 0.42, 0.78)
 const BAR_BG = Color(0.07, 0.07, 0.09, 0.9)
 const DEAD_TINT = Color(0.45, 0.38, 0.38, 0.8)
+const METER_TEXT = Color.BLACK
+const METER_OUTLINE = Color.WHITE
 
 ## Classic damage-meter row colors, assigned by join order.
 const METER_COLORS = [
@@ -149,14 +151,20 @@ func _add_meter_row(entity_id, entity_name):
 	fill.set_corner_radius_all(3)
 	bar.add_theme_stylebox_override("fill", fill)
 
-	var name_label = _make_label(entity_name, 12, Color.WHITE)
+	var name_label = _make_label(
+		entity_name, 12, METER_TEXT,
+		HORIZONTAL_ALIGNMENT_LEFT, METER_OUTLINE, 1
+	)
 	name_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	name_label.offset_left = 5
 	name_label.offset_right = -60
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	bar.add_child(name_label)
 
-	var value_label = _make_label("", 12, Color.WHITE)
+	var value_label = _make_label(
+		"", 12, METER_TEXT,
+		HORIZONTAL_ALIGNMENT_RIGHT, METER_OUTLINE, 1
+	)
 	value_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	value_label.offset_right = -5
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -188,15 +196,20 @@ func _refresh_meter():
 		row.value.text = "%d (%.1f)" % [total, dps]
 		meter_list.move_child(row.bar, i)
 
-func _make_label(text, size, color, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+func _make_label(
+		text, size, color,
+		align := HORIZONTAL_ALIGNMENT_LEFT,
+		outline_color := Color.BLACK,
+		outline_size := 2
+) -> Label:
 
 	var label = Label.new()
 	label.text = text
 	label.add_theme_font_override("font", FONT)
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", outline_color)
+	label.add_theme_constant_override("outline_size", outline_size)
 	label.horizontal_alignment = align
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	return label
