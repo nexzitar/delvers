@@ -1,5 +1,7 @@
 class_name CombatEntity
 
+const StatusEffect = preload("res://scripts/combat/status_effect.gd")
+
 var entity_id: int
 
 enum Team {
@@ -18,6 +20,19 @@ var formation_slot: int
 var gear := []
 var equipped := {}
 
+var position: Vector2 = Vector2.ZERO
+var facing: Vector2 = Vector2.RIGHT
+var move_speed: float = 120.0
+var path: PackedVector2Array = []
+var path_index: int = 0
+var target_id: int = -1
+var threat_table: Dictionary = {}
+var in_combat: bool = false
+var statuses: Array = []
+var is_casting: bool = false
+var cast_remaining: float = 0.0
+var weapon_reach: float = 48.0
+
 var team: Team
 
 var attack_interval: float
@@ -35,6 +50,21 @@ var off_attack_timer: float = 0.0
 const OFF_HAND_FACTOR := 0.5
 
 var alive := true
+
+func is_rooted() -> bool:
+	for s in statuses:
+		if s.remaining <= 0.0:
+			continue
+		if s.kind == StatusEffect.Kind.ROOT or s.kind == StatusEffect.Kind.STUN:
+			return true
+	return false
+
+func move_speed_multiplier() -> float:
+	var m := 1.0
+	for s in statuses:
+		if s.kind == StatusEffect.Kind.SLOW and s.remaining > 0.0:
+			m = minf(m, s.magnitude)
+	return m
 
 func update(delta, combat_state):
 	attack_timer -= delta
