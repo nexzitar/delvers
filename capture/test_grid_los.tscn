@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://btestgridlos001"]
+
+[ext_resource type="Script" path="res://capture/test_grid_los.gd" id="1_t"]
+
+[node name="TestGridLos" type="Node"]
+script = ExtResource("1_t")
