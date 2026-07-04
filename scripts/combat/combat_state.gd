@@ -62,9 +62,22 @@ func _nearest_opponent_id(entity) -> int:
 			best_id = other.entity_id
 	return best_id
 
-## Task 8 gate: melee reach only. Task 9 folds in skill range and LoS.
+func effective_range(attacker, skill) -> float:
+	var skill_range = skill.range if skill else 0.0
+	return maxf(skill_range, attacker.weapon_reach)
+
+## Attack validity: within range, and projectiles need line of sight.
+func can_use_skill_on(attacker, skill, target) -> bool:
+	var dist = attacker.position.distance_to(target.position)
+	if dist > effective_range(attacker, skill):
+		return false
+	if skill and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE:
+		return grid.has_los(attacker.position, target.position)
+	return true
+
 func in_attack_range(attacker, target) -> bool:
-	return attacker.position.distance_to(target.position) <= attacker.weapon_reach
+	var skill = attacker.skills[0] if not attacker.skills.is_empty() else null
+	return can_use_skill_on(attacker, skill, target)
 
 # --- Movement ---------------------------------------------------------
 
@@ -79,14 +92,22 @@ func tick_movement(entity, target, delta):
 	if entity.is_rooted():
 		return
 
-	# Re-path only when the target has moved to a different tile.
+	# Re-path when the target moved to a different tile, or when the
+	# path was walked to the end but we're still out of range (e.g.
+	# separation pushed us off). A failed search is cached until the
+	# goal tile changes, so unreachable targets don't re-search every tick.
 	var goal = grid.world_to_tile(target.position)
-	if entity.path.is_empty() or entity.path_goal != goal:
+	if entity.path_goal != goal:
 		entity.path = pathfinder.find_path(
 			grid.world_to_tile(entity.position), goal
 		)
 		entity.path_index = 0
 		entity.path_goal = goal
+	elif not entity.path.is_empty() and entity.path_index >= entity.path.size():
+		entity.path = pathfinder.find_path(
+			grid.world_to_tile(entity.position), goal
+		)
+		entity.path_index = 0
 	if entity.path.is_empty():
 		return
 
@@ -259,6 +280,8 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			and hero.main_weapon.attack_speed > 0.0
 			else hero_template.base_attack_interval
 		)
+		if hero.main_weapon:
+			hero.weapon_reach = hero.main_weapon.effective_reach()
 		hero.attack_timer = hero.attack_interval
 		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
 

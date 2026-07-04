@@ -60,6 +60,20 @@ enum HeadStyle {
 @export var damage_max: int = 0
 ## Seconds per swing. Only meaningful for weapons; 0 elsewhere.
 @export var attack_speed: float = 0.0
+## Attack reach in world pixels. 0 derives a default from weapon_type.
+@export var reach: float = 0.0
+
+func effective_reach() -> float:
+	if reach > 0.0:
+		return reach
+	match weapon_type:
+		WeaponType.BOW:
+			return 320.0
+		WeaponType.TWO_HANDED:
+			return 56.0
+		WeaponType.ONE_HANDED:
+			return 48.0
+	return 0.0
 
 func effective_damage_min() -> int:
 	if damage_max > 0 or damage_min > 0:
