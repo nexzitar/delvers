@@ -32,7 +32,7 @@ CombatState (fast tick sim) → CombatLog (Array[CombatEvent]) → TheaterContro
 ```
 
 - **`scripts/combat/`** — the simulation. `CombatState` (`combat_state.gd`) owns `heroes`/`enemies` arrays of `CombatEntity`, ticks everyone via `update(delta)` in fixed steps (`SIMULATION_STEP = 0.1`), and loops `while not combat.combat_over`. Every meaningful action appends a `CombatEvent` to `combat_log`. `build_result()` returns a `CombatResult`.
-- **`scripts/theater/`** — the presentation. `TheaterController` reads the log and plays events back ordered by `event.time`, waiting `event.time - last_time` between them, spawning actors and animations.
+- **`scripts/theater3d/`** — the presentation. `TheaterController3D` replays the log in real time in a 3D scene: a pre-built timeline dispatches events plus derived animation cues (melee swings start ahead of their `DAMAGE` so contact lands on the beat), `ActorFactory3D` builds procedural rigs from templates/loadouts, and continuous poses are driven from `_process`. (`scripts/theater/` retains only the 2D actor visuals still used by the camp and loadout screens.)
 - **Rule:** the sim must never depend on theater/scene nodes, and anything the theater needs to draw must travel through a field on `CombatEvent`. When you add a combat behavior, you usually (1) add/extend an `EventType` and a `create_*` factory on `combat_event.gd`, (2) emit it from the sim, (3) handle it in the theater.
 
 ## Data-driven content (no code to add units)
@@ -52,18 +52,13 @@ Adding content: make an actor scene in `scenes/theater/actors/`, a template `.tr
 - **`SceneFlow`** (`scripts/game/scene_flow.gd`) — use `SceneFlow.change_scene(path)` instead of `change_scene_to_file`; it adds the next scene before freeing the old one to avoid a black flash frame.
 - **`GameSettings`** — fullscreen + volume, persisted to disk. **`UiSounds`** — procedural SFX and buses (`default_bus_layout.tres`: Master/Music/SFX/Ambience).
 
-## In-progress: spatial combat migration (branch `feat/spatial-combat`)
+## Spatial combat (complete, branch `feat/spatial-combat`)
 
-The repo is mid-migration from **formation-slot, side-view hop-to-target** combat to **free movement on a 2D tile grid** (Zelda-style angled top-down). Design and plan docs: `docs/superpowers/specs/2026-07-03-spatial-combat-design.md` and `docs/superpowers/plans/`. Read the spec before touching combat.
-
-State of play: the spatial primitives exist and are unit-tested but are **not yet wired into `CombatState.update()`**, which still runs the old attack-timer/formation model.
-
-- Present & tested: `BattleArena`/`BattleGrid` (tile grid + `world_to_tile`), `GridPathfinder` (A*), `Threat` (`pick_target` by threat with in-range fallback), `separation.gd` (soft steering), `StatusEffect` (root/stun/slow), grid LoS. `CombatEntity` already carries `position`, `facing`, `move_speed`, `path`, `target_id`, `threat_table`, `in_combat`, `statuses`, casting fields, `weapon_reach`. `CombatEvent` already has `MOVE`/`FACE`/`TARGET`/`TELEGRAPH`/`CAST_*`/`BUFF_*` types and their factories.
-- Not yet done: entities don't path or move in `update()` yet; targeting still goes through `Formation` front-row rules in `get_target_for()`. Expect `formation_slot` to be retired for combat as the migration completes.
+Combat is fully spatial: units path on a tile grid (`BattleArena`/`BattleGrid`/`GridPathfinder` + `separation.gd`), attacks are gated on range and line of sight (melee closes to 70% of reach before settling), ranged attacks wind up standing still (`CAST_START`/`CAST_FINISH`), enemies target via threat tables with rooted fall-through, and cooldown skills carry behavior scripts (`scripts/combat/skills/`: Frost Nova, Hamstring, Charge, Heal — `try_use(state, caster, skill)`). Formation slots are gone; only `Formation.Row` (soft spawn preference) remains. Design/plan docs: `docs/superpowers/specs+plans/2026-07-03-spatial-combat*.md`.
 
 ## 3D art direction (`capture/proto3d/`) — the committed direction
 
-The game is going **3D low-poly** (owner decision 2026-07-04): the spatial-combat theater will be built in 3D on this prototype — see the "Theater Changes (3D)" section of the spatial-combat spec and Tasks 12b–16/18 of the plan. The sim stays a headless 2D tile-plane sim; sim `Vector2(x, y)` maps to `Vector3(x/32.0, 0, y/32.0)`. Everything is built from Godot primitives in code (`delver_builder.gd`, `delver_rig.gd`, `slime_rig.gd`) with deterministic pose-function animation (`pose_walk/swing/shoot(t)` — the same replay-friendly shape as the theater layer). Runnable demos: `proto3d_anim.tscn`, `proto3d_archer.tscn`, `proto3d_battle.tscn`; `*_shot.tscn` harnesses render stills/filmstrips into `renders/`. Rig convention: character faces local +Z, so its anatomical left is +X (sword = right hand at -X, shield/bow = left at +X); positive X rotation swings a hanging limb backward. Run capture scenes from the project root — `--path .` fails silently from subdirectories.
+The game is **3D low-poly** (owner decision 2026-07-04): the battle theater lives in `scripts/theater3d/` on rigs promoted from this prototype (`capture/proto3d/` keeps the demo scenes and render harnesses). The sim stays a headless 2D tile-plane sim; sim `Vector2(x, y)` maps to `Vector3(x/32.0, 0, y/32.0)` (1 tile = 1 unit). Camp, menu, and loadout are still 2D by design; they port in a later phase. Everything is built from Godot primitives in code (`delver_builder.gd`, `delver_rig.gd`, `slime_rig.gd`) with deterministic pose-function animation (`pose_walk/swing/shoot(t)` — the same replay-friendly shape as the theater layer). Runnable demos: `proto3d_anim.tscn`, `proto3d_archer.tscn`, `proto3d_battle.tscn`; `*_shot.tscn` harnesses render stills/filmstrips into `renders/`. Rig convention: character faces local +Z, so its anatomical left is +X (sword = right hand at -X, shield/bow = left at +X); positive X rotation swings a hanging limb backward. Run capture scenes from the project root — `--path .` fails silently from subdirectories.
 
 ## Conventions
 

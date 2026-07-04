@@ -31,7 +31,7 @@ func _run():
 	camp.queue_free()
 	await get_tree().process_frame
 
-	_show("res://scenes/theater/battle_theater.tscn")
+	_show("res://scenes/theater/battle_theater_3d.tscn")
 	await get_tree().create_timer(14.0).timeout
 	await _snap("battle")
 

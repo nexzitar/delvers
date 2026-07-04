@@ -16,7 +16,6 @@ var current_health: int
 var max_health: int
 var current_mana: int
 var attack_power: int
-var formation_slot: int
 var gear := []
 var equipped := {}
 

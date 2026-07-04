@@ -31,7 +31,6 @@ var target_name: String
 
 var source_id: int
 var target_id: int
-var formation_slot: int
 
 var skill_name: String
 var skill: SkillDefinition
@@ -67,7 +66,6 @@ static func create_spawn(combat_entity):
 	event.entity_name = combat_entity.entity_name
 
 	event.team = combat_entity.team
-	event.formation_slot = combat_entity.formation_slot
 
 	event.current_health = combat_entity.current_health
 	event.max_health = combat_entity.max_health

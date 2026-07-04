@@ -133,7 +133,7 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Scene | Path | What it does |
 |-------|------|--------------|
 | Combat simulation | `scenes/combat/combat_simulation.tscn` | Runs a headless fight and prints the combat log |
-| Battle theater | `scenes/theater/battle_theater.tscn` | Simulates a fight and plays it back on the battlefield with animations |
+| Battle theater | `scenes/theater/battle_theater_3d.tscn` | Simulates a fight and plays it back in the 3D battle scene |
 | Screenshot capture | `capture/shots.tscn`, `capture/cast.tscn`, `capture/loadout_shot.tscn` | Regenerates the README screenshots and unit renders into `docs/screenshots/` |
 
 ## Project Structure
@@ -149,13 +149,14 @@ delvers/
 │   ├── camp/         # Camp scene, campfire stage, animated fire
 │   ├── combat/       # Headless combat simulation scene
 │   ├── menus/        # Main menu
-│   └── theater/      # Battle theater and actor scenes
+│   └── theater/      # 3D battle theater scene and 2D actor scenes (camp/loadout)
 └── scripts/
     ├── camp/         # Camp, campfire stage, fire, and hero-loadout screen
     ├── combat/       # Simulation, entities, events, and results
     ├── data/         # Template classes for heroes, enemies, gear, and skills
     ├── game/         # Autoloads: roster/loadout, settings, sounds, scene flow
-    └── theater/      # Visual playback of combat events
+    ├── theater/      # 2D actor visuals still used by the camp and loadout
+    └── theater3d/    # 3D battle theater: procedural rigs, replay, overlays
 ```
 
 ## How Combat Works

@@ -290,17 +290,6 @@ func check_victory():
 	if not heroes_alive or not enemies_alive:
 		combat_over = true
 
-## Picks the first free slot, trying the preferred row first.
-func claim_slot(preferred_row, occupied_slots):
-
-	for slot in Formation.fill_order(preferred_row):
-		if not occupied_slots.has(slot):
-			occupied_slots[slot] = true
-			return slot
-
-	push_error("No free formation slot left")
-	return Formation.Slot.FRONT_CENTER
-
 ## Most foes are common rabble; an occasional veteran shows up.
 func roll_enemy_level() -> int:
 	return [1, 1, 2, 2, 2, 3].pick_random()
@@ -339,8 +328,6 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 	var next_entity_id = 1
 	var used_names = {}
-	var hero_slots_taken = {}
-	var enemy_slots_taken = {}
 
 	for hero_template in hero_templates:
 
@@ -355,9 +342,6 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		hero.template = hero_template
 		hero.entity_name = unique_name(
 			hero_template.hero_name, used_names
-		)
-		hero.formation_slot = claim_slot(
-			hero_template.preferred_row, hero_slots_taken
 		)
 
 		var loadout = hero_template.equipped.values()
@@ -427,9 +411,6 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		enemy.entity_name = (
 			unique_name(enemy_template.enemy_name, used_names)
 			+ " Lv %d" % enemy.level
-		)
-		enemy.formation_slot = claim_slot(
-			enemy_template.preferred_row, enemy_slots_taken
 		)
 
 		enemy.template = enemy_template
