@@ -134,6 +134,7 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 		return
 
 	var died = target.take_damage(damage)
+	combat_state.register_damage(self, target, skill, damage)
 
 	var event = CombatEvent.new()
 	event.time = combat_state.combat_time

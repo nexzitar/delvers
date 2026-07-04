@@ -42,13 +42,55 @@ func entity_by_id(id):
 func opponents_of(entity) -> Array[CombatEntity]:
 	return enemies if entity.team == CombatEntity.Team.HERO else heroes
 
-## Keeps the current target while it lives; otherwise picks the nearest
-## living opponent. (Threat-based enemy targeting lands in Task 10.)
+## Enemies with a threat table chase the highest-threat hero they can
+## attack (a rooted enemy falls through to whoever is in range now).
+## Heroes — and enemies before first blood — take the nearest opponent.
 func validate_target(entity):
+	if entity.team == CombatEntity.Team.ENEMY and not entity.threat_table.is_empty():
+		var hero_positions = {}
+		for hero in heroes:
+			if hero.alive:
+				hero_positions[hero.entity_id] = hero.position
+		if hero_positions.is_empty():
+			return
+		var skill = entity.skills[0] if not entity.skills.is_empty() else null
+		var pick = Threat.pick_target(
+			entity, hero_positions, effective_range(entity, skill),
+			func(hero_id, _pos):
+				var hero = entity_by_id(hero_id)
+				if hero == null or not hero.alive:
+					return false
+				if entity.is_rooted():
+					return can_use_skill_on(entity, skill, hero)
+				# Free to chase: any living hero is fair game (MVP:
+				# open arena, everything is pathable).
+				return true
+		)
+		_set_target(entity, pick)
+		return
+
 	var current = entity_by_id(entity.target_id)
 	if current and current.alive:
 		return
-	entity.target_id = _nearest_opponent_id(entity)
+	_set_target(entity, _nearest_opponent_id(entity))
+
+func _set_target(entity, new_target_id: int):
+	if entity.target_id == new_target_id:
+		return
+	entity.target_id = new_target_id
+	if new_target_id != -1:
+		combat_log.add_event(
+			CombatEvent.create_target(entity.entity_id, new_target_id, combat_time)
+		)
+
+## Called on every landed hit: pulls the pack into combat and accrues
+## threat on the struck enemy, scaled by the skill's threat modifier.
+func register_damage(source, target, skill, amount):
+	for enemy in enemies:
+		enemy.in_combat = true
+	if target.team == CombatEntity.Team.ENEMY:
+		var multiplier = skill.threat_modifier if skill else 1.0
+		Threat.add_damage(target.threat_table, source.entity_id, amount * multiplier)
 
 func _nearest_opponent_id(entity) -> int:
 	var best_id := -1
