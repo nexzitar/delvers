@@ -110,6 +110,29 @@ static func create_target(source_id: int, target_id: int, sim_time: float) -> Co
 	return event
 
 
+static func create_cast_start(source_id: int, target_id_: int, sim_time: float, skill_: SkillDefinition) -> CombatEvent:
+	var event = CombatEvent.new()
+	event.type = EventType.CAST_START
+	event.source_id = source_id
+	event.entity_id = source_id
+	event.target_id = target_id_
+	event.time = sim_time
+	event.skill = skill_
+	event.skill_name = skill_.skill_name if skill_ else ""
+	return event
+
+
+static func create_cast_finish(source_id: int, sim_time: float, skill_: SkillDefinition) -> CombatEvent:
+	var event = CombatEvent.new()
+	event.type = EventType.CAST_FINISH
+	event.source_id = source_id
+	event.entity_id = source_id
+	event.time = sim_time
+	event.skill = skill_
+	event.skill_name = skill_.skill_name if skill_ else ""
+	return event
+
+
 static func create_telegraph(
 		source_id: int,
 		sim_time: float,

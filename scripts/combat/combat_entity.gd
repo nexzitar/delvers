@@ -34,6 +34,7 @@ var in_combat: bool = false
 var statuses: Array = []
 var is_casting: bool = false
 var cast_remaining: float = 0.0
+var casting_skill: SkillDefinition = null
 var weapon_reach: float = 48.0
 
 var team: Team
@@ -87,6 +88,14 @@ func update(delta, combat_state):
 	if is_stunned():
 		return
 
+	# A cast in flight locks the caster in place until it resolves.
+	if is_casting:
+		cast_remaining -= delta
+		if cast_remaining <= 0.0:
+			is_casting = false
+			_finish_cast(combat_state)
+		return
+
 	combat_state.validate_target(self)
 	var target = combat_state.entity_by_id(target_id)
 	if target == null:
@@ -102,7 +111,15 @@ func update(delta, combat_state):
 	# swing only fires (and resets the timer) in range.
 	attack_timer -= delta
 	if attack_timer <= 0.0 and in_range:
-		perform_auto_attack(combat_state, target)
+		var skill = skills[0]
+		if (
+			skill
+			and skill.requires_stationary
+			and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
+		):
+			_start_cast(combat_state, skill)
+		else:
+			perform_auto_attack(combat_state, target)
 		attack_timer = attack_interval
 
 	if off_weapon:
@@ -111,6 +128,32 @@ func update(delta, combat_state):
 			perform_off_hand_attack(combat_state, target)
 			off_attack_timer = off_weapon.attack_speed
 
+
+## Ranged wind-up: instants get a short draw, real casts a longer one.
+func _start_cast(combat_state, skill):
+	is_casting = true
+	casting_skill = skill
+	cast_remaining = (
+		0.3 if skill.cast_type == SkillDefinition.CastType.INSTANT else 0.5
+	)
+	combat_state.stop_movement(self)
+	combat_state.combat_log.add_event(CombatEvent.create_cast_start(
+		entity_id, target_id, combat_state.combat_time, skill
+	))
+
+func _finish_cast(combat_state):
+	var skill = casting_skill
+	casting_skill = null
+	combat_state.combat_log.add_event(CombatEvent.create_cast_finish(
+		entity_id, combat_state.combat_time, skill
+	))
+	var target = combat_state.entity_by_id(target_id)
+	if target == null or not target.alive:
+		return
+	# The target may have broken range or line of sight mid-cast.
+	if not combat_state.can_use_skill_on(self, skill, target):
+		return
+	perform_auto_attack(combat_state, target)
 
 func perform_auto_attack(combat_state, target):
 	var weapon_hit := 0
