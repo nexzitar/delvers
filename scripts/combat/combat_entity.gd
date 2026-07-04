@@ -112,6 +112,7 @@ func update(delta, combat_state):
 	var in_range = combat_state.in_attack_range(self, target)
 	if in_range:
 		combat_state.stop_movement(self)
+		combat_state.face_target(self, target)
 	else:
 		combat_state.tick_movement(self, target, delta)
 

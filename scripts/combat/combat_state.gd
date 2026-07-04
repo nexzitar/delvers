@@ -168,6 +168,20 @@ func in_attack_range(attacker, target) -> bool:
 	var skill = attacker.skills[0] if not attacker.skills.is_empty() else null
 	return can_use_skill_on(attacker, skill, target)
 
+## Turns a stationary attacker toward its target (movement handles
+## facing while walking), logging FACE when the direction meaningfully
+## changes so the theater turns with it.
+func face_target(entity, target):
+	var dir = target.position - entity.position
+	if dir.length_squared() < 1.0:
+		return
+	entity.facing = dir.normalized()
+	if entity.facing.dot(entity.last_logged_facing) < 0.95:
+		entity.last_logged_facing = entity.facing
+		combat_log.add_event(
+			CombatEvent.create_face(entity.entity_id, combat_time, entity.facing)
+		)
+
 # --- Movement ---------------------------------------------------------
 
 func stop_movement(entity):
