@@ -12,6 +12,6 @@ skill_name = "Arrow Shot"
 icon = ExtResource("3_icon")
 delivery_type = 1
 projectile_scene = ExtResource("2_arrow")
-range = 8.0
+range = 320.0
 base_min_damage = 1
 base_max_damage = 7

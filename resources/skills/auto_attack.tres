@@ -9,4 +9,5 @@ script = ExtResource("1_hodyc")
 skill_id = "auto_attack"
 skill_name = "Slash"
 icon = ExtResource("2_icon")
+range = 48.0
 base_max_damage = 9

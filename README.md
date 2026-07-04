@@ -31,8 +31,8 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 ## Features
 
-- **Combat simulation** — Heroes and enemies fight using timed auto-attacks, skills, and formation slots. Combat runs headlessly and produces a full event log.
-- **Theater playback** — Combat results are replayed visually: actors spawn on the battlefield, attack animations play (main-hand and off-hand swings each close to the target and animate from the correct weapon pivot), damage numbers float up, and deaths are shown.
+- **Spatial combat simulation** — Heroes and enemies fight on a tile-based battlefield: units path toward their targets (A* + soft separation), attacks are gated on weapon/skill range and line of sight, ranged attacks wind up standing still, and enemies pick targets from threat tables. Combat runs headlessly and produces a full event log.
+- **3D theater playback** — Combat results replay in a low-poly 3D battle scene built entirely from procedural primitive-mesh rigs: units walk (or hop) along their logged paths, melee swings land on the damage beat, archers draw and loose visible arrows, deaths crumple into corpses, and target arrows + floating damage numbers keep it readable. A camera follows the fight.
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
 - **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds. Soft ground shadows sit under every actor at camp and in battle. Entering camp from the menu plays a zoom-and-fade transition, and the party keeps their seats across it.
@@ -98,9 +98,9 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 
 | Area | Status |
 |------|--------|
-| Combat simulation | Working |
-| Theater playback | Working |
-| Formation slots | Working |
+| Spatial combat simulation (movement, range/LoS, threat, skills) | Working |
+| 3D theater playback (procedural low-poly rigs) | Working |
+| ~~Formation slots~~ | Replaced by spatial positioning |
 | Game loop (menu → camp → battle → camp) | Working |
 | Hero loadout (equipment, skills, naming) | Working (session-only, no save yet) |
 | Camp upgrades / recruiting | Not started |
@@ -162,9 +162,9 @@ delvers/
 
 Combat is split into two layers:
 
-1. **Simulation** (`scripts/combat/`) — `CombatState` runs the fight in discrete time steps. Entities attack on intervals driven by their main-hand weapon speed (or template default when unarmed), damage is rolled from skill definitions plus weapon damage ranges, and every action is recorded as a `CombatEvent` in a `CombatLog`. When one side is eliminated, a `CombatResult` is built.
+1. **Simulation** (`scripts/combat/`) — `CombatState` runs the fight in discrete time steps on a tile grid (`BattleArena`). Units acquire targets (threat tables for enemies, nearest for heroes), path toward them with A* and separation steering, and attack only in range with line of sight — melee on weapon-speed timers, ranged via stationary casts, plus cooldown skills (Frost Nova, Hamstring, Charge, Heal). Every action is recorded as a `CombatEvent` in a `CombatLog`; when one side is eliminated, a `CombatResult` is built.
 
-2. **Theater** (`scripts/theater/`) — `TheaterController` reads the combat log and plays it back: spawning actors, triggering attack/hit/death animations (including separate off-hand melee swings), spawning floating damage numbers, and feeding the side panels (unit health/mana and the damage meters).
+2. **Theater** (`scripts/theater3d/`) — `TheaterController3D` replays the combat log in real time in a 3D scene: procedural rigs spawn from templates/loadouts, `MOVE` events drive walking, melee swings are cued so contact lands on the `DAMAGE` beat, casts draw and release arrows, statuses and heals float up as text, and the side panels (unit health/mana and damage meters) track everything live.
 
 ## Current Content
 

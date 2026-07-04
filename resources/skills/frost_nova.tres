@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/frost_nova.gd" id="2_behavior"]
+
+[resource]
+resource_name = "Frost Nova"
+script = ExtResource("1_skill")
+skill_id = "frost_nova"
+skill_name = "Frost Nova"
+behavior_script = ExtResource("2_behavior")
+skill_type = 1
+aoe_radius = 96.0
+telegraph_duration = 0.4
+cooldown = 10.0
