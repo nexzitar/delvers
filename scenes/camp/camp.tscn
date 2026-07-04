@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/camp/camp.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://scenes/camp/campfire_stage.tscn" id="2_stage"]
+[ext_resource type="PackedScene" path="res://scenes/camp/campfire_stage_3d.tscn" id="2_stage"]
 [ext_resource type="FontFile" uid="uid://b70ywrddxgpna" path="res://art/fonts/Herculanum.ttf" id="3_font"]
 [ext_resource type="Texture2D" uid="uid://5qykq0gmd8su" path="res://art/ui/stone_texture.jpeg" id="4_stone"]
 [ext_resource type="Script" path="res://scripts/ui/music_player.gd" id="5_music"]
@@ -30,8 +30,8 @@ grow_vertical = 2
 script = ExtResource("1_script")
 
 [node name="Stage" parent="." instance=ExtResource("2_stage")]
-zoom = 1.12
 interactive = true
+framing = "camp"
 
 [node name="UI" type="CanvasLayer" parent="."]
 

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ctc4i51geqd1x"]
 
-[ext_resource type="PackedScene" path="res://scenes/camp/campfire_stage.tscn" id="1_stage"]
+[ext_resource type="PackedScene" path="res://scenes/camp/campfire_stage_3d.tscn" id="1_stage"]
 [ext_resource type="FontFile" uid="uid://b70ywrddxgpna" path="res://art/fonts/Herculanum.ttf" id="2_cfcag"]
 [ext_resource type="Texture2D" uid="uid://5qykq0gmd8su" path="res://art/ui/stone_texture.jpeg" id="3_sf4ia"]
 [ext_resource type="Script" uid="uid://ckxo7qmhitru0" path="res://scripts/ui/menu.gd" id="4_menu"]

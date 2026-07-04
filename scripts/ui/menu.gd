@@ -2,10 +2,6 @@ extends Control
 
 const CAMP_SCENE = "res://scenes/camp/camp.tscn"
 
-## How far the camp scene zooms in, mirrored here so the Enter
-## transition lands exactly on the camp's framing.
-const CAMP_ZOOM = 1.12
-
 @onready var stage = $Stage
 @onready var hanging_sign = $UI/HangingSign
 
@@ -46,18 +42,11 @@ func _on_enter_pressed():
 		return
 	_transitioning = true
 
-	# The party keeps their seats through the transition into camp.
+	# The party keeps their seats through the transition into camp,
+	# and the camera glides from the menu framing to the camp's.
 	PlayerRoster.keep_seating = true
 
-	var transition = create_tween().set_parallel(true)
-
-	transition.tween_property(
-		stage, "scale", Vector2.ONE * CAMP_ZOOM, 1.0
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	transition.tween_property(
-		stage, "position", stage.zoom_center * (1.0 - CAMP_ZOOM), 1.0
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
+	var transition = stage.transition_to_camp(1.0)
 	transition.tween_property($UI/Logo, "modulate:a", 0.0, 0.7)
 	transition.tween_property(hanging_sign, "modulate:a", 0.0, 0.7)
 	transition.tween_property($UI/ColorRect, "color:a", 0.0, 0.7)

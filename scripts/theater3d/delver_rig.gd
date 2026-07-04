@@ -241,6 +241,21 @@ func pose_swing_off(t: float):
 	off_sword.rotation_degrees = OFF_SWORD_SWING_BASE + Vector3(v.pitch, 0, 0)
 	head.rotation.y = v.twist * 0.5
 
+## Seated on a log: legs stretched forward, hands in the lap, a slow
+## breathing sway. t is continuous seconds for the idle motion.
+func pose_sit(t: float):
+	_reset_pose()
+	var breathe := sin(t * 1.7)
+	# Positive X swings a hanging limb backward, so legs go forward
+	# with negative rotation; slight asymmetry keeps it natural.
+	leg_l.rotation.x = -1.5
+	leg_r.rotation.x = -1.32
+	arm_l.rotation.x = -0.35
+	arm_r.rotation.x = -0.3
+	spine.rotation.x = 0.1 + 0.02 * breathe
+	spine.position.y = 0.4 + 0.008 * breathe
+	head.rotation.x = -0.08
+
 ## Crumple: torso pitches forward, knees fold, body sinks. Holds the
 ## final frame so corpses can stay on the field. t in [0, DEATH_T].
 func pose_death(t: float):
