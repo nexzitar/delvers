@@ -54,7 +54,7 @@ Delvers is a party-based dungeon crawler where you send heroes — your *delvers
 4. **Theater** — Results play back as a staged battle scene.
 5. **Rewards** — Collect loot, experience, and progress deeper.
 
-The loop's skeleton is in place: from the menu you enter the camp, embark on an adventure (one battle for now), and return to camp with a victory or defeat report. Dungeon exploration and meta-progression are not yet implemented.
+The loop is playable: from the menu you enter the camp, embark on a **delve of up to ten escalating rooms** (bigger packs, stronger foes, varied arenas with obstacles), collect loot into a pouch after each room, and choose to press deeper or retreat. Clearing the tenth room, dying, or retreating banks the spoils into the stash — and everything (loadouts, stash, progress) persists to disk.
 
 ### Combat Design
 
@@ -104,8 +104,9 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Game loop (menu → camp → battle → camp) | Working |
 | Hero loadout (equipment, skills, naming) | Working (session-only, no save yet) |
 | Camp upgrades / recruiting | Not started |
-| Dungeon exploration | Not started |
-| Loot / progression | Not started |
+| Delve (10 escalating rooms, arena variety) | Working |
+| Loot drops + spoils screen | Working |
+| Save / persistence | Working |
 | Multiple skill types | Schema ready, only auto-attack implemented |
 | Sound | Procedural placeholder audio with settings (no composed music yet) |
 | Settings | Fullscreen + volume sliders working |
