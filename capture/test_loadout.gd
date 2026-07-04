@@ -4,8 +4,12 @@ func _ok(label, cond):
 	print(("PASS " if cond else "FAIL ") + label)
 
 func _ready():
+	# Built by hand with autosave off, so the test neither reads nor
+	# writes the player's real save.
 	var roster = preload("res://scripts/game/player_roster.gd").new()
-	add_child(roster)  # triggers _ready -> _build_heroes/_build_stash
+	roster.autosave = false
+	roster._build_heroes()
+	roster._build_stash()
 
 	# Two independent heroes from the same base.
 	_ok("two heroes", roster.heroes.size() == 2)

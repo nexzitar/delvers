@@ -410,6 +410,7 @@ func _finish_battle():
 	PlayerRoster.last_battle_won = combat_result.victory
 	if combat_result.victory:
 		PlayerRoster.adventures_completed += 1
+	RosterSave.save(PlayerRoster)
 
 	await _show_battle_result(combat_result.victory)
 	await get_tree().create_timer(2.2).timeout

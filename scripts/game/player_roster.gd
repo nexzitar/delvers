@@ -17,6 +17,10 @@ const HEAVY_AXE = preload("res://resources/gear/heavy_axe.tres")
 
 var heroes: Array = []
 
+## Loadout edits write straight to disk; tests that build throwaway
+## rosters turn this off so they never touch the player's save.
+var autosave := true
+
 ## Spare gear the player can drag onto heroes. Each entry is a single
 ## physical item: equipping it moves it onto a hero, unequipping puts
 ## the displaced item back here. Seeded with a few spares so the party
@@ -41,8 +45,12 @@ var saved_seating := {}
 var keep_seating := false
 
 func _ready():
+	if RosterSave.load_into(self):
+		return
 	_build_heroes()
 	_build_stash()
+	if autosave:
+		RosterSave.save(self)
 
 ## Both starting heroes are the same Default Delver, told apart only by
 ## the gear they hold. Duplicated so their loadouts are independent.
@@ -136,6 +144,8 @@ func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bo
 	while hero.bonus_skills.size() < 5:
 		hero.bonus_skills.append(null)
 	hero.bonus_skills[slot - 1] = skill
+	if autosave:
+		RosterSave.save(self)
 	return true
 
 func unequip_bonus_skill(hero_index: int, slot: int) -> void:
@@ -144,6 +154,8 @@ func unequip_bonus_skill(hero_index: int, slot: int) -> void:
 	var hero = heroes[hero_index]
 	if slot - 1 < hero.bonus_skills.size():
 		hero.bonus_skills[slot - 1] = null
+		if autosave:
+			RosterSave.save(self)
 
 ## Positions a stash item may go into right now (off hand is blocked by a
 ## two-hander/bow in the main hand).
@@ -205,6 +217,8 @@ func equip_gear(hero_index: int, gear: GearDefinition, position := -1) -> bool:
 		_sync_role(hero)
 
 	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
 	return true
 
 func unequip_gear(hero_index: int, position: int) -> void:
@@ -217,11 +231,15 @@ func unequip_gear(hero_index: int, position: int) -> void:
 	if position in [Equip.Position.MAIN_HAND, Equip.Position.OFF_HAND]:
 		_sync_role(hero)
 	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
 
 func rename_hero(hero_index: int, new_name: String) -> void:
 	var trimmed = new_name.strip_edges()
 	if not trimmed.is_empty():
 		heroes[hero_index].hero_name = trimmed
+		if autosave:
+			RosterSave.save(self)
 
 func _main_hand_two_handed(hero) -> bool:
 	var main = hero.equipped.get(Equip.Position.MAIN_HAND, null)

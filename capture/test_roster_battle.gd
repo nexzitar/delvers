@@ -7,8 +7,12 @@ const GREEN_SLIME = preload("res://resources/enemies/green_slime.tres")
 const GOBLIN_ARCHER = preload("res://resources/enemies/goblin_archer.tres")
 
 func _ready():
+	# Built by hand with autosave off, so the test neither reads nor
+	# writes the player's real save.
 	var roster = load("res://scripts/game/player_roster.gd").new()
-	add_child(roster)
+	roster.autosave = false
+	roster._build_heroes()
+	roster._build_stash()
 
 	for trial in 12:
 		var encounter = []
