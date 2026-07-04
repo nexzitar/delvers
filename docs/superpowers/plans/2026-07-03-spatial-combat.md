@@ -551,15 +551,15 @@ Charge path: ray/step toward target up to max distance; first enemy within radiu
 - Create: `scenes/theater/battle_theater_3d.tscn` (Node3D root: ground, lights, `Camera3D` at gameplay angle per `proto3d_battle.gd`)
 - Test: `capture/test_actor_factory_3d.gd`, `.tscn`
 
-- [ ] **Step 1: Move builders/rigs into `scripts/theater3d/`; update proto3d scene preloads**
+- [x] **Step 1: Move builders/rigs into `scripts/theater3d/`; update proto3d scene preloads**
 
-- [ ] **Step 2: `actor_factory_3d.build(template) -> Node3D`** — HeroTemplate: map `equipped` to rig opts (main-hand sword → `sword`, bow → `bow`, off-hand shield → `shield`, head gear → `helmet`); EnemyTemplate: `enemy_id` → slime rig / goblin palette rig. Add a `death` pose to both rigs (fall/flatten + fade).
+- [x] **Step 2: `actor_factory_3d.build(template) -> Node3D`** — HeroTemplate: map `equipped` to rig opts (main-hand sword → `sword`, bow → `bow`, off-hand shield → `shield`, head gear → `helmet`); EnemyTemplate: `enemy_id` → slime rig / goblin palette rig. Add a `death` pose to both rigs (fall/flatten + fade).
 
-- [ ] **Step 3: Add sim→world mapping helper** — `Theater3D.to_world(sim_pos: Vector2) -> Vector3` = `Vector3(sim_pos.x / 32.0, 0, sim_pos.y / 32.0)`.
+- [x] **Step 3: Add sim→world mapping helper** — `Theater3D.to_world(sim_pos: Vector2) -> Vector3` = `Vector3(sim_pos.x / 32.0, 0, sim_pos.y / 32.0)`.
 
-- [ ] **Step 4: Test — factory builds hero with sword+shield opts and a slime; assert rig children exist**
+- [x] **Step 4: Test — factory builds hero with sword+shield opts and a slime; assert rig children exist**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -568,7 +568,7 @@ Charge path: ray/step toward target up to max distance; first enemy within radiu
 **Files:**
 - Create: `scripts/theater3d/theater_controller_3d.gd` (replay clock; 2D `theater_controller.gd` stays until parity, then is retired)
 
-- [ ] **Step 1: Replace sequential fixed waits with time-based playback**
+- [x] **Step 1: Replace sequential fixed waits with time-based playback**
 
 ```gdscript
 var _replay_time: float = 0.0
@@ -582,9 +582,9 @@ func play(result: CombatResult):
 		await play_event(event)
 ```
 
-- [ ] **Step 2: Manual smoke — battle theater plays at real-time pace**
+- [x] **Step 2: Manual smoke — battle theater plays at real-time pace**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -594,15 +594,15 @@ func play(result: CombatResult):
 - Modify: `scripts/theater3d/theater_controller_3d.gd`
 - Test: visual (battle_theater_3d); logic: `capture/test_replay_move.gd`
 
-- [ ] **Step 1: Handle `SPAWN` — factory-build rig at `to_world(event.position)`**
+- [x] **Step 1: Handle `SPAWN` — factory-build rig at `to_world(event.position)`**
 
-- [ ] **Step 2: Handle `MOVE` — tween rig root to `to_world(event.position)` over 0.15s; drive `pose_walk(phase)` from distance travelled; idle pose when stationary**
+- [x] **Step 2: Handle `MOVE` — tween rig root to `to_world(event.position)` over 0.15s; drive `pose_walk(phase)` from distance travelled; idle pose when stationary**
 
-- [ ] **Step 3: Handle `FACE` — rotate rig root Y toward `event.facing`**
+- [x] **Step 3: Handle `FACE` — rotate rig root Y toward `event.facing`**
 
-- [ ] **Step 4: Melee `DAMAGE` — play `pose_swing` on the source rig, timed so contact lands on the event; no `jump_to` (attacks play in place). Ranged `CAST_START`/`CAST_FINISH` — `pose_shoot` draw/loose; `DEATH` — death pose**
+- [x] **Step 4: Melee `DAMAGE` — play `pose_swing` on the source rig, timed so contact lands on the event; no `jump_to` (attacks play in place). Ranged `CAST_START`/`CAST_FINISH` — `pose_shoot` draw/loose; `DEATH` — death pose**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -612,13 +612,13 @@ func play(result: CombatResult):
 - Create: `scripts/theater3d/target_arrow_3d.gd`
 - Modify: `scripts/theater3d/theater_controller_3d.gd`
 
-- [ ] **Step 1: Flat arrow mesh (primitive prisms) on the ground at rig feet, rotatable around Y**
+- [x] **Step 1: Flat arrow mesh (primitive prisms) on the ground at rig feet, rotatable around Y**
 
-- [ ] **Step 2: On `TARGET` event, update arrow for `source_id` to point at `target_id` actor**
+- [x] **Step 2: On `TARGET` event, update arrow for `source_id` to point at `target_id` actor**
 
-- [ ] **Step 3: Show arrows for all units with valid `target_id`; hide on death**
+- [x] **Step 3: Show arrows for all units with valid `target_id`; hide on death**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ---
 
@@ -628,11 +628,11 @@ func play(result: CombatResult):
 - Create: `scripts/theater3d/aoe_telegraph_3d.gd`
 - Modify: `scripts/theater3d/theater_controller_3d.gd`
 
-- [ ] **Step 1: On `TELEGRAPH`, spawn fading ground circle (flattened cylinder, transparent material) at `to_world(position)`/radius**
+- [x] **Step 1: On `TELEGRAPH`, spawn fading ground circle (flattened cylinder, transparent material) at `to_world(position)`/radius**
 
-- [ ] **Step 2: On `BUFF_APPLIED` / DAMAGE AoE, clear telegraph**
+- [x] **Step 2: On `BUFF_APPLIED` / DAMAGE AoE, clear telegraph**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -643,17 +643,17 @@ func play(result: CombatResult):
 - Modify: `resources/skills/*.tres`, hero/enemy templates
 - Modify: `resources/heroes/default_delver.tres`, `resources/enemies/*.tres`
 
-- [ ] **Step 1: Set weapon `reach` (sword 48, bow 320, dagger 40)**
+- [x] **Step 1: Set weapon `reach` (sword 48, bow 320, dagger 40)**
 
-- [ ] **Step 2: Retune skill `range` to pixels (Slash 48, Arrow Shot 320)**
+- [x] **Step 2: Retune skill `range` to pixels (Slash 48, Arrow Shot 320)**
 
-- [ ] **Step 3: Add `move_speed` to templates (hero 120, slime 80, goblin 100)**
+- [x] **Step 3: Add `move_speed` to templates (hero 120, slime 80, goblin 100)**
 
-- [ ] **Step 4: Run full headless sim — combat completes, no errors**
+- [x] **Step 4: Run full headless sim — combat completes, no errors**
 
 Run: `$GODOT --headless --path . scenes/combat/combat_simulation.tscn`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -664,13 +664,13 @@ Run: `$GODOT --headless --path . scenes/combat/combat_simulation.tscn`
 - Modify: `scripts/game/scene_flow.gd` callers — camp "Embark" routes to the 3D theater
 - Retire: `scripts/theater/battlefield_layout.gd` (spawns come from sim positions)
 
-- [ ] **Step 1: Pass `open_arena.tres` into combat setup from theater bootstrap; size the ground plane from arena dimensions**
+- [x] **Step 1: Pass `open_arena.tres` into combat setup from theater bootstrap; size the ground plane from arena dimensions**
 
-- [ ] **Step 2: Optional debug tile grid on the ground (`@export var show_debug_grid`)**
+- [ ] **Step 2: Optional debug tile grid on the ground (`@export var show_debug_grid`)** *(deferred)*
 
-- [ ] **Step 3: Battle sidebar/damage meter UI unchanged — subscribes to the same replay events (`CanvasLayer` over the 3D viewport)**
+- [x] **Step 3: Battle sidebar/damage meter UI unchanged — subscribes to the same replay events (`CanvasLayer` over the 3D viewport)**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ---
 
@@ -680,11 +680,11 @@ Run: `$GODOT --headless --path . scenes/combat/combat_simulation.tscn`
 - Create: `capture/test_spatial_combat.gd`, `capture/test_spatial_combat.tscn`
 - Modify: `README.md` (Combat Design section)
 
-- [ ] **Step 1: Integration test — 2 heroes vs 3 slimes, sim finishes, min 1 MOVE event, no DAMAGE before MOVE for melee**
+- [x] **Step 1: Integration test — 2 heroes vs 3 slimes, sim finishes, min 1 MOVE event, no DAMAGE before MOVE for melee**
 
-- [ ] **Step 2: Update README combat section to describe spatial model**
+- [x] **Step 2: Update README combat section to describe spatial model**
 
-- [ ] **Step 3: Run all tests**
+- [x] **Step 3: Run all tests**
 
 ```bash
 for t in test_arena test_grid_los test_pathfinder test_threat test_spatial_move test_range_los test_spatial_combat; do
@@ -693,7 +693,7 @@ for t in test_arena test_grid_los test_pathfinder test_threat test_spatial_move 
 done
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ---
 
