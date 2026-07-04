@@ -46,6 +46,25 @@ var battles_fought := 0
 var adventures_completed := 0
 var last_battle_won := false
 
+## A delve is a run of up to DELVE_LENGTH rooms. Loot accumulates in
+## the pouch and only banks into the stash (and the save) when the
+## delve ends — by clearing the last room, dying, or retreating.
+const DELVE_LENGTH := 10
+var delve_room := 0
+var delve_loot: Array = []
+
+func start_delve():
+	delve_room = 1
+	delve_loot = []
+
+func bank_delve_loot():
+	gear_stash.append_array(delve_loot)
+	delve_loot = []
+	delve_room = 0
+	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
+
 ## Seat assignments (seat node name -> hero index) from the last
 ## campfire stage. When keep_seating is set, the next stage reuses
 ## them, so the party stays put during the menu-to-camp transition.

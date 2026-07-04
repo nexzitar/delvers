@@ -17,6 +17,9 @@ var combat_log := CombatLog.new()
 
 var combat_over: bool = false
 
+## Deeper delve rooms field stronger foes.
+var enemy_level_bonus: int = 0
+
 var _move_log_time := {}
 
 func update(delta: float):
@@ -292,7 +295,7 @@ func check_victory():
 
 ## Most foes are common rabble; an occasional veteran shows up.
 func roll_enemy_level() -> int:
-	return [1, 1, 2, 2, 2, 3].pick_random()
+	return [1, 1, 2, 2, 2, 3].pick_random() + enemy_level_bonus
 
 ## Stat multiplier for a level, with a touch of individual variance
 ## so two enemies of the same level aren't perfectly identical.

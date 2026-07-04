@@ -54,27 +54,52 @@ var _wrapping_up := false
 static func to_world(sim_pos: Vector2) -> Vector3:
 	return Vector3(sim_pos.x * WORLD_SCALE, 0.0, sim_pos.y * WORLD_SCALE)
 
+const ARENA_POOL := [
+	"res://resources/arenas/open_arena.tres",
+	"res://resources/arenas/pillared_hall.tres",
+	"res://resources/arenas/broken_wall.tres",
+	"res://resources/arenas/scattered_rocks.tres",
+]
+
+## Harness hook: force a specific arena (set before adding to the tree).
+var forced_arena_path := ""
+
 func _ready():
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 
+	var room = maxi(1, PlayerRoster.delve_room)
 	var combat = CombatState.new()
-	combat.setup_combat(PlayerRoster.heroes, roll_encounter())
+	# Rooms deepen: bigger packs, higher enemy levels.
+	combat.enemy_level_bonus = (room - 1) / 4
+	combat.setup_combat(PlayerRoster.heroes, roll_encounter(room), _pick_arena(room))
 	while not combat.combat_over:
 		combat.update(0.1)
 	combat_result = combat.build_result()
 
 	_setup_world(combat.arena)
 	_setup_ui()
+	_show_room_banner(room)
 	_build_timeline(combat_result.combat_log)
 	_playing = true
 
-## A random pack of enemies for this adventure.
-func roll_encounter() -> Array:
+## A random pack of enemies, growing with the delve's depth.
+func roll_encounter(room: int) -> Array:
 	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER]
+	var low = clampi(2 + (room - 1) / 4, 2, 4)
+	var high = clampi(3 + (room - 1) / 2, 3, 6)
 	var encounter = []
-	for i in randi_range(2, 4):
+	for i in randi_range(low, high):
 		encounter.append(pool.pick_random())
 	return encounter
+
+## The first room is always the open field; deeper rooms draw from the
+## full arena pool.
+func _pick_arena(room: int) -> BattleArena:
+	if forced_arena_path != "":
+		return load(forced_arena_path)
+	if room <= 1:
+		return load(ARENA_POOL[0])
+	return load(ARENA_POOL.pick_random())
 
 # --- Replay loop --------------------------------------------------------
 
@@ -403,17 +428,96 @@ func _spawn_floating_text(at: Vector3, text: String, color: Color):
 		.set_ease(Tween.EASE_IN)
 	tween.tween_callback(label.queue_free)
 
+## Fades a "Room N of 10" banner at the top as the fight opens.
+func _show_room_banner(room: int):
+	var layer := CanvasLayer.new()
+	layer.layer = 11
+	add_child(layer)
+	var label := Label.new()
+	label.text = "Room %d of %d" % [room, PlayerRoster.DELVE_LENGTH]
+	label.anchor_left = 0.0
+	label.anchor_right = 1.0
+	label.offset_top = 40
+	label.offset_bottom = 110
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", FONT)
+	label.add_theme_font_size_override("font_size", 52)
+	label.add_theme_color_override("font_color", Color(0.85, 0.72, 0.42))
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 10)
+	label.modulate.a = 0.0
+	layer.add_child(label)
+	var tween := create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.5)
+	tween.tween_interval(1.8)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(layer.queue_free)
+
 func _finish_battle():
 	await get_tree().create_timer(1.4).timeout
 
+	var room = maxi(1, PlayerRoster.delve_room)
 	PlayerRoster.battles_fought += 1
 	PlayerRoster.last_battle_won = combat_result.victory
-	if combat_result.victory:
-		PlayerRoster.adventures_completed += 1
-	RosterSave.save(PlayerRoster)
 
-	await _show_battle_result(combat_result.victory)
-	await get_tree().create_timer(2.2).timeout
+	if not combat_result.victory:
+		RosterSave.save(PlayerRoster)
+		await _show_battle_result(false)
+		await get_tree().create_timer(1.2).timeout
+		_show_summary(
+			"The Party Falls...",
+			"%d room%s cleared. Their spoils make it home." % [
+				room - 1, "" if room == 2 else "s"
+			]
+		)
+		return
+
+	var found = LootTable.roll_room_loot(room)
+	PlayerRoster.delve_loot.append_array(found)
+
+	if room >= PlayerRoster.DELVE_LENGTH:
+		PlayerRoster.adventures_completed += 1
+		RosterSave.save(PlayerRoster)
+		await _show_battle_result(true)
+		await get_tree().create_timer(1.2).timeout
+		_show_summary(
+			"Delve Complete!",
+			"All %d rooms conquered." % PlayerRoster.DELVE_LENGTH
+		)
+		return
+
+	RosterSave.save(PlayerRoster)
+	await _show_battle_result(true)
+	await get_tree().create_timer(1.2).timeout
+	_show_room_cleared(room, found)
+
+func _show_room_cleared(room: int, found: Array):
+	var panel := DelvePanel.new()
+	add_child(panel)
+	panel.setup(
+		"Room %d Cleared!" % room,
+		"The pouch holds %d item%s. Deeper rooms hold deadlier foes." % [
+			PlayerRoster.delve_loot.size(),
+			"" if PlayerRoster.delve_loot.size() == 1 else "s",
+		],
+		found,
+		"Delve Deeper",
+		"Retreat with Spoils"
+	)
+	panel.primary_pressed.connect(func():
+		PlayerRoster.delve_room += 1
+		SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn"))
+	panel.secondary_pressed.connect(_bank_and_return)
+
+## Final spoils screen: everything gathered this delve, then camp.
+func _show_summary(title: String, subtitle: String):
+	var panel := DelvePanel.new()
+	add_child(panel)
+	panel.setup(title, subtitle, PlayerRoster.delve_loot, "Return to Camp")
+	panel.primary_pressed.connect(_bank_and_return)
+
+func _bank_and_return():
+	PlayerRoster.bank_delve_loot()
 	SceneFlow.change_scene("res://scenes/camp/camp.tscn")
 
 func _show_battle_result(victory):
@@ -482,6 +586,25 @@ func _setup_world(arena):
 	ground.material_override = mat
 	ground.position = center
 	add_child(ground)
+
+	# Blocked tiles rise as stone pillars: the same cells the sim's
+	# pathfinding and line of sight respect.
+	var pillar_mat := StandardMaterial3D.new()
+	pillar_mat.albedo_color = Color("5b5e57")
+	pillar_mat.roughness = 1.0
+	for tile in arena.blocked_tiles:
+		var pillar := BoxMesh.new()
+		var wobble = 0.15 * ((tile.x * 7 + tile.y * 13) % 5) / 4.0
+		pillar.size = Vector3(1.0, 1.3 + wobble, 1.0)
+		var mesh := MeshInstance3D.new()
+		mesh.mesh = pillar
+		mesh.material_override = pillar_mat
+		var base = to_world(Vector2(
+			(tile.x + 0.5) * arena.tile_size,
+			(tile.y + 0.5) * arena.tile_size
+		))
+		mesh.position = base + Vector3(0, pillar.size.y * 0.5, 0)
+		add_child(mesh)
 
 	# Deterministic scatter so the field reads as a place.
 	for i in 14:

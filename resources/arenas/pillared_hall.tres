@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BattleArena" load_steps=2 format=3 uid="uid://dpillarhall001"]
+
+[ext_resource type="Script" path="res://scripts/combat/battle_arena.gd" id="1_arena"]
+
+[resource]
+script = ExtResource("1_arena")
+arena_id = "pillared_hall"
+width = 30
+height = 20
+tile_size = 32
+blocked_tiles = Array[Vector2i]([Vector2i(9, 5), Vector2i(10, 5), Vector2i(9, 6), Vector2i(10, 6), Vector2i(9, 13), Vector2i(10, 13), Vector2i(9, 14), Vector2i(10, 14), Vector2i(19, 5), Vector2i(20, 5), Vector2i(19, 6), Vector2i(20, 6), Vector2i(19, 13), Vector2i(20, 13), Vector2i(19, 14), Vector2i(20, 14)])
+hero_spawn_center = Vector2i(4, 10)
+enemy_spawn_center = Vector2i(25, 10)
