@@ -11,6 +11,8 @@ class_name EnemyDefinition
 @export var base_attack: int
 
 @export var base_attack_interval: float
+## World pixels per second on the battle grid.
+@export var move_speed: float = 100.0
 
 @export var portrait: Texture2D
 

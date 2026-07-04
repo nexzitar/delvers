@@ -371,6 +371,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		)
 		if hero.main_weapon:
 			hero.weapon_reach = hero.main_weapon.effective_reach()
+		hero.move_speed = hero_template.move_speed
 		hero.attack_timer = hero.attack_interval
 		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
 
@@ -422,6 +423,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		enemy.attack_interval = enemy_template.base_attack_interval
 		enemy.attack_timer = enemy.attack_interval
+		enemy.move_speed = enemy_template.move_speed
 
 		enemy.skills = enemy_template.skills.duplicate()
 

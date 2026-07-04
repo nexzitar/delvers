@@ -74,6 +74,16 @@ func pose_hop(t: float):
 		var splat := 1.0 + 0.35 * sin(k * PI)
 		body.scale = Vector3(splat, 2.0 - splat, splat)
 
+## Travel: bounces in place while the root slides along its path, so
+## replayed movement reads as hopping. t is continuous seconds.
+func pose_travel(t: float):
+	_reset_pose()
+	var phase := fmod(t, 0.5) / 0.5
+	var arc := 4.0 * phase * (1.0 - phase)
+	body.position.y = 0.18 * arc
+	var stretch := 0.85 + 0.3 * arc
+	body.scale = Vector3(2.0 - stretch, stretch, 2.0 - stretch)
+
 ## Deflates into a puddle; holds the final frame as a corpse.
 func pose_death(t: float):
 	_reset_pose()

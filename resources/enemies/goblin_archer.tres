@@ -14,6 +14,7 @@ actor_scene = ExtResource("2_actor")
 base_health = 20
 base_attack = 2
 base_attack_interval = 3.5
+move_speed = 100.0
 portrait = ExtResource("5_icon")
 skills = Array[ExtResource("3_skill")]([ExtResource("4_arrow")])
 preferred_row = 1

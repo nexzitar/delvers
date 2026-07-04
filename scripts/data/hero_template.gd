@@ -10,6 +10,8 @@ class_name HeroTemplate
 @export var base_mana: int
 @export var base_attack: int
 @export var base_attack_interval: float
+## World pixels per second on the battle grid.
+@export var move_speed: float = 120.0
 
 @export var portrait: Texture2D
 @export var starting_skills: Array[SkillDefinition]
