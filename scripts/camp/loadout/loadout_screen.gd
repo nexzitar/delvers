@@ -54,6 +54,8 @@ var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # the SKILL_SLOTS skill DropTarget panels
 var _gear_grid: GridContainer
 var _preview_holder: Control
+var _preview_rig: Node3D
+var _preview_time := 0.0
 var _tooltip_panel: Panel
 var _tooltip_left: VBoxContainer
 var _tooltip_right: VBoxContainer
@@ -449,23 +451,41 @@ func _fill_gear_grid():
 
 func _update_preview():
 	_clear(_preview_holder)
+	_preview_rig = null
 
 	var hero = PlayerRoster.heroes[hero_index]
 
 	var vp_w := PREVIEW_VIEWPORT_W
 	var vp_h := PREVIEW_VIEWPORT_H
 
+	# Live 3D preview: the hero's actual battle rig with its gear,
+	# idling under studio lighting.
 	var vp = SubViewport.new()
 	vp.size = Vector2i(vp_w, vp_h)
 	vp.transparent_bg = true
+	vp.own_world_3d = true
+	vp.msaa_3d = Viewport.MSAA_4X
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 
-	var actor_y := vp_h * 0.5
+	var key_light = DirectionalLight3D.new()
+	key_light.rotation_degrees = Vector3(-35, -28, 0)
+	key_light.light_energy = 1.15
+	vp.add_child(key_light)
 
-	var actor = hero.actor_scene.instantiate()
-	actor.position = Vector2(vp_w / 2.0, actor_y)
-	actor.scale = Vector2(1.0, 1.0)
-	vp.add_child(actor)
+	var camera = Camera3D.new()
+	camera.fov = 30
+	var env = Environment.new()
+	env.background_mode = Environment.BG_CLEAR_COLOR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.75, 0.78, 0.9)
+	env.ambient_light_energy = 0.85
+	camera.environment = env
+	vp.add_child(camera)
+	camera.position = Vector3(0, 0.72, 2.7)
+	camera.look_at(Vector3(0, 0.62, 0))
+
+	_preview_rig = ActorFactory3D.build_hero(hero.equipped)
+	vp.add_child(_preview_rig)
 
 	var container = SubViewportContainer.new()
 	container.stretch = false
@@ -478,7 +498,6 @@ func _update_preview():
 	container.offset_bottom = vp_h / 2.0
 	container.add_child(vp)
 	_preview_holder.add_child(container)
-	actor.equip_gear(hero.equipped)
 
 # --- Drag-and-drop policy --------------------------------------------
 
@@ -691,10 +710,16 @@ func _tooltip_skill(skill: SkillDefinition):
 func is_carrying() -> bool:
 	return _carried != null
 
-func _process(_delta):
+func _process(delta):
 	if _carry_visual and is_instance_valid(_carry_visual):
 		var m = _carry_visual.get_global_mouse_position()
 		_carry_visual.global_position = m - _carry_visual.size * 0.5
+
+	# Gentle idle + sway so the 3D preview reads as alive.
+	if is_instance_valid(_preview_rig):
+		_preview_time += delta
+		_preview_rig.pose_idle(_preview_time)
+		_preview_rig.rotation.y = 0.4 * sin(_preview_time * 0.4)
 
 func _input(event):
 	if _carried == null:
