@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/charge.gd" id="2_behavior"]
+
+[resource]
+resource_name = "Charge"
+script = ExtResource("1_skill")
+skill_id = "charge"
+skill_name = "Charge"
+behavior_script = ExtResource("2_behavior")
+range = 400.0
+displacement = true
+cooldown = 12.0

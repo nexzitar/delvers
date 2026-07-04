@@ -44,6 +44,8 @@ var attack_timer = attack_interval
 var combat_log := []
 
 var skills := []
+## skill_id -> combat_time when the skill comes off cooldown.
+var skill_ready_at := {}
 
 # Per-hand attack model. base_attack_power excludes weapon damage so the
 # off-hand swing can be computed independently.
@@ -69,9 +71,11 @@ func is_stunned() -> bool:
 			return true
 	return false
 
-func tick_statuses(delta):
+func tick_statuses(delta, combat_state):
 	for s in statuses:
 		s.remaining -= delta
+		if s.remaining <= 0.0:
+			combat_state.log_buff_expired(self, s)
 	statuses = statuses.filter(func(s): return s.remaining > 0.0)
 
 func move_speed_multiplier() -> float:
@@ -84,7 +88,7 @@ func move_speed_multiplier() -> float:
 ## Per-tick loop: statuses, target, close distance, then attack when
 ## in range. Stun skips everything; root skips only movement.
 func update(delta, combat_state):
-	tick_statuses(delta)
+	tick_statuses(delta, combat_state)
 	if is_stunned():
 		return
 
@@ -99,6 +103,10 @@ func update(delta, combat_state):
 	combat_state.validate_target(self)
 	var target = combat_state.entity_by_id(target_id)
 	if target == null:
+		return
+
+	# Special skills fire on their own cooldowns and take the beat.
+	if _try_special_skills(combat_state):
 		return
 
 	var in_range = combat_state.in_attack_range(self, target)
@@ -128,6 +136,20 @@ func update(delta, combat_state):
 			perform_off_hand_attack(combat_state, target)
 			off_attack_timer = off_weapon.attack_speed
 
+
+## Skills beyond the auto-attack (skills[0]) carry behavior scripts and
+## fire whenever their conditions hold and the cooldown has elapsed.
+func _try_special_skills(combat_state) -> bool:
+	for i in range(1, skills.size()):
+		var skill = skills[i]
+		if skill == null or skill.behavior_script == null:
+			continue
+		if combat_state.combat_time < skill_ready_at.get(skill.skill_id, 0.0):
+			continue
+		if skill.behavior_script.try_use(combat_state, self, skill):
+			skill_ready_at[skill.skill_id] = combat_state.combat_time + skill.cooldown
+			return true
+	return false
 
 ## Ranged wind-up: instants get a short draw, real casts a longer one.
 func _start_cast(combat_state, skill):

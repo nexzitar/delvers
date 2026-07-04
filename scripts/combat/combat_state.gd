@@ -83,6 +83,53 @@ func _set_target(entity, new_target_id: int):
 			CombatEvent.create_target(entity.entity_id, new_target_id, combat_time)
 		)
 
+## Applies a timed status and logs BUFF_APPLIED for the theater.
+func apply_status(target, kind, duration: float, magnitude: float, status_id: String):
+	var status = StatusEffect.new()
+	status.kind = kind
+	status.remaining = duration
+	status.magnitude = magnitude
+	status.id = status_id
+	target.statuses.append(status)
+
+	var event = CombatEvent.new()
+	event.type = CombatEvent.EventType.BUFF_APPLIED
+	event.time = combat_time
+	event.entity_id = target.entity_id
+	event.target_id = target.entity_id
+	event.target_name = target.entity_name
+	event.status_id = status_id
+	combat_log.add_event(event)
+
+func log_buff_expired(entity, status):
+	var event = CombatEvent.new()
+	event.type = CombatEvent.EventType.BUFF_EXPIRED
+	event.time = combat_time
+	event.entity_id = entity.entity_id
+	event.target_id = entity.entity_id
+	event.status_id = status.id
+	combat_log.add_event(event)
+
+func log_heal(source, target, skill, amount: int):
+	var event = CombatEvent.new()
+	event.type = CombatEvent.EventType.HEAL
+	event.time = combat_time
+	event.source_id = source.entity_id
+	event.source_name = source.entity_name
+	event.target_id = target.entity_id
+	event.target_name = target.entity_name
+	event.skill = skill
+	event.skill_name = skill.skill_name if skill else ""
+	event.amount = amount
+	event.remaining_health = target.current_health
+	event.max_health = target.max_health
+	combat_log.add_event(event)
+
+## Displacement skills (charge) teleport in the sim; the theater tweens
+## along the logged jump.
+func log_forced_move(entity):
+	_log_move(entity, true)
+
 ## Called on every landed hit: pulls the pack into combat and accrues
 ## threat on the struck enemy, scaled by the skill's threat modifier.
 func register_damage(source, target, skill, amount):
@@ -328,6 +375,10 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
 
 		hero.skills = hero_template.starting_skills.duplicate()
+		# Loadout skill slots feed straight into combat.
+		for extra in hero_template.bonus_skills:
+			if extra is SkillDefinition:
+				hero.skills.append(extra)
 
 		hero.position = _spawn_position(
 			arena.hero_spawn_center, heroes.size(),

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/heal.gd" id="2_behavior"]
+
+[resource]
+resource_name = "Heal"
+script = ExtResource("1_skill")
+skill_id = "heal"
+skill_name = "Heal"
+behavior_script = ExtResource("2_behavior")
+skill_type = 2
+range = 320.0
+cooldown = 6.0
+base_min_damage = 8
+base_max_damage = 12

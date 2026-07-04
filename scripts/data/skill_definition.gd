@@ -55,6 +55,8 @@ enum DeliveryType {
 @export var aoe_radius: float = 0.0
 ## Wind-up shown on the battlefield before an AoE lands.
 @export var telegraph_duration: float = 0.0
+## Moves the caster (charge, blink) instead of casting in place.
+@export var displacement: bool = false
 @export var mana_cost: int = 0
 @export var base_min_damage: int
 @export var base_max_damage: int
