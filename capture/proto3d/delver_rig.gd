@@ -233,9 +233,14 @@ func pose_shoot(t: float, target_dist := 2.2):
 		aim = 1.0 - k
 		draw = 0.0
 
-	# Bow arm points at the target; bow pivots belly-forward.
+	# Bow arm points at the target. The bow is a child of the arm, so
+	# the aim orientation counter-rotates the arm's pitch: at full draw
+	# the bow stands world-vertical, top tip up, belly forward.
 	arm_l.rotation.x = lerpf(0.0, -1.35, aim)
-	bow.rotation_degrees = BOW_REST.lerp(BOW_AIM, aim)
+	var rest_q := Quaternion.from_euler(BOW_REST * (PI / 180.0))
+	var aim_q := Quaternion(Vector3.RIGHT, 1.35) \
+		* Quaternion.from_euler(BOW_AIM * (PI / 180.0))
+	bow.quaternion = rest_q.slerp(aim_q, aim)
 	# String hand: reaches to the bow, then pulls back toward the cheek.
 	arm_r.rotation.x = lerpf(0.0, -1.25, aim) + draw * 0.55
 	arm_r.rotation.z = draw * 0.12
