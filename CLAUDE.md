@@ -61,6 +61,10 @@ State of play: the spatial primitives exist and are unit-tested but are **not ye
 - Present & tested: `BattleArena`/`BattleGrid` (tile grid + `world_to_tile`), `GridPathfinder` (A*), `Threat` (`pick_target` by threat with in-range fallback), `separation.gd` (soft steering), `StatusEffect` (root/stun/slow), grid LoS. `CombatEntity` already carries `position`, `facing`, `move_speed`, `path`, `target_id`, `threat_table`, `in_combat`, `statuses`, casting fields, `weapon_reach`. `CombatEvent` already has `MOVE`/`FACE`/`TARGET`/`TELEGRAPH`/`CAST_*`/`BUFF_*` types and their factories.
 - Not yet done: entities don't path or move in `update()` yet; targeting still goes through `Formation` front-row rules in `get_target_for()`. Expect `formation_slot` to be retired for combat as the migration completes.
 
+## 3D art direction prototype (`capture/proto3d/`)
+
+A procedural low-poly 3D exploration the owner likes as a possible future art direction. Everything is built from Godot primitives in code (`delver_builder.gd`, `delver_rig.gd`, `slime_rig.gd`) with deterministic pose-function animation (`pose_walk/swing/shoot(t)` — the same replay-friendly shape as the theater layer). Runnable demos: `proto3d_anim.tscn`, `proto3d_archer.tscn`, `proto3d_battle.tscn`; `*_shot.tscn` harnesses render stills/filmstrips into `renders/`. Rig convention: character faces local +Z, so its anatomical left is +X (sword = right hand at -X, shield/bow = left at +X); positive X rotation swings a hanging limb backward. Run capture scenes from the project root — `--path .` fails silently from subdirectories.
+
 ## Conventions
 
 - **GDScript with `class_name`** for combat/data types (referenced globally, no `preload` needed); autoloads and scene scripts use `extends Node`. Indentation is **tabs** (see `.editorconfig`).
