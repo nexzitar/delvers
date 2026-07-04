@@ -6,6 +6,8 @@
 
 **Architecture:** A headless **`BattleArena`** tile map drives **`GridPathfinder`** (A*) and **`LineOfSight`**. **`CombatEntity`** gains position, path, statuses, and threat tables; **`CombatState.update`** ticks movement + separation then actions. Meaningful changes append to **`CombatLog`** (`MOVE`, `TARGET`, `CAST_*`, `TELEGRAPH`, etc.). **`TheaterController`** lerps actors between logged positions, drops melee jump-to-target, and draws target arrows + AoE telegraphs. See `docs/superpowers/specs/2026-07-03-spatial-combat-design.md`.
 
+> **Presentation decision (2026-07-04):** the theater is **3D low-poly**, built on the approved procedural rig prototype in `capture/proto3d/` (see the spec's "Theater Changes (3D)" section). The sim tasks below are unchanged — the sim stays a headless 2D tile-plane sim; sim `Vector2(x, y)` maps to `Vector3(x / 32.0, 0, y / 32.0)`. Task 12b ports the rigs into game code; Tasks 13-16 and 18 build the 3D theater. Status: **Tasks 1-7 are done** (committed on `feat/spatial-combat`).
+
 **Tech Stack:** Godot 4.6, GDScript. Headless tests via `capture/test_*.tscn` (`PASS`/`FAIL`, no screenshots).
 
 ---
@@ -33,11 +35,14 @@
 | `scripts/combat/combat_event.gd` | New event fields/types |
 | `scripts/data/gear_definition.gd` | `reach: float` for weapons |
 | `scripts/data/skill_definition.gd` | `requires_stationary`, `aoe_radius`, etc. |
-| `scripts/theater/theater_controller.gd` | Real-time replay, no melee jump |
-| `scripts/theater/move_replay.gd` | Lerp between MOVE events |
-| `scripts/theater/target_arrow.gd` | Foot arrow overlay |
+| `scripts/theater3d/delver_builder.gd` | Primitive-mesh part/gear builders (from `capture/proto3d/`) |
+| `scripts/theater3d/delver_rig.gd` | Poseable humanoid rig + walk/swing/shoot poses |
+| `scripts/theater3d/slime_rig.gd` | Squash-and-stretch slime rig |
+| `scripts/theater3d/actor_factory_3d.gd` | Template/loadout → rig instance |
+| `scripts/theater3d/theater_controller_3d.gd` | Real-time 3D replay, event → pose mapping |
+| `scripts/theater3d/target_arrow_3d.gd` | Ground arrow overlay |
 | `resources/arenas/open_arena.tres` | MVP open battlefield |
-| `scenes/theater/battle_theater.tscn` | Arena ref, camera, drop formation markers |
+| `scenes/theater/battle_theater_3d.tscn` | 3D world: arena floor, Camera3D, lights |
 
 ---
 
@@ -48,7 +53,7 @@
 - Create: `resources/arenas/open_arena.tres`
 - Test: `capture/test_arena.gd`, `capture/test_arena.tscn`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```gdscript
 extends Node
@@ -61,11 +66,11 @@ func _ready():
 	get_tree().quit()
 ```
 
-- [ ] **Step 2: Run test — expect FAIL** (missing resource)
+- [x] **Step 2: Run test — expect FAIL** (missing resource)
 
 Run: `$GODOT --headless --path . capture/test_arena.tscn 2>&1 | rg "PASS|FAIL|ERROR"`
 
-- [ ] **Step 3: Implement `BattleArena`**
+- [x] **Step 3: Implement `BattleArena`**
 
 ```gdscript
 extends Resource
@@ -82,9 +87,9 @@ class_name BattleArena
 
 Create `open_arena.tres` in editor or with minimal `.tres` text referencing the script.
 
-- [ ] **Step 4: Run test — expect PASS**
+- [x] **Step 4: Run test — expect PASS**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/combat/battle_arena.gd resources/arenas/open_arena.tres capture/test_arena.gd capture/test_arena.tscn
@@ -99,7 +104,7 @@ git commit -m "Add BattleArena resource for tile-based combat"
 - Create: `scripts/combat/battle_grid.gd`
 - Test: `capture/test_grid_los.gd`, `capture/test_grid_los.tscn`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```gdscript
 extends Node
@@ -121,9 +126,9 @@ func _ready():
 	get_tree().quit()
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
-- [ ] **Step 3: Implement `BattleGrid`**
+- [x] **Step 3: Implement `BattleGrid`**
 
 ```gdscript
 class_name BattleGrid
@@ -180,9 +185,9 @@ func _bresenham(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 	return points
 ```
 
-- [ ] **Step 4: Run — expect PASS**
+- [x] **Step 4: Run — expect PASS**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -192,7 +197,7 @@ func _bresenham(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 - Create: `scripts/combat/grid_pathfinder.gd`
 - Test: `capture/test_pathfinder.gd`, `capture/test_pathfinder.tscn`
 
-- [ ] **Step 1: Test path around pillar**
+- [x] **Step 1: Test path around pillar**
 
 ```gdscript
 extends Node
@@ -210,15 +215,15 @@ func _ready():
 	get_tree().quit()
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
-- [ ] **Step 3: Implement A* with 4-neighbor grid**
+- [x] **Step 3: Implement A* with 4-neighbor grid**
 
 Use Manhattan heuristic, max nodes `width * height`. Return `PackedVector2Array` of **world** waypoints via `grid.tile_to_world`.
 
-- [ ] **Step 4: Run — expect PASS**
+- [x] **Step 4: Run — expect PASS**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -228,7 +233,7 @@ Use Manhattan heuristic, max nodes `width * height`. Return `PackedVector2Array`
 - Modify: `scripts/combat/combat_event.gd`
 - Test: `capture/test_combat_events.gd`, `capture/test_combat_events.tscn`
 
-- [ ] **Step 1: Add fields and factory helpers**
+- [x] **Step 1: Add fields and factory helpers**
 
 Extend enum with `MOVE`, `FACE`, `TARGET`, `TELEGRAPH` (some exist unused — wire them up).
 
@@ -245,9 +250,9 @@ var status_id: String = ""
 
 Add static factories: `create_move(entity, time, pos)`, `create_target(source_id, target_id, time)`, `create_telegraph(...)`.
 
-- [ ] **Step 2: Test factories set type and fields**
+- [x] **Step 2: Test factories set type and fields**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -258,7 +263,7 @@ Add static factories: `create_move(entity, time, pos)`, `create_target(source_id
 - Create: `scripts/combat/status_effect.gd`
 - Test: `capture/test_status.gd`, `capture/test_status.tscn`
 
-- [ ] **Step 1: Add `StatusEffect`**
+- [x] **Step 1: Add `StatusEffect`**
 
 ```gdscript
 class_name StatusEffect
@@ -268,7 +273,7 @@ var remaining: float
 var magnitude: float = 1.0  # slow = 0.5 means half speed
 ```
 
-- [ ] **Step 2: Extend `CombatEntity`**
+- [x] **Step 2: Extend `CombatEntity`**
 
 ```gdscript
 var position: Vector2 = Vector2.ZERO
@@ -299,9 +304,9 @@ func move_speed_multiplier() -> float:
 	return m
 ```
 
-- [ ] **Step 3: Test root blocks movement flag**
+- [x] **Step 3: Test root blocks movement flag**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ---
 
@@ -311,7 +316,7 @@ func move_speed_multiplier() -> float:
 - Create: `scripts/combat/separation.gd`
 - Test: `capture/test_separation.gd`, `capture/test_separation.tscn`
 
-- [ ] **Step 1: Test two units at same point push apart**
+- [x] **Step 1: Test two units at same point push apart**
 
 ```gdscript
 extends Node
@@ -325,7 +330,7 @@ func _ready():
 	get_tree().quit()
 ```
 
-- [ ] **Step 2: Implement inverse-distance repulsion capped per frame**
+- [x] **Step 2: Implement inverse-distance repulsion capped per frame**
 
 ```gdscript
 class_name Separation
@@ -343,9 +348,9 @@ static func compute_offset(pos: Vector2, others: Array, radius: float, strength:
 	return push
 ```
 
-- [ ] **Step 3: Run — PASS**
+- [x] **Step 3: Run — PASS**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ---
 
@@ -355,7 +360,7 @@ static func compute_offset(pos: Vector2, others: Array, radius: float, strength:
 - Create: `scripts/combat/threat.gd`
 - Test: `capture/test_threat.gd`, `capture/test_threat.tscn`
 
-- [ ] **Step 1: Tests for damage, heal split, pick target**
+- [x] **Step 1: Tests for damage, heal split, pick target**
 
 ```gdscript
 extends Node
@@ -381,9 +386,9 @@ Implement `Threat.add_damage`, `add_heal_split(healer_id, amount, enemy_count_in
 
 `pick_target`: sort by threat; return first where `can_attack_fn(hero_id, hero_pos)`; else nearest.
 
-- [ ] **Step 2: Run — PASS**
+- [x] **Step 2: Run — PASS**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -538,11 +543,30 @@ Charge path: ray/step toward target up to max distance; first enemy within radiu
 
 ---
 
+### Task 12b: Promote proto3d rigs to game code (3D theater foundation)
+
+**Files:**
+- Create: `scripts/theater3d/delver_builder.gd`, `delver_rig.gd`, `slime_rig.gd` (moved from `capture/proto3d/`, which keeps thin shims or is retired)
+- Create: `scripts/theater3d/actor_factory_3d.gd`
+- Create: `scenes/theater/battle_theater_3d.tscn` (Node3D root: ground, lights, `Camera3D` at gameplay angle per `proto3d_battle.gd`)
+- Test: `capture/test_actor_factory_3d.gd`, `.tscn`
+
+- [ ] **Step 1: Move builders/rigs into `scripts/theater3d/`; update proto3d scene preloads**
+
+- [ ] **Step 2: `actor_factory_3d.build(template) -> Node3D`** — HeroTemplate: map `equipped` to rig opts (main-hand sword → `sword`, bow → `bow`, off-hand shield → `shield`, head gear → `helmet`); EnemyTemplate: `enemy_id` → slime rig / goblin palette rig. Add a `death` pose to both rigs (fall/flatten + fade).
+
+- [ ] **Step 3: Add sim→world mapping helper** — `Theater3D.to_world(sim_pos: Vector2) -> Vector3` = `Vector3(sim_pos.x / 32.0, 0, sim_pos.y / 32.0)`.
+
+- [ ] **Step 4: Test — factory builds hero with sword+shield opts and a slime; assert rig children exist**
+
+- [ ] **Step 5: Commit**
+
+---
+
 ### Task 13: Theater — real-time replay clock
 
 **Files:**
-- Modify: `scripts/theater/theater_controller.gd`
-- Create: `scripts/theater/replay_clock.gd`
+- Create: `scripts/theater3d/theater_controller_3d.gd` (replay clock; 2D `theater_controller.gd` stays until parity, then is retired)
 
 - [ ] **Step 1: Replace sequential fixed waits with time-based playback**
 
@@ -564,20 +588,19 @@ func play(result: CombatResult):
 
 ---
 
-### Task 14: Theater — movement replay, remove melee jump
+### Task 14: Theater — movement replay and pose mapping (3D)
 
 **Files:**
-- Modify: `scripts/theater/theater_controller.gd`
-- Modify: `scripts/theater/actors/theater_actor.gd`
-- Test: visual (battle_theater); logic: `capture/test_replay_move.gd`
+- Modify: `scripts/theater3d/theater_controller_3d.gd`
+- Test: visual (battle_theater_3d); logic: `capture/test_replay_move.gd`
 
-- [ ] **Step 1: Handle `CombatEvent.EventType.MOVE` — tween actor to `event.position` over 0.15s**
+- [ ] **Step 1: Handle `SPAWN` — factory-build rig at `to_world(event.position)`**
 
-- [ ] **Step 2: Handle `FACE` — set facing / flip sprite**
+- [ ] **Step 2: Handle `MOVE` — tween rig root to `to_world(event.position)` over 0.15s; drive `pose_walk(phase)` from distance travelled; idle pose when stationary**
 
-- [ ] **Step 3: Remove `jump_to` from `play_melee_attack`; call `play_attack()` in place**
+- [ ] **Step 3: Handle `FACE` — rotate rig root Y toward `event.facing`**
 
-- [ ] **Step 4: SPAWN uses `event.position` instead of `BattlefieldLayout` slot**
+- [ ] **Step 4: Melee `DAMAGE` — play `pose_swing` on the source rig, timed so contact lands on the event; no `jump_to` (attacks play in place). Ranged `CAST_START`/`CAST_FINISH` — `pose_shoot` draw/loose; `DEATH` — death pose**
 
 - [ ] **Step 5: Commit**
 
@@ -586,11 +609,10 @@ func play(result: CombatResult):
 ### Task 15: Target arrows overlay
 
 **Files:**
-- Create: `scripts/theater/target_arrow.gd`
-- Create: `scenes/theater/target_arrow.tscn`
-- Modify: `scripts/theater/theater_controller.gd`
+- Create: `scripts/theater3d/target_arrow_3d.gd`
+- Modify: `scripts/theater3d/theater_controller_3d.gd`
 
-- [ ] **Step 1: Scene — small arrow sprite at actor feet, rotatable**
+- [ ] **Step 1: Flat arrow mesh (primitive prisms) on the ground at rig feet, rotatable around Y**
 
 - [ ] **Step 2: On `TARGET` event, update arrow for `source_id` to point at `target_id` actor**
 
@@ -603,10 +625,10 @@ func play(result: CombatResult):
 ### Task 16: AoE telegraph
 
 **Files:**
-- Create: `scripts/theater/aoe_telegraph.gd`
-- Modify: `scripts/theater/theater_controller.gd`
+- Create: `scripts/theater3d/aoe_telegraph_3d.gd`
+- Modify: `scripts/theater3d/theater_controller_3d.gd`
 
-- [ ] **Step 1: On `TELEGRAPH`, spawn fading circle at position/radius**
+- [ ] **Step 1: On `TELEGRAPH`, spawn fading ground circle (flattened cylinder, transparent material) at `to_world(position)`/radius**
 
 - [ ] **Step 2: On `BUFF_APPLIED` / DAMAGE AoE, clear telegraph**
 
@@ -635,18 +657,18 @@ Run: `$GODOT --headless --path . scenes/combat/combat_simulation.tscn`
 
 ---
 
-### Task 18: Wire battle theater to open arena
+### Task 18: Wire battle theater to open arena (3D)
 
 **Files:**
-- Modify: `scenes/theater/battle_theater.tscn`
-- Modify: `scripts/theater/battlefield_layout.gd` (deprecate or adapt)
-- Add: `Camera2D` with limits matching arena pixel size
+- Modify: `scenes/theater/battle_theater_3d.tscn`
+- Modify: `scripts/game/scene_flow.gd` callers — camp "Embark" routes to the 3D theater
+- Retire: `scripts/theater/battlefield_layout.gd` (spawns come from sim positions)
 
-- [ ] **Step 1: Pass `open_arena.tres` into combat setup from theater bootstrap**
+- [ ] **Step 1: Pass `open_arena.tres` into combat setup from theater bootstrap; size the ground plane from arena dimensions**
 
-- [ ] **Step 2: Draw debug tile grid optional `@export var show_debug_grid`**
+- [ ] **Step 2: Optional debug tile grid on the ground (`@export var show_debug_grid`)**
 
-- [ ] **Step 3: Remove dependency on HeroSlots/EnemySlots markers for spawn**
+- [ ] **Step 3: Battle sidebar/damage meter UI unchanged — subscribes to the same replay events (`CanvasLayer` over the 3D viewport)**
 
 - [ ] **Step 4: Commit**
 
@@ -682,7 +704,7 @@ done
 - 100-enemy perf pass (MOVE throttling, spatial hash, optional flow fields)
 - Multi-group pull, trap releases
 - Taunt / threat reset skills
-- Full 4-dir walk/attack art set (Zelda-style)
+- Expand the rig pose library (hit reacts, block, more weapon types) and port camp/menu scenes to 3D
 
 ## Phase 3 roadmap
 
@@ -696,6 +718,7 @@ done
 
 | Spec requirement | Task |
 |------------------|------|
+| 3D low-poly presentation (proto3d rigs) | 12b, 14 |
 | Event-log fast sim + real-time theater | 13, 14 |
 | Tile grid + open arena MVP | 1, 2, 18 |
 | A* pathfinding | 3 |

@@ -6,7 +6,9 @@ Date: 2026-07-03
 
 Replace the current **formation-slot, side-view hop-to-target** combat model with **free movement on a 2D tile battlefield**. Units path toward targets, attack only when in range (weapon/skill range), and respect line of sight for ranged attacks and heals. Combat still **simulates headlessly at high speed** and **replays through the theater in real time** via an extended event log.
 
-Presentation shifts to a **Zelda-style angled top-down** view with **4-directional** character art. Dungeons are **tile-based** with obstacles and LoS blockers; MVP uses an **open arena** built on the same tile/nav infrastructure so larger rooms ship quickly later.
+Presentation shifts to a **true 3D low-poly** view (decision 2026-07-04, superseding the original angled top-down 2D + 4-directional art plan). The approved art direction is the procedural primitive-mesh prototype in `capture/proto3d/`: characters and gear are built from Godot primitives in code, animated by deterministic pose functions — no imported art, no directional sprite sets (rigs rotate freely). Dungeons are **tile-based** with obstacles and LoS blockers; MVP uses an **open arena** built on the same tile/nav infrastructure so larger rooms ship quickly later.
+
+**The simulation is unchanged by this decision** — it stays a headless 2D tile-plane sim. Sim `Vector2(x, y)` maps to the 3D ground plane as `Vector3(x / 32.0, 0, y / 32.0)` (1 tile = 1.0 world unit, starting point to tune).
 
 ## Goals
 
@@ -22,7 +24,7 @@ Presentation shifts to a **Zelda-style angled top-down** view with **4-direction
 - Full dungeon floor generation, multi-room exploration, or trap-triggered swarms.
 - Player-authored AI scripts.
 - Save/load of battle state mid-fight.
-- Full 4-dir bespoke animation sets (Phase 1 may ship with 2 facings + flips until art catches up).
+- ~~Full 4-dir bespoke animation sets~~ (obsolete: 3D rigs rotate freely; the pose library — walk, swing, shoot, slime hop — already exists in `capture/proto3d/`).
 - Threat decay, elaborate proc systems, or full skill catalog beyond MVP set.
 
 ---
@@ -69,8 +71,8 @@ Units **may overlap paths** but apply **separation steering** so groups surround
 
 ### Phase 2
 
-- Tile layers from dungeon rooms, doors, pillars, chokepoints.
-- Camera pan/zoom when battlefield exceeds viewport (theater already has large backdrop; add `Camera2D` bounds).
+- Tile layers from dungeon rooms, doors, pillars, chokepoints (3D: extrude blocked tiles as pillar/wall meshes).
+- Camera pan/zoom when battlefield exceeds viewport (`Camera3D` bounds/rig).
 
 ---
 
@@ -192,24 +194,34 @@ New / extended `CombatEvent.EventType` values:
 
 ---
 
-## Theater Changes
+## Theater Changes (3D)
+
+The theater becomes a `Node3D` world using the `capture/proto3d/` rigs. Same replay contract: consume `CombatLog` ordered by `event.time`; only the rendering is new.
 
 ### Camera & layout
 
-- Angled view: battlefield centered; **`y_sort_enabled`** on actors (already present).
+- **`Camera3D`** at a gameplay angle (see `proto3d_battle.gd`: fov ~35, elevated ~25-30 degrees); real depth replaces `y_sort_enabled`.
 - Remove **`jump_to` melee close-in**; actors **walk** along replayed positions.
 - **`MELEE_STRIKE_DISTANCE`** removed; attacks play **in place** when `DAMAGE` fires.
 
-### Animations
+### Actors & animations (event → pose mapping)
 
-- Walk cycle while moving (4-dir when art ready; interim **2-dir + flip**).
-- Ranged: windup → release at `CAST_FINISH`; entity stationary.
-- Charge: fast tween along logged displacement path.
+Actors are procedural rigs (`delver_rig.gd`, `slime_rig.gd`) with deterministic pose functions of time — the same replay-friendly shape as the event log:
+
+| Event | Rig response |
+|-------|-------------|
+| `SPAWN` | Instantiate rig from template (hero loadout → rig gear opts; enemies → their rig/palette) at mapped position |
+| `MOVE` | Lerp root position between samples; `pose_walk(phase)` from distance travelled |
+| `FACE` | Rotate rig root Y toward `event.facing` |
+| `DAMAGE` (melee source) | `pose_swing(t)` timed so contact lands at event time |
+| `CAST_START`/`CAST_FINISH` | `pose_shoot(t)` draw/loose phases (ranged); arrow prop flies at finish |
+| `DEATH` | Death pose/fade (to add to rig pose library) |
+| Charge | Fast root tween along logged displacement path |
 
 ### Readability overlays
 
-- **Target arrow** at unit's feet pointing toward current target (heroes and enemies).
-- **AoE telegraph**: filled circle fades in before `DAMAGE` / `BUFF_APPLIED`.
+- **Target arrow** at unit's feet pointing toward current target (heroes and enemies) — flat mesh/decal on the ground plane.
+- **AoE telegraph**: filled ground circle (flattened cylinder/decal) fades in before `DAMAGE` / `BUFF_APPLIED`.
 
 ---
 
