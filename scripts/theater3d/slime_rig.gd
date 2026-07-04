@@ -3,10 +3,11 @@ extends Node3D
 ## Green slime: a faceted blob that lives on squash-and-stretch.
 ## Root sits on the ground; `body` scales/lifts for wobble and hops.
 
-const Builder = preload("res://capture/proto3d/delver_builder.gd")
+const Builder = preload("res://scripts/theater3d/delver_builder.gd")
 
 const HOP_T := 1.1
 const ATTACK_T := 0.8
+const DEATH_T := 0.7
 
 const SLIME := Color("4fae4f")
 const SLIME_DARK := Color("3c8a3f")
@@ -72,6 +73,12 @@ func pose_hop(t: float):
 		body.position.z = 0.5
 		var splat := 1.0 + 0.35 * sin(k * PI)
 		body.scale = Vector3(splat, 2.0 - splat, splat)
+
+## Deflates into a puddle; holds the final frame as a corpse.
+func pose_death(t: float):
+	_reset_pose()
+	var k := smoothstep(0.0, 1.0, clampf(t / DEATH_T, 0.0, 1.0))
+	body.scale = Vector3(1.0 + 0.6 * k, maxf(0.07, 1.0 - 0.93 * k), 1.0 + 0.6 * k)
 
 ## Aggressive lunge at a melee target: fast low hop with a splat.
 func pose_attack(t: float):

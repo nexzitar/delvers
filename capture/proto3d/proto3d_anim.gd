@@ -4,8 +4,8 @@ extends Node3D
 ## twice, turns, and walks back — looping. Run this scene directly to
 ## watch it live; proto3d_anim_shot.tscn captures filmstrips from it.
 
-const Builder = preload("res://capture/proto3d/delver_builder.gd")
-const DelverRig = preload("res://capture/proto3d/delver_rig.gd")
+const Builder = preload("res://scripts/theater3d/delver_builder.gd")
+const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 
 ## He walks left-to-right so his (true right) sword arm faces the camera.
 const WALK_SPEED := 1.15

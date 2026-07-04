@@ -3,7 +3,7 @@ extends Node3D
 ## Renders the 3D prototype: a cast lineup (melee, archer, base body)
 ## and a floating gear rack, saved as PNGs into capture/proto3d/renders/.
 
-const Builder = preload("res://capture/proto3d/delver_builder.gd")
+const Builder = preload("res://scripts/theater3d/delver_builder.gd")
 
 var out_dir := ProjectSettings.globalize_path("res://capture/proto3d/renders")
 

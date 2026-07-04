@@ -3,7 +3,7 @@ extends Node
 ## Steps proto3d_anim's timeline frame by frame and assembles filmstrip
 ## contact sheets (walk cycle, sword swing) plus key full-res frames.
 
-const DelverRig = preload("res://capture/proto3d/delver_rig.gd")
+const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 
 var out_dir := ProjectSettings.globalize_path("res://capture/proto3d/renders")
 

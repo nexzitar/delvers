@@ -4,10 +4,11 @@ extends Node3D
 ## grouped under hip/shoulder/spine pivots so procedural walk, idle,
 ## and sword-swing cycles can drive them.
 
-const Builder = preload("res://capture/proto3d/delver_builder.gd")
+const Builder = preload("res://scripts/theater3d/delver_builder.gd")
 
 const SWING_T := 0.95
 const SHOOT_T := 1.4
+const DEATH_T := 0.9
 
 var spine: Node3D
 var head: Node3D
@@ -16,6 +17,7 @@ var arm_r: Node3D
 var leg_l: Node3D
 var leg_r: Node3D
 var sword: Node3D
+var shield: Node3D
 var bow: Node3D
 var arrow: Node3D
 
@@ -87,7 +89,7 @@ func _init(opts := {}):
 		arm_r.add_child(sword)
 
 	if opts.get("shield", false):
-		var shield := Builder.build_shield()
+		shield = Builder.build_shield()
 		shield.position = Vector3(0.09, -0.16, 0.07)
 		shield.rotation_degrees = Vector3(90, 45, 0)
 		arm_l.add_child(shield)
@@ -210,6 +212,19 @@ func pose_swing(t: float):
 		sword.rotation_degrees = SWORD_SWING_BASE + Vector3(pitch, 0, 0)
 	# Eyes stay on the target through the torso twist.
 	head.rotation.y = -twist * 0.5
+
+## Crumple: torso pitches forward, knees fold, body sinks. Holds the
+## final frame so corpses can stay on the field. t in [0, DEATH_T].
+func pose_death(t: float):
+	_reset_pose()
+	var k := smoothstep(0.0, 1.0, clampf(t / DEATH_T, 0.0, 1.0))
+	spine.rotation.x = 1.35 * k
+	spine.position.y = 0.4 - 0.24 * k
+	leg_l.rotation.x = -0.85 * k
+	leg_r.rotation.x = -0.65 * k
+	arm_l.rotation.x = -0.45 * k
+	arm_r.rotation.x = -0.55 * k
+	head.rotation.x = 0.35 * k
 
 ## Raise, nock, draw to the cheek, loose, lower. t in [0, SHOOT_T].
 ## target_dist: rig-local forward distance the arrow flies before sticking.

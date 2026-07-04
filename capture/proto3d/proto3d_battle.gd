@@ -4,8 +4,8 @@ extends Node3D
 ## blows with slimes while a hero archer and a goblin archer exchange
 ## arrows across the field. Pure choreography (no sim) on a 4.8s loop.
 
-const DelverRig = preload("res://capture/proto3d/delver_rig.gd")
-const SlimeRig = preload("res://capture/proto3d/slime_rig.gd")
+const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
+const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
 
 const LOOP := 4.8
 const MELEE_CYCLE := 1.6

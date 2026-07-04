@@ -3,7 +3,7 @@ extends Node3D
 ## Archer demo: a bow delver repeatedly draws and shoots the training
 ## dummy. Run this scene directly to watch it live.
 
-const DelverRig = preload("res://capture/proto3d/delver_rig.gd")
+const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 const AnimDemo = preload("res://capture/proto3d/proto3d_anim.gd")
 
 const IDLE_T := 0.6

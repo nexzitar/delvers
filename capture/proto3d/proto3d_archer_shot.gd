@@ -2,7 +2,7 @@ extends Node
 
 ## Captures the archer shoot cycle: a filmstrip plus full-res key frames.
 
-const DelverRig = preload("res://capture/proto3d/delver_rig.gd")
+const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 
 var out_dir := ProjectSettings.globalize_path("res://capture/proto3d/renders")
 
