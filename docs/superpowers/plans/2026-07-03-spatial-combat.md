@@ -399,7 +399,7 @@ Implement `Threat.add_damage`, `add_heal_split(healer_id, amount, enemy_count_in
 - Modify: `scripts/combat/combat_simulator.gd`
 - Test: `capture/test_spatial_move.gd`, `capture/test_spatial_move.tscn`
 
-- [ ] **Step 1: Add arena to CombatState**
+- [x] **Step 1: Add arena to CombatState**
 
 ```gdscript
 var arena: BattleArena
@@ -414,7 +414,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 	# ... existing spawn logic ...
 ```
 
-- [ ] **Step 2: Replace formation slots with spawn offsets**
+- [x] **Step 2: Replace formation slots with spawn offsets**
 
 ```gdscript
 func _spawn_position(center: Vector2i, index: int, preferred_row: int) -> Vector2:
@@ -425,16 +425,16 @@ func _spawn_position(center: Vector2i, index: int, preferred_row: int) -> Vector
 	return grid.tile_to_world(cell)
 ```
 
-- [ ] **Step 3: Add `_tick_movement(entity, delta)`**
+- [x] **Step 3: Add `_tick_movement(entity, delta)`**
 
 - Advance along `path` up to `move_speed * move_speed_multiplier() * delta`.
 - Apply `Separation.compute_offset` from nearby same-team positions.
 - Emit `MOVE` event if moved and cooldown elapsed (0.15 s).
 - Update `facing` from velocity.
 
-- [ ] **Step 4: Test — melee hero far from slime; after several ticks, distance decreases before any DAMAGE**
+- [x] **Step 4: Test — melee hero far from slime; after several ticks, distance decreases before any DAMAGE**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -446,13 +446,13 @@ func _spawn_position(center: Vector2i, index: int, preferred_row: int) -> Vector
 - Modify: `scripts/data/skill_definition.gd`
 - Test: `capture/test_range_los.gd`, `capture/test_range_los.tscn`
 
-- [ ] **Step 1: Add `GearDefinition.reach`**
+- [x] **Step 1: Add `GearDefinition.reach`**
 
 ```gdscript
 @export var reach: float = 0.0  # 0 = derive from weapon_type defaults
 ```
 
-- [ ] **Step 2: Add skill flags**
+- [x] **Step 2: Add skill flags**
 
 ```gdscript
 @export var requires_stationary: bool = true
@@ -460,17 +460,17 @@ func _spawn_position(center: Vector2i, index: int, preferred_row: int) -> Vector
 @export var telegraph_duration: float = 0.0
 ```
 
-- [ ] **Step 3: Implement `_can_use_skill_on(state, skill, target) -> bool`**
+- [x] **Step 3: Implement `_can_use_skill_on(state, skill, target) -> bool`**
 
 Distance ≤ `max(skill.range, weapon_reach)` (in pixels; retune existing `range` values from abstract 1.5 to e.g. 400 for bow).
 
 Ranged/projectile: `state.grid.has_los(self.position, target.position)`.
 
-- [ ] **Step 4: Refactor `_strike` — only called when in range; remove implicit targeting without movement**
+- [x] **Step 4: Refactor `_strike` — only called when in range; remove implicit targeting without movement**
 
-- [ ] **Step 5: Test — archer does not damage through pillar fixture**
+- [x] **Step 5: Test — archer does not damage through pillar fixture**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ---
 
@@ -481,19 +481,19 @@ Ranged/projectile: `state.grid.has_los(self.position, target.position)`.
 - Modify: `scripts/combat/combat_entity.gd`
 - Test: `capture/test_threat_targeting.gd`, `capture/test_threat_targeting.tscn`
 
-- [ ] **Step 1: On DAMAGE, call `Threat.add_damage(enemy.threat_table, source_id, amount * skill.threat_multiplier)`**
+- [x] **Step 1: On DAMAGE, call `Threat.add_damage(enemy.threat_table, source_id, amount * skill.threat_multiplier)`**
 
-- [ ] **Step 2: Mark `in_combat` on all enemies when any enemy takes damage from heroes**
+- [x] **Step 2: Mark `in_combat` on all enemies when any enemy takes damage from heroes**
 
-- [ ] **Step 3: Replace `get_target_for` for enemies with `Threat.pick_target`**
+- [x] **Step 3: Replace `get_target_for` for enemies with `Threat.pick_target`**
 
 Pass `can_attack_fn` that checks range/LoS/root fallback rules from design spec.
 
-- [ ] **Step 4: Emit `TARGET` event when `target_id` changes**
+- [x] **Step 4: Emit `TARGET` event when `target_id` changes**
 
-- [ ] **Step 5: Test — two heroes; high-threat hero out of range while rooted enemy hits second hero**
+- [x] **Step 5: Test — two heroes; high-threat hero out of range while rooted enemy hits second hero**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ---
 
@@ -503,7 +503,7 @@ Pass `can_attack_fn` that checks range/LoS/root fallback rules from design spec.
 - Modify: `scripts/combat/combat_entity.gd`
 - Test: `capture/test_stationary_cast.gd`, `capture/test_stationary_cast.tscn`
 
-- [ ] **Step 1: Before ranged `_strike`, if `skill.requires_stationary`:**
+- [x] **Step 1: Before ranged `_strike`, if `skill.requires_stationary`:**
 
 Set `is_casting = true`, `cast_remaining = cast_time` (0.5 s default for MVP if `cast_type == INSTANT` use 0.3 wind-up).
 
@@ -511,9 +511,9 @@ Do not move while `is_casting`.
 
 Emit `CAST_START` / `CAST_FINISH`.
 
-- [ ] **Step 2: Test — position unchanged for 0.3s before Arrow Shot DAMAGE**
+- [x] **Step 2: Test — position unchanged for 0.3s before Arrow Shot DAMAGE**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -525,21 +525,21 @@ Emit `CAST_START` / `CAST_FINISH`.
 - Modify: hero/enemy templates as needed
 - Test: `capture/test_mvp_skills.gd`, `capture/test_mvp_skills.tscn`
 
-- [ ] **Step 1: Frost Nova — AoE around caster, `BUFF_APPLIED` root 3s, `TELEGRAPH` 0.4s**
+- [x] **Step 1: Frost Nova — AoE around caster, `BUFF_APPLIED` root 3s, `TELEGRAPH` 0.4s**
 
-- [ ] **Step 2: Hamstring — melee skill, applies SLOW 50% for 6s**
+- [x] **Step 2: Hamstring — melee skill, applies SLOW 50% for 6s**
 
-- [ ] **Step 3: Charge — displacement toward target, stop on contact, STUN 1.5s, `displacement` flag**
+- [x] **Step 3: Charge — displacement toward target, stop on contact, STUN 1.5s, `displacement` flag**
 
 Charge path: ray/step toward target up to max distance; first enemy within radius stops movement.
 
-- [ ] **Step 4: Heal — single ally, requires LoS, stationary cast; emits `HEAL` event; threat = `heal_amount / enemies_in_combat` on each in-combat enemy toward healer**
+- [x] **Step 4: Heal — single ally, requires LoS, stationary cast; emits `HEAL` event; threat = `heal_amount / enemies_in_combat` on each in-combat enemy toward healer**
 
-- [ ] **Step 5: Assign Charge to default delver; assign Heal to second hero for threat testing**
+- [x] **Step 5: Assign Charge to default delver; assign Heal to second hero for threat testing**
 
-- [ ] **Step 6: Test each skill applies expected effect (including heal threat split)**
+- [x] **Step 6: Test each skill applies expected effect (including heal threat split)**
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ---
 
