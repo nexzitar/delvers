@@ -19,9 +19,10 @@ var sword: Node3D
 var bow: Node3D
 var arrow: Node3D
 
-## Bow carry and aim share the sagittal plane: belly forward, string
-## toward the archer.
-const BOW_REST := Vector3(0, -90, 0)
+## Carry: limbs horizontal (top tip forward, belly down), so the string
+## runs perpendicular to the hanging arm. Aim: rolled up vertical, belly
+## forward. Only the Z component differs, so the draw sweeps smoothly.
+const BOW_REST := Vector3(0, -90, -90)
 const BOW_AIM := Vector3(0, -90, 0)
 
 ## Carry grip: blade tips 45 degrees forward instead of straight up.

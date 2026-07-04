@@ -109,8 +109,9 @@ static func build_delver(opts := {}) -> Node3D:
 	if opts.get("bow", false):
 		var bow := build_bow()
 		bow.position = Vector3(0.31, 0.32, 0.08)
-		# Carried in the sagittal plane: belly forward, string to the arm.
-		bow.rotation_degrees = Vector3(0, -90, 0)
+		# Carried with limbs horizontal (top tip forward, belly down), so
+		# the string runs perpendicular to the hanging arm.
+		bow.rotation_degrees = Vector3(0, -90, -90)
 		root.add_child(bow)
 		var quiver := build_quiver()
 		quiver.position = Vector3(-0.1, 0.68, -0.19)
