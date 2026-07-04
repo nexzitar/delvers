@@ -287,7 +287,7 @@ func _build_right_tabs():
 	skill_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	skills_tab.add_child(skill_box)
 	var note = Label.new()
-	note.text = "Active skills coming soon. Your attack follows your weapon."
+	note.text = "Your attack follows your weapon. Drag skills into slots 2-6."
 	note.add_theme_color_override("font_color", DIM)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	skill_box.add_child(note)

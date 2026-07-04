@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
 [ext_resource type="Script" path="res://scripts/combat/skills/charge.gd" id="2_behavior"]
+[ext_resource type="Texture2D" path="res://art/skills/skill_charge.png" id="3_icon"]
 
 [resource]
 resource_name = "Charge"
 script = ExtResource("1_skill")
 skill_id = "charge"
 skill_name = "Charge"
+icon = ExtResource("3_icon")
 behavior_script = ExtResource("2_behavior")
 range = 400.0
 displacement = true

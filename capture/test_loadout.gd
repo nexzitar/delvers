@@ -64,4 +64,15 @@ func _ready():
 	_ok("default_position routes HEAD item to HEAD",
 		roster.default_position(1, spare_head) == Equip.Position.HEAD)
 
+	# The full MVP skill set is in the catalog, iconed and equippable.
+	_ok("six skills known", roster.skill_catalog.size() == 6)
+	_ok("all catalog skills have icons",
+		roster.skill_catalog.all(func(s): return s.icon != null))
+	var charge = roster.skill_catalog.filter(
+		func(s): return s.skill_id == "charge"
+	)
+	_ok("charge in catalog", charge.size() == 1)
+	_ok("charge equips into slot 2", roster.equip_bonus_skill(0, charge[0], 2))
+	_ok("charge sits in loadout", roster.heroes[0].bonus_skills[1] == charge[0])
+
 	get_tree().quit()

@@ -1,0 +1,91 @@
+extends SceneTree
+
+## Generates flat 64x64 skill icons (rounded dark tile + bold symbol)
+## for the MVP skills. Run: godot --headless --script this_file.
+
+const SIZE := 64
+const C := 32.0
+
+func _init():
+	_save(_frost_nova(), "res://art/skills/skill_frost_nova.png")
+	_save(_hamstring(), "res://art/skills/skill_hamstring.png")
+	_save(_charge(), "res://art/skills/skill_charge.png")
+	_save(_heal(), "res://art/skills/skill_heal.png")
+	print("icons written")
+	quit()
+
+func _save(img: Image, path: String):
+	img.save_png(ProjectSettings.globalize_path(path))
+
+## Rounded-square tile with a soft vertical gradient and rim.
+func _tile(top: Color, bottom: Color, rim: Color) -> Image:
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	for y in SIZE:
+		for x in SIZE:
+			var dx = maxf(0.0, maxf(10.0 - x, x - (SIZE - 11)))
+			var dy = maxf(0.0, maxf(10.0 - y, y - (SIZE - 11)))
+			if Vector2(dx, dy).length() > 10.0:
+				continue  # transparent corner
+			var color = top.lerp(bottom, y / float(SIZE))
+			if x < 3 or x > SIZE - 4 or y < 3 or y > SIZE - 4:
+				color = rim
+			img.set_pixel(x, y, color)
+	return img
+
+func _dist_to_segment(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab = b - a
+	var k = clampf((p - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+	return (p - (a + ab * k)).length()
+
+func _paint(img: Image, inside: Callable, color: Color):
+	for y in SIZE:
+		for x in SIZE:
+			if img.get_pixel(x, y).a > 0.0 and inside.call(Vector2(x, y)):
+				img.set_pixel(x, y, color)
+
+## Frost Nova: six-spoke burst radiating from a bright core.
+func _frost_nova() -> Image:
+	var img = _tile(Color("1c3350"), Color("11203a"), Color("3b5b86"))
+	var spokes := []
+	for i in 6:
+		var a = TAU * i / 6.0 + 0.26
+		spokes.append(Vector2(C, C) + Vector2(cos(a), sin(a)) * 22.0)
+	_paint(img, func(p):
+		for tip in spokes:
+			if _dist_to_segment(p, Vector2(C, C), tip) < 2.6:
+				return true
+		return false, Color("bfe4ff"))
+	_paint(img, func(p): return p.distance_to(Vector2(C, C)) < 6.0, Color("eaf6ff"))
+	return img
+
+## Hamstring: a savage diagonal slash with a secondary nick.
+func _hamstring() -> Image:
+	var img = _tile(Color("47201e"), Color("2c1113"), Color("74403a"))
+	_paint(img, func(p):
+		return _dist_to_segment(p, Vector2(16, 14), Vector2(50, 52)) < 3.4,
+		Color("ff8d78"))
+	_paint(img, func(p):
+		return _dist_to_segment(p, Vector2(38, 16), Vector2(22, 46)) < 2.0,
+		Color("d94f42"))
+	return img
+
+## Charge: a heavy forward chevron pair.
+func _charge() -> Image:
+	var img = _tile(Color("4d3a17"), Color("32240e"), Color("7d6230"))
+	var chevron = func(offset: float) -> Callable:
+		return func(p):
+			var upper = _dist_to_segment(p, Vector2(18 + offset, 16), Vector2(40 + offset, 32))
+			var lower = _dist_to_segment(p, Vector2(40 + offset, 32), Vector2(18 + offset, 48))
+			return upper < 3.2 or lower < 3.2
+	_paint(img, chevron.call(-6.0), Color("caa04a"))
+	_paint(img, chevron.call(8.0), Color("ffd769"))
+	return img
+
+## Heal: a plump cross on green.
+func _heal() -> Image:
+	var img = _tile(Color("1f4023"), Color("122a16"), Color("3f7043"))
+	_paint(img, func(p):
+		return (absf(p.x - C) < 6.0 and absf(p.y - C) < 18.0) \
+			or (absf(p.y - C) < 6.0 and absf(p.x - C) < 18.0),
+		Color("a8eb9e"))
+	return img

@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
 [ext_resource type="Script" path="res://scripts/combat/skills/frost_nova.gd" id="2_behavior"]
+[ext_resource type="Texture2D" path="res://art/skills/skill_frost_nova.png" id="3_icon"]
 
 [resource]
 resource_name = "Frost Nova"
 script = ExtResource("1_skill")
 skill_id = "frost_nova"
 skill_name = "Frost Nova"
+icon = ExtResource("3_icon")
 behavior_script = ExtResource("2_behavior")
 skill_type = 1
 aoe_radius = 96.0

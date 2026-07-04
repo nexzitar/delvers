@@ -6,6 +6,10 @@ extends Node
 const DEFAULT_DELVER = preload("res://resources/heroes/default_delver.tres")
 const AUTO_ATTACK = preload("res://resources/skills/auto_attack.tres")
 const ARROW_SHOT = preload("res://resources/skills/arrow_shot.tres")
+const FROST_NOVA = preload("res://resources/skills/frost_nova.tres")
+const HAMSTRING = preload("res://resources/skills/hamstring.tres")
+const CHARGE = preload("res://resources/skills/charge.tres")
+const HEAL = preload("res://resources/skills/heal.tres")
 
 const SWORD = preload("res://resources/gear/starter_sword.tres")
 const BOW = preload("res://resources/gear/starter_bow.tres")
@@ -32,6 +36,10 @@ var gear_stash: Array = []
 var skill_catalog: Array = [
 	AUTO_ATTACK,
 	ARROW_SHOT,
+	FROST_NOVA,
+	HAMSTRING,
+	CHARGE,
+	HEAL,
 ]
 
 var battles_fought := 0

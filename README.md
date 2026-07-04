@@ -176,6 +176,10 @@ Combat is split into two layers:
 | Enemy  | goblin_archer  | Goblin Archer  | 20 HP, 2 ATK, 3.5s interval, back row, ranged |
 | Skill  | auto_attack    | Slash          | 0–9 bonus damage, melee |
 | Skill  | arrow_shot     | Arrow Shot     | 1–7 bonus damage, projectile |
+| Skill  | frost_nova     | Frost Nova     | Roots everything within 96px for 3s, 10s cooldown |
+| Skill  | hamstring      | Hamstring      | Melee strike, slows 50% for 6s, 8s cooldown |
+| Skill  | charge         | Charge         | Gap-closer up to 400px, stuns 1.5s, 12s cooldown |
+| Skill  | heal           | Heal           | Restores 8–12 to the most injured ally in sight, 6s cooldown |
 | Gear   | starter_sword  | Starter Sword  | Main hand, one-handed, 1–3 dmg, 2.6s speed |
 | Gear   | starter_bow    | Starter Bow    | Main hand, bow, 1–4 dmg, 2.8s speed |
 | Gear   | fast_dagger    | Fast Dagger    | Main hand, one-handed, 1–2 dmg, 1.5s speed |
