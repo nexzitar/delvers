@@ -17,6 +17,7 @@ var arm_r: Node3D
 var leg_l: Node3D
 var leg_r: Node3D
 var sword: Node3D
+var off_sword: Node3D
 var shield: Node3D
 var bow: Node3D
 var arrow: Node3D
@@ -32,6 +33,9 @@ const SWORD_REST := Vector3(45, 0, 20)
 ## The swing arc below was tuned around this grip; windup/recovery blend
 ## between the carry grip and it (the 55-degree pitch offset).
 const SWORD_SWING_BASE := Vector3(-10, 0, 20)
+## Off-hand (left) mirrors the Z cant.
+const OFF_SWORD_REST := Vector3(45, 0, -20)
+const OFF_SWORD_SWING_BASE := Vector3(-10, 0, -20)
 
 ## opts also takes a palette (skin/tunic/sleeve/pants/eyes as Colors,
 ## hair as Color or null for bald) plus ears:true for goblin-style ears,
@@ -88,6 +92,14 @@ func _init(opts := {}):
 		sword.rotation_degrees = SWORD_REST
 		arm_r.add_child(sword)
 
+	if opts.get("off_sword", false):
+		off_sword = Builder.build_sword()
+		off_sword.position = Vector3(0.02, -0.36, 0.07)
+		off_sword.rotation_degrees = OFF_SWORD_REST
+		# A touch smaller so the off-hand blade reads as the lighter one.
+		off_sword.scale = Vector3.ONE * 0.88
+		arm_l.add_child(off_sword)
+
 	if opts.get("shield", false):
 		shield = Builder.build_shield()
 		shield.position = Vector3(0.09, -0.16, 0.07)
@@ -132,6 +144,8 @@ func _reset_pose():
 	spine.position = Vector3(0, 0.4, 0)
 	if sword:
 		sword.rotation_degrees = SWORD_REST
+	if off_sword:
+		off_sword.rotation_degrees = OFF_SWORD_REST
 	if bow:
 		bow.rotation_degrees = BOW_REST
 		arrow.visible = false
@@ -157,61 +171,75 @@ func pose_walk(phase: float):
 	head.rotation.x = -0.06
 	spine.position.y = 0.4 + 0.03 * absf(cos(phase))
 
-## One overhead chop: wind up, strike, recover. t in [0, SWING_T].
-func pose_swing(t: float):
-	_reset_pose()
-	var p := clampf(t / SWING_T, 0.0, 1.0)
-	var arm_x: float
-	var arm_z: float
-	var twist: float
-	var lean: float
-	var guard: float
-	var lunge: float
-	var pitch: float
-	# Sign convention: positive X rotation swings a hanging limb BACKWARD.
-	# The blade pitch is chosen so blade angle (arm_x + pitch) sweeps from
-	# cocked-behind (-108deg) up over the head to forward (105deg) at contact.
+## Shared chop envelope: wind up, strike, recover. Sign convention:
+## positive X rotation swings a hanging limb BACKWARD. The blade pitch
+## makes blade angle (arm_x + pitch) sweep from cocked-behind up over
+## the head to forward at contact.
+func _swing_envelope(p: float) -> Dictionary:
+	var v := {}
 	if p < 0.38:
 		var k := smoothstep(0.0, 1.0, p / 0.38)
-		arm_x = lerpf(0.0, 2.2, k)
-		arm_z = lerpf(0.0, 0.5, k)
-		twist = lerpf(0.0, -0.35, k)
-		lean = 0.03
-		guard = lerpf(0.0, 0.2, k)
-		lunge = lerpf(0.0, -0.06, k)
-		pitch = lerpf(55.0, -234.0, k)
+		v.arm_x = lerpf(0.0, 2.2, k)
+		v.arm_z = lerpf(0.0, 0.5, k)
+		v.twist = lerpf(0.0, -0.35, k)
+		v.lean = 0.03
+		v.guard = lerpf(0.0, 0.2, k)
+		v.lunge = lerpf(0.0, -0.06, k)
+		v.pitch = lerpf(55.0, -234.0, k)
 	elif p < 0.52:
 		var k := smoothstep(0.0, 1.0, (p - 0.38) / 0.14)
-		arm_x = lerpf(2.2, -1.45, k)
-		arm_z = lerpf(0.5, -0.1, k)
-		twist = lerpf(-0.35, 0.4, k)
-		lean = lerpf(0.03, 0.14, k)
-		guard = lerpf(0.2, 0.5, k)
-		lunge = lerpf(-0.06, 0.14, k)
-		pitch = lerpf(-234.0, 188.0, k)
+		v.arm_x = lerpf(2.2, -1.45, k)
+		v.arm_z = lerpf(0.5, -0.1, k)
+		v.twist = lerpf(-0.35, 0.4, k)
+		v.lean = lerpf(0.03, 0.14, k)
+		v.guard = lerpf(0.2, 0.5, k)
+		v.lunge = lerpf(-0.06, 0.14, k)
+		v.pitch = lerpf(-234.0, 188.0, k)
 	else:
 		var k := smoothstep(0.0, 1.0, (p - 0.52) / 0.48)
-		arm_x = lerpf(-1.45, 0.0, k)
-		arm_z = lerpf(-0.1, 0.0, k)
-		twist = lerpf(0.4, 0.0, k)
-		lean = lerpf(0.14, 0.03, k)
-		guard = lerpf(0.5, 0.0, k)
-		lunge = lerpf(0.14, 0.0, k)
-		pitch = lerpf(188.0, 55.0, k)
-	arm_r.rotation.x = arm_x
-	arm_r.rotation.z = arm_z
-	spine.rotation.y = twist
-	spine.rotation.x = lean
+		v.arm_x = lerpf(-1.45, 0.0, k)
+		v.arm_z = lerpf(-0.1, 0.0, k)
+		v.twist = lerpf(0.4, 0.0, k)
+		v.lean = lerpf(0.14, 0.03, k)
+		v.guard = lerpf(0.5, 0.0, k)
+		v.lunge = lerpf(0.14, 0.0, k)
+		v.pitch = lerpf(188.0, 55.0, k)
+	return v
+
+## Main-hand overhead chop. t in [0, SWING_T].
+func pose_swing(t: float):
+	_reset_pose()
+	var v := _swing_envelope(clampf(t / SWING_T, 0.0, 1.0))
+	arm_r.rotation.x = v.arm_x
+	arm_r.rotation.z = v.arm_z
+	spine.rotation.y = v.twist
+	spine.rotation.x = v.lean
 	# Weight shift: sway back on the windup, into the blow on the strike.
-	spine.position.z = lunge
-	arm_l.rotation.x = -guard * 0.8
-	arm_l.rotation.z = -0.15 * guard
+	spine.position.z = v.lunge
+	arm_l.rotation.x = -v.guard * 0.8
+	arm_l.rotation.z = -0.15 * v.guard
 	# The blade pitches through the hand so it leads the arc and points
 	# at the target on contact instead of staying in carry grip.
 	if sword:
-		sword.rotation_degrees = SWORD_SWING_BASE + Vector3(pitch, 0, 0)
+		sword.rotation_degrees = SWORD_SWING_BASE + Vector3(v.pitch, 0, 0)
 	# Eyes stay on the target through the torso twist.
-	head.rotation.y = -twist * 0.5
+	head.rotation.y = -v.twist * 0.5
+
+## Mirrored chop with the off-hand weapon (dual wield).
+func pose_swing_off(t: float):
+	if off_sword == null:
+		pose_swing(t)
+		return
+	_reset_pose()
+	var v := _swing_envelope(clampf(t / SWING_T, 0.0, 1.0))
+	arm_l.rotation.x = v.arm_x
+	arm_l.rotation.z = -v.arm_z
+	spine.rotation.y = -v.twist
+	spine.rotation.x = v.lean
+	spine.position.z = v.lunge
+	arm_r.rotation.x = -v.guard * 0.4
+	off_sword.rotation_degrees = OFF_SWORD_SWING_BASE + Vector3(v.pitch, 0, 0)
+	head.rotation.y = v.twist * 0.5
 
 ## Crumple: torso pitches forward, knees fold, body sinks. Holds the
 ## final frame so corpses can stay on the field. t in [0, DEATH_T].

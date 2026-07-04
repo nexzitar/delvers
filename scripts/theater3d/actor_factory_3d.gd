@@ -32,8 +32,11 @@ static func hero_opts(equipped: Dictionary) -> Dictionary:
 		else:
 			opts["sword"] = true
 	var off = equipped.get(Equip.Position.OFF_HAND)
-	if off and off.attack_speed <= 0.0:
-		opts["shield"] = true
+	if off:
+		if off.attack_speed > 0.0:
+			opts["off_sword"] = true
+		else:
+			opts["shield"] = true
 	if equipped.get(Equip.Position.HEAD):
 		opts["helmet"] = true
 	return opts

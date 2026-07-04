@@ -168,6 +168,16 @@ func in_attack_range(attacker, target) -> bool:
 	var skill = attacker.skills[0] if not attacker.skills.is_empty() else null
 	return can_use_skill_on(attacker, skill, target)
 
+## Where movement stops. Ranged units stop as soon as they can shoot;
+## melee closes to well inside reach so strikes read as contact instead
+## of edge-of-range pokes (and corpses in between don't look blocking).
+func within_stop_range(attacker, target) -> bool:
+	var skill = attacker.skills[0] if not attacker.skills.is_empty() else null
+	if skill and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE:
+		return can_use_skill_on(attacker, skill, target)
+	var dist = attacker.position.distance_to(target.position)
+	return dist <= effective_range(attacker, skill) * 0.7
+
 ## Turns a stationary attacker toward its target (movement handles
 ## facing while walking), logging FACE when the direction meaningfully
 ## changes so the theater turns with it.

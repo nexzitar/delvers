@@ -29,6 +29,17 @@ func _ready():
 	var archer = ActorFactory3D.build_hero({Equip.Position.MAIN_HAND: bow})
 	assert(archer.bow != null, "archer rig carries a bow")
 
+	var dagger = load("res://resources/gear/fast_dagger.tres")
+	var duelist = ActorFactory3D.build_hero({
+		Equip.Position.MAIN_HAND: sword,
+		Equip.Position.OFF_HAND: dagger,
+	})
+	assert(duelist.sword != null, "duelist main-hand blade")
+	assert(duelist.off_sword != null, "duelist off-hand blade")
+	assert(duelist.shield == null, "no shield when dual wielding")
+	duelist.pose_swing_off(0.5)
+	duelist.free()
+
 	var slime = ActorFactory3D.build_enemy(
 		load("res://resources/enemies/green_slime.tres")
 	)

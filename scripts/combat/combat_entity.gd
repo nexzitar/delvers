@@ -109,8 +109,10 @@ func update(delta, combat_state):
 	if _try_special_skills(combat_state):
 		return
 
+	# Attacks fire anywhere inside range, but melee keeps closing to
+	# comfortable striking distance before settling.
 	var in_range = combat_state.in_attack_range(self, target)
-	if in_range:
+	if combat_state.within_stop_range(self, target):
 		combat_state.stop_movement(self)
 		combat_state.face_target(self, target)
 	else:

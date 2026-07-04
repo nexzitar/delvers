@@ -113,6 +113,7 @@ func _build_timeline(log):
 					_timeline.append({
 						"time": maxf(0.0, event.time - lead),
 						"kind": "swing", "id": event.source_id,
+						"off": event.off_hand,
 					})
 			CombatEvent.EventType.CAST_START:
 				var duration := 0.3
@@ -130,7 +131,7 @@ func _dispatch(item):
 	if item.kind == "swing":
 		var state = actors.get(item.id)
 		if state and state.mode != "dead":
-			state.mode = "attack"
+			state.mode = "attack_off" if item.get("off", false) else "attack"
 			state.anim_t = 0.0
 		return
 	_play_event(item.event)
@@ -301,14 +302,17 @@ func _update_actors(delta):
 			"dead":
 				state.anim_t += delta
 				rig.pose_death(state.anim_t)
-			"attack":
+			"attack", "attack_off":
 				state.anim_t += delta
 				if state.is_slime:
 					rig.pose_attack(state.anim_t)
 					if state.anim_t >= SlimeRig.ATTACK_T:
 						state.mode = "idle"
 				else:
-					rig.pose_swing(state.anim_t)
+					if state.mode == "attack_off":
+						rig.pose_swing_off(state.anim_t)
+					else:
+						rig.pose_swing(state.anim_t)
 					if state.anim_t >= DelverRig.SWING_T:
 						state.mode = "idle"
 			"shoot":
