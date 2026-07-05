@@ -529,7 +529,8 @@ func _finish_battle():
 	PlayerRoster.last_battle_won = combat_result.victory
 
 	if not combat_result.victory:
-		RosterSave.save(PlayerRoster)
+		if PlayerRoster.autosave:
+			RosterSave.save(PlayerRoster)
 		await _show_battle_result(false)
 		await get_tree().create_timer(1.2).timeout
 		_show_summary(
@@ -560,7 +561,8 @@ func _finish_battle():
 
 	if room >= PlayerRoster.DELVE_LENGTH:
 		PlayerRoster.adventures_completed += 1
-		RosterSave.save(PlayerRoster)
+		if PlayerRoster.autosave:
+			RosterSave.save(PlayerRoster)
 		await _show_battle_result(true)
 		await get_tree().create_timer(1.2).timeout
 		_show_summary(
@@ -569,7 +571,8 @@ func _finish_battle():
 		)
 		return
 
-	RosterSave.save(PlayerRoster)
+	if PlayerRoster.autosave:
+		RosterSave.save(PlayerRoster)
 	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
