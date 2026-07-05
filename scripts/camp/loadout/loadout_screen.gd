@@ -54,6 +54,10 @@ var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
 var _library_box: VBoxContainer
+var _right_tabs: TabContainer
+## Clicked recipe: its crafted-item preview stays pinned in the
+## tooltip panels (no hovering needed).
+var _forge_selected: String = ""
 ## recipe_id -> chosen affix_id ("" = plain craft), kept across refreshes.
 var _forge_affix_choice := {}
 var _preview_holder: Control
@@ -259,6 +263,8 @@ func _build_equip_slot(position: int) -> Control:
 
 func _build_right_tabs():
 	var tabs = TabContainer.new()
+	_right_tabs = tabs
+	tabs.tab_changed.connect(func(_i): _refresh_forge_tooltip())
 	tabs.add_theme_font_override("font", FONT)
 	_place(tabs, -580, 50, -40, -40, 1, 0, 1, 1)
 
@@ -424,6 +430,9 @@ func _make_tome_row(tome: Dictionary) -> Control:
 func _fill_forge():
 	_clear(_forge_box)
 
+	if _forge_selected == "" and not PlayerRoster.known_recipes.is_empty():
+		_forge_selected = PlayerRoster.known_recipes[0]
+
 	_forge_box.add_child(_title("Recipes"))
 	if PlayerRoster.known_recipes.is_empty():
 		var none = Label.new()
@@ -445,6 +454,9 @@ func _fill_forge():
 			var affix = load(RosterSave.AFFIX_PATHS[affix_id])
 			var chip = HBoxContainer.new()
 			chip.add_theme_constant_override("separation", 6)
+			chip.mouse_filter = Control.MOUSE_FILTER_STOP
+			chip.mouse_entered.connect(func(): show_tooltip("affix", affix))
+			chip.mouse_exited.connect(_refresh_forge_tooltip)
 			var affix_icon = TextureRect.new()
 			affix_icon.texture = affix.icon
 			affix_icon.custom_minimum_size = Vector2(30, 30)
@@ -479,6 +491,34 @@ func _fill_forge():
 		empty.text = "The material shelves are bare."
 		empty.add_theme_color_override("font_color", DIM)
 		_forge_box.add_child(empty)
+
+	_refresh_forge_tooltip()
+
+## The selected recipe's crafted item stays pinned in the tooltip
+## while the Forge tab is open.
+func _refresh_forge_tooltip():
+	if _right_tabs == null or _tooltip_panel == null:
+		return
+	var current = _right_tabs.get_current_tab_control()
+	if current == null or current.name != "Forge":
+		hide_tooltip()
+		return
+	if _forge_selected == "" or not RosterSave.RECIPE_PATHS.has(_forge_selected):
+		hide_tooltip()
+		return
+	var recipe = load(RosterSave.RECIPE_PATHS[_forge_selected])
+	var chosen: String = _forge_affix_choice.get(_forge_selected, "")
+	if chosen != "" and not PlayerRoster.compatible_affixes(recipe).has(chosen):
+		chosen = ""
+	var preview = LootTable.materialize(
+		recipe.result_gear_id, recipe.result_item_level,
+		recipe.result_quality, chosen
+	)
+	var prefix := ""
+	if chosen != "":
+		prefix = load(RosterSave.AFFIX_PATHS[chosen]).affix_name + " "
+	preview.gear_name = prefix + recipe.recipe_name
+	show_tooltip("gear", preview)
 
 func _material_chip(material_id: String, count: int) -> Control:
 	var material = load(RosterSave.MATERIAL_PATHS[material_id])
@@ -554,15 +594,17 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 		)
 		info.add_child(cost_label)
 
-	# Hovering the row previews the exact item this craft would forge,
-	# with the usual equipped-gear comparison.
-	var preview = LootTable.materialize(
-		recipe.result_gear_id, recipe.result_item_level,
-		recipe.result_quality, chosen
-	)
-	preview.gear_name = display_name
-	panel.mouse_entered.connect(func(): show_tooltip("gear", preview))
-	panel.mouse_exited.connect(hide_tooltip)
+	# Clicking the row selects it: the exact item this craft would
+	# forge stays pinned in the tooltip, compared against equipped gear.
+	if recipe.recipe_id == _forge_selected:
+		var highlight = _slot_style()
+		highlight.border_color = Color(0.85, 0.72, 0.42)
+		panel.add_theme_stylebox_override("panel", highlight)
+	panel.gui_input.connect(func(input_event):
+		if input_event is InputEventMouseButton and input_event.pressed \
+				and input_event.button_index == MOUSE_BUTTON_LEFT:
+			_forge_selected = recipe.recipe_id
+			_fill_forge())
 
 	# Known compatible affixes: pick one to enchant the craft.
 	if not affixes.is_empty():
@@ -844,6 +886,8 @@ func show_tooltip(kind, res):
 
 	if kind == "gear":
 		_tooltip_gear(res)
+	elif kind == "affix":
+		_tooltip_affix(res)
 	elif kind == "skill":
 		_tooltip_skill(res)
 	elif kind == "twohand":
@@ -916,9 +960,27 @@ func _tooltip_gear(gear: GearDefinition):
 	if gear.spell_power != 0:
 		_tip_line("+%d Spell Power" % gear.spell_power, PARCHMENT, 18, 1)
 
+	if gear.affix_id != "" and RosterSave.AFFIX_PATHS.has(gear.affix_id):
+		var affix = load(RosterSave.AFFIX_PATHS[gear.affix_id])
+		_tip_line(affix.affix_name, ItemQuality.color(ItemQuality.Tier.EPIC), 18, 1)
+		for line in affix.effect_lines():
+			_tip_line(line, Color(0.55, 0.85, 0.5), 16, 1)
+
 	_tip_line("Item level %d" % gear.item_level, DIM, 16, 1)
 
 	_fill_gear_compare(gear)
+
+func _tooltip_affix(affix):
+	_tip_line(affix.affix_name, ItemQuality.color(ItemQuality.Tier.EPIC), 26, 0)
+	_tip_line("Affix — craft it onto compatible %s" % (
+		"weapons" if affix.applies_to_weapons else "armor"
+	), DIM, 15, 0)
+	for line in affix.effect_lines():
+		_tip_line(line, Color(0.55, 0.85, 0.5), 18, 0)
+	if affix.tome_name != "":
+		_tip_line(affix.tome_name, DIM, 15, 1)
+	if affix.tome_lore != "":
+		_tip_line("\"%s\"" % affix.tome_lore, PARCHMENT, 15, 1)
 
 func _fill_gear_compare(gear: GearDefinition):
 	if gear.slot == GearDefinition.Slot.MAIN_HAND \

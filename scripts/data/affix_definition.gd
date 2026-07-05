@@ -36,6 +36,24 @@ class_name AffixDefinition
 ## material_id -> count, consumed on top of the base recipe's costs.
 @export var costs: Dictionary = {}
 
+## Human-readable effect summary, for item tooltips and the library.
+func effect_lines() -> Array:
+	var out := []
+	if damage_mult != 1.0:
+		out.append("+%d%% weapon damage" % roundi((damage_mult - 1.0) * 100))
+	if attack_speed_mult != 1.0:
+		out.append("%d%% faster swings" % roundi((1.0 - attack_speed_mult) * 100))
+	if health_bonus_add != 0:
+		out.append("+%d Health" % health_bonus_add)
+	match on_hit_status:
+		"poison":
+			out.append("Poisons on hit: %.1f damage/s for %ds" % [
+				on_hit_magnitude, int(on_hit_duration)])
+		"slow":
+			out.append("Chills on hit: %d%% slower for %ds" % [
+				roundi((1.0 - on_hit_magnitude) * 100), int(on_hit_duration)])
+	return out
+
 func compatible_with(gear: GearDefinition) -> bool:
 	var is_weapon = gear.weapon_type != GearDefinition.WeaponType.NONE
 	return (is_weapon and applies_to_weapons) \

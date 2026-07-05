@@ -28,11 +28,10 @@ func _ready():
 		tabs.current_tab = 2
 	await get_tree().create_timer(0.4).timeout
 
-	# Simulate hovering the first recipe row for the preview tooltip.
-	for panel in loadout.find_children("*", "PanelContainer", true, false):
-		if panel.mouse_entered.get_connections().size() > 0:
-			panel.mouse_entered.emit()
-			break
+	# Select the sword with Virulent chosen: pinned preview + effects.
+	loadout._forge_affix_choice["iron_sword"] = "virulent"
+	loadout._forge_selected = "iron_sword"
+	loadout._fill_forge()
 	await get_tree().create_timer(0.2).timeout
 
 	await RenderingServer.frame_post_draw

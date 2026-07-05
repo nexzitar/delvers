@@ -205,18 +205,9 @@ func _seed_loadout(hero, items: Array):
 				break
 
 func _build_stash():
-	# Distinct duplicates so a stash spare is its own physical item,
-	# separate from whatever a hero already has equipped.
-	gear_stash = [
-		SWORD.duplicate(),
-		BOW.duplicate(),
-		SHIELD.duplicate(),
-		HELMET.duplicate(),
-		ARMOR.duplicate(),
-		FAST_DAGGER.duplicate(),
-		HEAVY_AXE.duplicate(),
-	]
-	sort_gear_stash()
+	# A new guild owns nothing beyond what it wears. Anything else is
+	# found in the delve or built at the Forge.
+	gear_stash = []
 
 ## Stash display order: equipment category, then rarity (high first), then item level.
 func sort_gear_stash() -> void:
