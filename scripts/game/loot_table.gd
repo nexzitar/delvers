@@ -31,9 +31,10 @@ static func roll_quality(depth: int, boss := false) -> int:
 	return ItemQuality.Tier.COMMON
 
 ## Builds a concrete item: authored base stats scaled by item level,
-## with a smaller premium for rarity. Deterministic, so saved items
-## rebuild identically from (id, level, quality).
-static func materialize(gear_id: String, item_level: int, quality: int) -> GearDefinition:
+## with a smaller premium for rarity, optionally enchanted by an affix.
+## Deterministic, so saved items rebuild identically from
+## (id, level, quality, affix).
+static func materialize(gear_id: String, item_level: int, quality: int, affix_id := "") -> GearDefinition:
 	var path = RosterSave.GEAR_PATHS.get(gear_id)
 	if path == null:
 		return null
@@ -46,16 +47,35 @@ static func materialize(gear_id: String, item_level: int, quality: int) -> GearD
 		gear.damage_max = maxi(gear.damage_min, roundi(gear.damage_max * mult))
 	gear.attack_bonus = roundi(gear.attack_bonus * mult)
 	gear.health_bonus = roundi(gear.health_bonus * mult)
+
+	if affix_id != "" and RosterSave.AFFIX_PATHS.has(affix_id):
+		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+		gear.affix_id = affix_id
+		gear.gear_name = "%s %s" % [affix.affix_name, gear.gear_name]
+		if gear.damage_min > 0 or gear.damage_max > 0:
+			gear.damage_min = maxi(1, roundi(gear.damage_min * affix.damage_mult))
+			gear.damage_max = maxi(
+				gear.damage_min, roundi(gear.damage_max * affix.damage_mult)
+			)
+		if gear.attack_speed > 0.0:
+			gear.attack_speed = snappedf(
+				gear.attack_speed * affix.attack_speed_mult, 0.1
+			)
+		gear.health_bonus += affix.health_bonus_add
 	return gear
 
 ## Rolls drops for a defeated pack: monsters drop resources and
-## knowledge, not equipment. Returns
-## {"materials": {id: count}, "recipes": [recipe_id], "gear": [GearDefinition]}.
-## known_recipes suppresses already-learned knowledge (nothing wasted:
-## a known recipe simply doesn't drop).
-static func roll_enemy_drops(enemy_templates: Array, room: int, known_recipes := []) -> Dictionary:
-	var drops := {"materials": {}, "recipes": [], "gear": []}
+## knowledge, not equipment. Returns {"materials": {id: count},
+## "recipes": [recipe_id], "affixes": [affix_id], "gear": [...]}.
+## known_recipes / known_affixes suppress already-learned knowledge
+## (nothing wasted: known knowledge simply doesn't drop).
+static func roll_enemy_drops(
+		enemy_templates: Array, room: int,
+		known_recipes := [], known_affixes := [],
+) -> Dictionary:
+	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": []}
 	var seen: Array = known_recipes.duplicate()
+	var seen_affixes: Array = known_affixes.duplicate()
 
 	for template in enemy_templates:
 		# Materials: the common reward, in this enemy's identity.
@@ -75,6 +95,16 @@ static func roll_enemy_drops(enemy_templates: Array, room: int, known_recipes :=
 				var recipe_id = unknown.pick_random()
 				drops.recipes.append(recipe_id)
 				seen.append(recipe_id)
+
+		# Affixes: the rarest knowledge of all.
+		if randf() <= template.affix_drop_chance:
+			var unknown_affixes = template.affix_loot.filter(
+				func(id): return not seen_affixes.has(id)
+			)
+			if not unknown_affixes.is_empty():
+				var affix_id = unknown_affixes.pick_random()
+				drops.affixes.append(affix_id)
+				seen_affixes.append(affix_id)
 
 		# Finished equipment: a memorable fluke, or a boss trophy.
 		if not template.loot_ids.is_empty() and randf() <= template.drop_chance:

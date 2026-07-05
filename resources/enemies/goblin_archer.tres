@@ -19,5 +19,6 @@ portrait = ExtResource("5_icon")
 skills = Array[ExtResource("3_skill")]([ExtResource("4_arrow")])
 material_loot = Array[String](["ash_wood", "ash_wood", "bow_string", "poison_sac"])
 recipe_loot = Array[String](["hunter_bow", "iron_helm"])
+affix_loot = Array[String](["virulent", "quick"])
 loot_ids = Array[String](["starter_bow", "fast_dagger", "starter_helmet", "starter_armor"])
 preferred_row = 1

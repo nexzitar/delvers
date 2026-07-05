@@ -71,7 +71,7 @@ func _ready():
 	# Unknown ids in a save drop gracefully instead of crashing.
 	var file = FileAccess.open(TEST_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify({
-		"version": 3, "heroes": [{"template": "default_delver",
+		"version": 4, "heroes": [{"template": "default_delver",
 		"name": "X",
 		"equipped": {"14": {"id": "future_relic", "level": 3, "quality": 0}},
 		"bonus_skills": []}],

@@ -35,6 +35,8 @@ const STATUS_TEXT := {
 	"frost_nova_root": "Rooted!",
 	"hamstring_slow": "Slowed!",
 	"charge_stun": "Stunned!",
+	"poison_virulent": "Poisoned!",
+	"slow_frostforged": "Chilled!",
 }
 
 var actors := {}
@@ -159,6 +161,8 @@ func _build_timeline(log):
 		_timeline.append({"time": event.time, "kind": "event", "event": event})
 		match event.type:
 			CombatEvent.EventType.DAMAGE:
+				if event.dot:
+					continue
 				if event.skill == null or event.skill.delivery_type == SkillDefinition.DeliveryType.MELEE:
 					var lead = SLIME_LEAD if is_slime.get(event.source_id, false) else SWING_LEAD
 					_timeline.append({
@@ -288,6 +292,12 @@ func _play_damage(event):
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
+	if event.dot:
+		# Poison ticks: a quiet purple number, no impact sound or swing.
+		_spawn_floating_text(
+			target.rig.position, str(event.amount), Color(0.7, 0.35, 0.85)
+		)
+		return
 	var ranged = (
 		event.skill != null
 		and event.skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
@@ -501,7 +511,9 @@ func _finish_battle():
 	# Monsters drop resources and knowledge: pouch it all.
 	var slain = combat_result.enemies.map(func(e): return e.template)
 	var found = LootTable.roll_enemy_drops(
-		slain, room, PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+		slain, room,
+		PlayerRoster.known_recipes + PlayerRoster.delve_recipes,
+		PlayerRoster.known_affixes + PlayerRoster.delve_affixes
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -510,6 +522,7 @@ func _finish_battle():
 			+ found.materials[material_id]
 		)
 	PlayerRoster.delve_recipes.append_array(found.recipes)
+	PlayerRoster.delve_affixes.append_array(found.affixes)
 
 	if room >= PlayerRoster.DELVE_LENGTH:
 		PlayerRoster.adventures_completed += 1
@@ -523,15 +536,22 @@ func _finish_battle():
 		return
 
 	RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
-## crown jewels — newly learned recipes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array) -> Array:
+## crown jewels — newly learned recipes and affixes.
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = []) -> Array:
 	var entries := []
+	for affix_id in affixes:
+		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+		entries.append({
+			"texture": affix.icon,
+			"text": "Affix:\n%s" % affix.affix_name,
+			"color": ItemQuality.color(ItemQuality.Tier.EPIC),
+		})
 	for recipe_id in recipes:
 		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
 		var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
@@ -611,7 +631,8 @@ func _show_summary(title: String, subtitle: String):
 	var entries = _drop_entries(
 		PlayerRoster.delve_loot,
 		PlayerRoster.delve_materials,
-		PlayerRoster.delve_recipes
+		PlayerRoster.delve_recipes,
+		PlayerRoster.delve_affixes
 	)
 	panel.setup(title, subtitle, entries, "Return to Camp")
 	panel.primary_pressed.connect(_bank_and_return)

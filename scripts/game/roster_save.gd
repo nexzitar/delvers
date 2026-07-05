@@ -6,7 +6,7 @@ class_name RosterSave
 ## the "each item is one physical object" model.
 
 const SAVE_PATH := "user://delvers_save.json"
-const VERSION := 3
+const VERSION := 4
 
 const MATERIAL_PATHS := {
 	"gel": "res://resources/materials/gel.tres",
@@ -24,6 +24,14 @@ const RECIPE_PATHS := {
 	"hunter_bow": "res://resources/recipes/hunter_bow.tres",
 	"reinforced_shield": "res://resources/recipes/reinforced_shield.tres",
 	"iron_helm": "res://resources/recipes/iron_helm.tres",
+}
+
+const AFFIX_PATHS := {
+	"virulent": "res://resources/affixes/virulent.tres",
+	"frostforged": "res://resources/affixes/frostforged.tres",
+	"flaming": "res://resources/affixes/flaming.tres",
+	"quick": "res://resources/affixes/quick.tres",
+	"guarding": "res://resources/affixes/guarding.tres",
 }
 
 const HERO_PATHS := {
@@ -56,6 +64,8 @@ static func _gear_entry(gear) -> Dictionary:
 		"id": gear.gear_id,
 		"level": gear.item_level,
 		"quality": int(gear.quality),
+		"affix": gear.affix_id,
+		"name": gear.gear_name,
 	}
 
 static func save(roster, path := SAVE_PATH) -> void:
@@ -83,6 +93,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"stash": roster.gear_stash.map(_gear_entry),
 		"materials": roster.material_stash,
 		"known_recipes": roster.known_recipes,
+		"known_affixes": roster.known_affixes,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -134,6 +145,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	for recipe_id in data.get("known_recipes", []):
 		if RECIPE_PATHS.has(recipe_id) and not roster.known_recipes.has(recipe_id):
 			roster.known_recipes.append(recipe_id)
+
+	roster.known_affixes = []
+	for affix_id in data.get("known_affixes", []):
+		if AFFIX_PATHS.has(affix_id) and not roster.known_affixes.has(affix_id):
+			roster.known_affixes.append(affix_id)
 	return true
 
 static func _restore_hero(entry):
@@ -159,11 +175,18 @@ static func _restore_hero(entry):
 static func _gear_from_entry(entry):
 	if not (entry is Dictionary) or not GEAR_PATHS.has(entry.get("id")):
 		return null
-	return LootTable.materialize(
+	var affix_id = entry.get("affix", "")
+	if affix_id != "" and not AFFIX_PATHS.has(affix_id):
+		affix_id = ""
+	var gear = LootTable.materialize(
 		entry.get("id"),
 		int(entry.get("level", 1)),
-		int(entry.get("quality", ItemQuality.Tier.COMMON))
+		int(entry.get("quality", ItemQuality.Tier.COMMON)),
+		affix_id
 	)
+	if gear and entry.get("name", "") != "":
+		gear.gear_name = entry.get("name")
+	return gear
 
 static func _skill_from_id(skill_id):
 	if skill_id == null:

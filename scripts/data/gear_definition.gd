@@ -41,6 +41,8 @@ enum HeadStyle {
 ## Drop level: stats scale from the authored (level 1) values via
 ## LootTable.materialize. Higher item level = stronger item.
 @export var item_level: int = 1
+## Applied enchantment (AffixDefinition id), baked in at craft time.
+@export var affix_id: String = ""
 
 @export_group("Visuals")
 ## Sprite drawn on the character (paper-doll layer).

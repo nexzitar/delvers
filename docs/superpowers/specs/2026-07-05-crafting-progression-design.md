@@ -99,6 +99,13 @@ beat "another random rare sword".
   recipes as rare permanent drops (saved as knowledge), Forge tab in
   the loadout for crafting, finished gear reduced to boss drops +
   2% from normals, rooms auto-advance (no Delve Deeper click).
-- **Deferred**: affix recipes, salvaging, camp buildings & material
-  spending beyond crafting, multiple dungeons with material identity,
-  difficulty tiers, crafting stations.
+- **2026-07-05 (slice 2)**: affix recipes — Virulent (poison DoT on
+  hit), Frostforged (chill on hit), Flaming (+damage), Quick (faster
+  swings), Guarding (+health) — learnable from themed enemy pools
+  (the Slime King teaches Flaming), applied at craft time via a Forge
+  affix picker with combined material costs ("Virulent Iron Sword").
+  The sim gained POISON damage-over-time with attribution, on-hit
+  weapon riders, and refresh-not-stack statuses. Save schema v4.
+- **Deferred**: salvaging, camp buildings & material spending beyond
+  crafting, essences as a distinct material class, multiple dungeons
+  with material identity, difficulty tiers, crafting stations.

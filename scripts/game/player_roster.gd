@@ -43,9 +43,10 @@ var skill_catalog: Array = [
 ]
 
 ## Materials are consumed; knowledge is permanent. The camp grows more
-## knowledgeable with every recipe brought home.
+## knowledgeable with every recipe or affix brought home.
 var material_stash := {}
 var known_recipes: Array = ["iron_sword"]
+var known_affixes: Array = []
 
 var battles_fought := 0
 var adventures_completed := 0
@@ -65,6 +66,7 @@ var delve_room := 0
 var delve_loot: Array = []
 var delve_materials := {}
 var delve_recipes: Array = []
+var delve_affixes: Array = []
 var delve_health := {}
 
 func start_delve():
@@ -72,6 +74,7 @@ func start_delve():
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
+	delve_affixes = []
 	delve_health = {}
 
 func bank_delve_loot():
@@ -83,9 +86,13 @@ func bank_delve_loot():
 	for recipe_id in delve_recipes:
 		if not known_recipes.has(recipe_id):
 			known_recipes.append(recipe_id)
+	for affix_id in delve_affixes:
+		if not known_affixes.has(affix_id):
+			known_affixes.append(affix_id)
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
+	delve_affixes = []
 	delve_room = 0
 	sort_gear_stash()
 	if autosave:
@@ -93,25 +100,59 @@ func bank_delve_loot():
 
 # --- Crafting ---------------------------------------------------------
 
-func can_craft(recipe: RecipeDefinition) -> bool:
+## Affixes the camp knows that can enchant this recipe's result.
+func compatible_affixes(recipe: RecipeDefinition) -> Array:
+	var base = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
+	var out := []
+	for affix_id in known_affixes:
+		if not RosterSave.AFFIX_PATHS.has(affix_id):
+			continue
+		if load(RosterSave.AFFIX_PATHS[affix_id]).compatible_with(base):
+			out.append(affix_id)
+	return out
+
+## Combined material bill: the base recipe plus the chosen affix.
+func craft_costs(recipe: RecipeDefinition, affix_id := "") -> Dictionary:
+	var costs = recipe.costs.duplicate()
+	if affix_id != "" and RosterSave.AFFIX_PATHS.has(affix_id):
+		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+		for material_id in affix.costs:
+			costs[material_id] = costs.get(material_id, 0) + affix.costs[material_id]
+	return costs
+
+func can_craft(recipe: RecipeDefinition, affix_id := "") -> bool:
 	if not known_recipes.has(recipe.recipe_id):
 		return false
-	for material_id in recipe.costs:
-		if material_stash.get(material_id, 0) < recipe.costs[material_id]:
+	if affix_id != "":
+		if not known_affixes.has(affix_id):
+			return false
+		if not compatible_affixes(recipe).has(affix_id):
+			return false
+	var costs = craft_costs(recipe, affix_id)
+	for material_id in costs:
+		if material_stash.get(material_id, 0) < costs[material_id]:
 			return false
 	return true
 
-## Consumes materials and forges the recipe's item into the stash.
-func craft(recipe: RecipeDefinition) -> GearDefinition:
-	if not can_craft(recipe):
+## Consumes materials and forges the recipe's item — optionally
+## enchanted ("Virulent Hunter Bow") — into the stash.
+func craft(recipe: RecipeDefinition, affix_id := "") -> GearDefinition:
+	if not can_craft(recipe, affix_id):
 		return null
-	for material_id in recipe.costs:
-		material_stash[material_id] -= recipe.costs[material_id]
+	var costs = craft_costs(recipe, affix_id)
+	for material_id in costs:
+		material_stash[material_id] -= costs[material_id]
 		if material_stash[material_id] <= 0:
 			material_stash.erase(material_id)
 	var gear = LootTable.materialize(
-		recipe.result_gear_id, recipe.result_item_level, recipe.result_quality
+		recipe.result_gear_id, recipe.result_item_level,
+		recipe.result_quality, affix_id
 	)
+	# Crafted items carry the recipe's name, not the base item's.
+	var affix_prefix := ""
+	if affix_id != "":
+		affix_prefix = load(RosterSave.AFFIX_PATHS[affix_id]).affix_name + " "
+	gear.gear_name = affix_prefix + recipe.recipe_name
 	gear_stash.append(gear)
 	sort_gear_stash()
 	if autosave:

@@ -53,6 +53,8 @@ var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
+## recipe_id -> chosen affix_id ("" = plain craft), kept across refreshes.
+var _forge_affix_choice := {}
 var _preview_holder: Control
 var _preview_rig: Node3D
 var _preview_time := 0.0
@@ -327,6 +329,33 @@ func _fill_forge():
 		if RosterSave.RECIPE_PATHS.has(recipe_id):
 			_forge_box.add_child(_make_recipe_row(load(RosterSave.RECIPE_PATHS[recipe_id])))
 
+	if not PlayerRoster.known_affixes.is_empty():
+		_forge_box.add_child(_title("Affixes"))
+		var affix_row = HBoxContainer.new()
+		affix_row.add_theme_constant_override("separation", 14)
+		_forge_box.add_child(affix_row)
+		for affix_id in PlayerRoster.known_affixes:
+			if not RosterSave.AFFIX_PATHS.has(affix_id):
+				continue
+			var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+			var chip = HBoxContainer.new()
+			chip.add_theme_constant_override("separation", 6)
+			var affix_icon = TextureRect.new()
+			affix_icon.texture = affix.icon
+			affix_icon.custom_minimum_size = Vector2(30, 30)
+			affix_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			affix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			chip.add_child(affix_icon)
+			var affix_label = Label.new()
+			affix_label.text = affix.affix_name
+			affix_label.add_theme_font_override("font", FONT)
+			affix_label.add_theme_font_size_override("font_size", 16)
+			affix_label.add_theme_color_override(
+				"font_color", ItemQuality.color(ItemQuality.Tier.EPIC)
+			)
+			chip.add_child(affix_label)
+			affix_row.add_child(chip)
+
 	_forge_box.add_child(_title("Materials"))
 	var grid = GridContainer.new()
 	grid.columns = 3
@@ -365,6 +394,11 @@ func _material_chip(material_id: String, count: int) -> Control:
 	return row
 
 func _make_recipe_row(recipe: RecipeDefinition) -> Control:
+	var affixes = PlayerRoster.compatible_affixes(recipe)
+	var chosen: String = _forge_affix_choice.get(recipe.recipe_id, "")
+	if chosen != "" and not affixes.has(chosen):
+		chosen = ""
+
 	var panel = PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _slot_style())
 
@@ -383,20 +417,26 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	var info = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
+	var display_name = recipe.recipe_name
+	if chosen != "":
+		display_name = "%s %s" % [
+			load(RosterSave.AFFIX_PATHS[chosen]).affix_name, recipe.recipe_name
+		]
 	var name_label = Label.new()
-	name_label.text = recipe.recipe_name
+	name_label.text = display_name
 	name_label.add_theme_font_override("font", FONT)
 	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.add_theme_color_override(
 		"font_color", ItemQuality.color(recipe.result_quality)
 	)
 	info.add_child(name_label)
+	var bill = PlayerRoster.craft_costs(recipe, chosen)
 	var costs := []
-	for material_id in recipe.costs:
+	for material_id in bill:
 		var material = load(RosterSave.MATERIAL_PATHS[material_id])
 		var have = PlayerRoster.material_stash.get(material_id, 0)
 		costs.append("%s %d/%d" % [
-			material.material_name, have, recipe.costs[material_id]
+			material.material_name, have, bill[material_id]
 		])
 	var cost_label = Label.new()
 	cost_label.text = ", ".join(costs)
@@ -405,18 +445,36 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	cost_label.add_theme_font_size_override("font_size", 13)
 	cost_label.add_theme_color_override(
 		"font_color",
-		PARCHMENT if PlayerRoster.can_craft(recipe) else Color(0.75, 0.4, 0.35)
+		PARCHMENT if PlayerRoster.can_craft(recipe, chosen) else Color(0.75, 0.4, 0.35)
 	)
 	info.add_child(cost_label)
+
+	# Known compatible affixes: pick one to enchant the craft.
+	if not affixes.is_empty():
+		var picker = OptionButton.new()
+		picker.add_theme_font_override("font", FONT)
+		picker.add_theme_font_size_override("font_size", 14)
+		picker.add_item("No affix")
+		picker.set_item_metadata(0, "")
+		for i in affixes.size():
+			var affix = load(RosterSave.AFFIX_PATHS[affixes[i]])
+			picker.add_item(affix.affix_name)
+			picker.set_item_metadata(i + 1, affixes[i])
+			if affixes[i] == chosen:
+				picker.select(i + 1)
+		picker.item_selected.connect(func(index):
+			_forge_affix_choice[recipe.recipe_id] = picker.get_item_metadata(index)
+			_fill_forge())
+		row.add_child(picker)
 
 	var craft = Button.new()
 	craft.text = "Craft"
 	craft.add_theme_font_override("font", FONT)
 	craft.add_theme_font_size_override("font_size", 18)
-	craft.disabled = not PlayerRoster.can_craft(recipe)
+	craft.disabled = not PlayerRoster.can_craft(recipe, chosen)
 	craft.custom_minimum_size = Vector2(92, 40)
 	craft.pressed.connect(func():
-		if PlayerRoster.craft(recipe) != null:
+		if PlayerRoster.craft(recipe, chosen) != null:
 			UiSounds.click()
 			refresh())
 	row.add_child(craft)

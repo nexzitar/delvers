@@ -13,6 +13,8 @@ func _ready():
 		"poison_sac": 2, "royal_jelly": 1,
 	}
 	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield"]
+	PlayerRoster.known_affixes = ["virulent", "frostforged", "guarding"]
+	PlayerRoster.material_stash["corrosion_core"] = 2
 
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
 	add_child(camp)

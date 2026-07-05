@@ -75,6 +75,13 @@ func is_stunned() -> bool:
 func tick_statuses(delta, combat_state):
 	for s in statuses:
 		s.remaining -= delta
+		if s.kind == StatusEffect.Kind.POISON and alive:
+			s.accum += s.magnitude * delta
+			if s.accum >= 1.0:
+				var dmg = int(s.accum)
+				s.accum -= dmg
+				var died = take_damage(dmg)
+				combat_state.log_dot(self, s, dmg, died)
 		if s.remaining <= 0.0:
 			combat_state.log_buff_expired(self, s)
 	statuses = statuses.filter(func(s): return s.remaining > 0.0)
@@ -204,6 +211,10 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 
 	var died = target.take_damage(damage)
 	combat_state.register_damage(self, target, skill, damage)
+	# Weapon affixes (poison, chill) bite on the landed hit.
+	combat_state.apply_on_hit(
+		self, off_weapon if off_hand else main_weapon, target
+	)
 
 	var event = CombatEvent.new()
 	event.time = combat_state.combat_time

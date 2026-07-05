@@ -45,6 +45,9 @@ var team: int
 var gear := []
 var equipped := {}
 var off_hand := false
+## Damage-over-time tick: the theater shows the number but plays no
+## swing or hit sound for it.
+var dot := false
 
 var position: Vector2 = Vector2.ZERO
 var facing: Vector2 = Vector2.RIGHT

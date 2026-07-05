@@ -27,6 +27,9 @@ class_name EnemyDefinition
 @export var material_drop_chance: float = 0.65
 @export var recipe_loot: Array[String] = []
 @export var recipe_drop_chance: float = 0.05
+## Affix knowledge this enemy can teach (rarer than base recipes).
+@export var affix_loot: Array[String] = []
+@export var affix_drop_chance: float = 0.03
 @export var loot_ids: Array[String] = []
 @export var drop_chance: float = 0.02
 @export var is_boss: bool = false
