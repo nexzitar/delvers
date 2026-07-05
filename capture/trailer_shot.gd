@@ -15,11 +15,23 @@ var _saved := 0
 var _segment := ""
 var _dir: String
 var _manifest := {}
+## Movie Maker mode (--write-movie --fixed-fps 30): the engine writes
+## every frame itself; we only log segment frame ranges to cut later.
+var _movie := OS.has_feature("movie")
 
 func _ready():
 	_dir = ProjectSettings.globalize_path(OUT)
+	DirAccess.make_dir_recursive_absolute(_dir)
 	RenderingServer.frame_post_draw.connect(_on_frame)
 	PlayerRoster.autosave = false
+	# The render mixes its own soundtrack regardless of the local
+	# settings file (applied only in memory, never saved).
+	GameSettings.set_volume("master", 1.0)
+	GameSettings.set_volume("music", 0.7)
+	GameSettings.set_volume("sfx", 0.85)
+	GameSettings.set_volume("ambience", 0.6)
+	if _movie:
+		print("movie mode: logging segment ranges")
 	_run()
 
 func _run():
@@ -188,6 +200,16 @@ func _settle():
 	await get_tree().process_frame
 
 func _record(segment: String, seconds: float):
+	if _movie:
+		var start = Engine.get_process_frames()
+		await get_tree().create_timer(seconds).timeout
+		_manifest[segment] = {
+			"start_frame": start,
+			"end_frame": Engine.get_process_frames(),
+		}
+		print("segment %s: movie frames %d-%d" % [
+			segment, start, Engine.get_process_frames()])
+		return
 	DirAccess.make_dir_recursive_absolute("%s/%s" % [_dir, segment])
 	_segment = segment
 	_saved = 0
@@ -199,7 +221,7 @@ func _record(segment: String, seconds: float):
 	print("segment %s: %d frames / %.1fs" % [segment, _saved, seconds])
 
 func _on_frame():
-	if not _grab:
+	if _movie or not _grab:
 		return
 	_rendered += 1
 	if _rendered % EVERY_NTH != 0:
