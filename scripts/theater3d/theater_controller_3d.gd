@@ -13,6 +13,7 @@ const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
 
 const GREEN_SLIME = preload("res://resources/enemies/green_slime.tres")
 const GOBLIN_ARCHER = preload("res://resources/enemies/goblin_archer.tres")
+const SLIME_KING = preload("res://resources/enemies/slime_king.tres")
 const MELEE_HIT_SOUND = preload("res://audio/melee_hit.wav")
 const ARROW_HIT_SOUND = preload("res://audio/arrow_hit.wav")
 const FONT = preload("res://art/fonts/Herculanum.ttf")
@@ -64,17 +65,39 @@ const ARENA_POOL := [
 ## Harness hook: force a specific arena (set before adding to the tree).
 var forced_arena_path := ""
 
+## Roster indices of the heroes fielded this room (attrition can
+## bench the fallen for the rest of the delve).
+var _party_indices := []
+
 func _ready():
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 
 	var room = maxi(1, PlayerRoster.delve_room)
+
+	# Attrition: health carries between rooms; downed heroes sit out.
+	var party := []
+	var entry_health := {}
+	_party_indices = []
+	for i in PlayerRoster.heroes.size():
+		var carried = PlayerRoster.delve_health.get(i, -1)
+		if carried == 0:
+			continue
+		if carried > 0:
+			entry_health[party.size()] = carried
+		party.append(PlayerRoster.heroes[i])
+		_party_indices.append(i)
+
 	var combat = CombatState.new()
 	# Rooms deepen: bigger packs, higher enemy levels.
 	combat.enemy_level_bonus = (room - 1) / 4
-	combat.setup_combat(PlayerRoster.heroes, roll_encounter(room), _pick_arena(room))
+	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
 	while not combat.combat_over:
 		combat.update(0.1)
 	combat_result = combat.build_result()
+
+	# Record how the party came out of the fight.
+	for k in combat.heroes.size():
+		PlayerRoster.delve_health[_party_indices[k]] = combat.heroes[k].current_health
 
 	_setup_world(combat.arena)
 	_setup_ui()
@@ -82,8 +105,11 @@ func _ready():
 	_build_timeline(combat_result.combat_log)
 	_playing = true
 
-## A random pack of enemies, growing with the delve's depth.
+## A random pack of enemies, growing with the delve's depth. The final
+## room is the boss lair: the Slime King and his retinue.
 func roll_encounter(room: int) -> Array:
+	if room >= PlayerRoster.DELVE_LENGTH:
+		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
 	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER]
 	var low = clampi(2 + (room - 1) / 4, 2, 4)
 	var high = clampi(3 + (room - 1) / 2, 3, 6)
@@ -92,12 +118,12 @@ func roll_encounter(room: int) -> Array:
 		encounter.append(pool.pick_random())
 	return encounter
 
-## The first room is always the open field; deeper rooms draw from the
-## full arena pool.
+## The first room is always the open field, the boss lair too (a clean
+## stage for the fight); rooms between draw from the full arena pool.
 func _pick_arena(room: int) -> BattleArena:
 	if forced_arena_path != "":
 		return load(forced_arena_path)
-	if room <= 1:
+	if room <= 1 or room >= PlayerRoster.DELVE_LENGTH:
 		return load(ARENA_POOL[0])
 	return load(ARENA_POOL.pick_random())
 
@@ -472,7 +498,9 @@ func _finish_battle():
 		)
 		return
 
-	var found = LootTable.roll_room_loot(room)
+	# Each slain enemy rolls its own loot table; most drop nothing.
+	var slain = combat_result.enemies.map(func(e): return e.template)
+	var found = LootTable.roll_enemy_drops(slain, room)
 	PlayerRoster.delve_loot.append_array(found)
 
 	if room >= PlayerRoster.DELVE_LENGTH:
@@ -482,7 +510,7 @@ func _finish_battle():
 		await get_tree().create_timer(1.2).timeout
 		_show_summary(
 			"Delve Complete!",
-			"All %d rooms conquered." % PlayerRoster.DELVE_LENGTH
+			"The Slime King is slain. All %d rooms conquered." % PlayerRoster.DELVE_LENGTH
 		)
 		return
 
@@ -494,20 +522,18 @@ func _finish_battle():
 func _show_room_cleared(room: int, found: Array):
 	var panel := DelvePanel.new()
 	add_child(panel)
-	panel.setup(
-		"Room %d Cleared!" % room,
-		"The pouch holds %d item%s. Deeper rooms hold deadlier foes." % [
+	var subtitle: String
+	if found.is_empty():
+		subtitle = "Nothing worth carrying. The way deeper stands open."
+	else:
+		subtitle = "The pouch holds %d item%s." % [
 			PlayerRoster.delve_loot.size(),
 			"" if PlayerRoster.delve_loot.size() == 1 else "s",
-		],
-		found,
-		"Delve Deeper",
-		"Retreat with Spoils"
-	)
+		]
+	panel.setup("Room %d Cleared!" % room, subtitle, found, "Delve Deeper")
 	panel.primary_pressed.connect(func():
 		PlayerRoster.delve_room += 1
 		SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn"))
-	panel.secondary_pressed.connect(_bank_and_return)
 
 ## Final spoils screen: everything gathered this delve, then camp.
 func _show_summary(title: String, subtitle: String):

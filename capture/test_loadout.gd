@@ -11,14 +11,12 @@ func _ready():
 	roster._build_heroes()
 	roster._build_stash()
 
-	# Two independent heroes from the same base.
-	_ok("two heroes", roster.heroes.size() == 2)
+	# One starting hero: a sword-and-board melee delver.
+	_ok("one starting hero", roster.heroes.size() == 1)
 
-	# Hero 0 is melee with a sword in the main hand; hero 1 ranged (bow).
 	var h0_main = roster.equipped_item(0, Equip.Position.MAIN_HAND)
 	_ok("hero0 has main-hand weapon", h0_main != null)
 	_ok("hero0 melee", not roster.is_ranged(0))
-	_ok("hero1 ranged", roster.is_ranged(1))
 
 	# Equip a stash sword into hero0's OFF hand (dual wield).
 	var spare_sword = null
@@ -48,12 +46,6 @@ func _ready():
 	_ok("displaced main-hand weapon returned to stash",
 		roster.gear_stash.has(h0_main))
 
-	# Hero 1's loadout is untouched by edits to hero 0.
-	_ok("hero1 loadout untouched by hero0 edits",
-		roster.equipped_item(1, Equip.Position.MAIN_HAND) != null \
-		and roster.equipped_item(1, Equip.Position.MAIN_HAND) \
-			!= roster.equipped_item(0, Equip.Position.MAIN_HAND))
-
 	# A fresh HEAD-category stash item resolves to the HEAD position.
 	var spare_head = null
 	for g in roster.gear_stash:
@@ -62,7 +54,7 @@ func _ready():
 			break
 	_ok("found spare HEAD item", spare_head != null)
 	_ok("default_position routes HEAD item to HEAD",
-		roster.default_position(1, spare_head) == Equip.Position.HEAD)
+		roster.default_position(0, spare_head) == Equip.Position.HEAD)
 
 	# The full MVP skill set is in the catalog, iconed and equippable.
 	_ok("six skills known", roster.skill_catalog.size() == 6)
@@ -72,7 +64,10 @@ func _ready():
 		func(s): return s.skill_id == "charge"
 	)
 	_ok("charge in catalog", charge.size() == 1)
-	_ok("charge equips into slot 2", roster.equip_bonus_skill(0, charge[0], 2))
-	_ok("charge sits in loadout", roster.heroes[0].bonus_skills[1] == charge[0])
+	_ok("one bonus slot unlocked", roster.bonus_skill_slots == 1)
+	_ok("charge equips into slot 1", roster.equip_bonus_skill(0, charge[0], 1))
+	_ok("charge sits in loadout", roster.heroes[0].bonus_skills[0] == charge[0])
+	_ok("locked slot 2 rejects skills",
+		not roster.equip_bonus_skill(0, charge[0], 2))
 
 	get_tree().quit()

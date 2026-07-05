@@ -6,7 +6,7 @@ class_name RosterSave
 ## the "each item is one physical object" model.
 
 const SAVE_PATH := "user://delvers_save.json"
-const VERSION := 1
+const VERSION := 2
 
 const HERO_PATHS := {
 	"default_delver": "res://resources/heroes/default_delver.tres",
@@ -31,12 +31,21 @@ const SKILL_PATHS := {
 	"heal": "res://resources/skills/heal.tres",
 }
 
+## Items serialize as {id, level, quality} and rebuild deterministically
+## through LootTable.materialize.
+static func _gear_entry(gear) -> Dictionary:
+	return {
+		"id": gear.gear_id,
+		"level": gear.item_level,
+		"quality": int(gear.quality),
+	}
+
 static func save(roster, path := SAVE_PATH) -> void:
 	var heroes := []
 	for hero in roster.heroes:
 		var equipped := {}
 		for pos in hero.equipped:
-			equipped[str(pos)] = hero.equipped[pos].gear_id
+			equipped[str(pos)] = _gear_entry(hero.equipped[pos])
 		heroes.append({
 			"template": "default_delver",
 			"name": hero.hero_name,
@@ -51,8 +60,9 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"battles_fought": roster.battles_fought,
 		"adventures_completed": roster.adventures_completed,
 		"last_battle_won": roster.last_battle_won,
+		"bonus_skill_slots": roster.bonus_skill_slots,
 		"heroes": heroes,
-		"stash": roster.gear_stash.map(func(g): return g.gear_id),
+		"stash": roster.gear_stash.map(_gear_entry),
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -83,8 +93,8 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		roster._sync_role(hero)
 
 	roster.gear_stash = []
-	for gear_id in data.get("stash", []):
-		var gear = _gear_from_id(gear_id)
+	for entry in data.get("stash", []):
+		var gear = _gear_from_entry(entry)
 		if gear:
 			roster.gear_stash.append(gear)
 	roster.sort_gear_stash()
@@ -92,6 +102,7 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	roster.battles_fought = int(data.get("battles_fought", 0))
 	roster.adventures_completed = int(data.get("adventures_completed", 0))
 	roster.last_battle_won = bool(data.get("last_battle_won", false))
+	roster.bonus_skill_slots = int(data.get("bonus_skill_slots", 1))
 	return true
 
 static func _restore_hero(entry):
@@ -104,7 +115,7 @@ static func _restore_hero(entry):
 	hero.equipped = {}
 	var equipped = entry.get("equipped", {})
 	for pos_key in equipped:
-		var gear = _gear_from_id(equipped[pos_key])
+		var gear = _gear_from_entry(equipped[pos_key])
 		if gear:
 			hero.equipped[int(pos_key)] = gear
 
@@ -114,9 +125,14 @@ static func _restore_hero(entry):
 	return hero
 
 ## Unknown ids (e.g. content removed in an update) drop the item.
-static func _gear_from_id(gear_id):
-	var path = GEAR_PATHS.get(gear_id)
-	return load(path).duplicate() if path else null
+static func _gear_from_entry(entry):
+	if not (entry is Dictionary) or not GEAR_PATHS.has(entry.get("id")):
+		return null
+	return LootTable.materialize(
+		entry.get("id"),
+		int(entry.get("level", 1)),
+		int(entry.get("quality", ItemQuality.Tier.COMMON))
+	)
 
 static func _skill_from_id(skill_id):
 	if skill_id == null:

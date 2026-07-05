@@ -22,17 +22,23 @@ func _ready():
 	assert(dagger != null, "dagger seeded in stash")
 	assert(roster.equip_gear(0, dagger, Equip.Position.OFF_HAND), "dagger equipped")
 	roster.equip_bonus_skill(0, load("res://resources/skills/charge.tres"), 1)
-	roster.rename_hero(1, "Legolas")
+	roster.rename_hero(0, "Aragorn")
 	roster.battles_fought = 7
 	roster.adventures_completed = 3
 	roster.last_battle_won = true
+	# A leveled uncommon drop must survive the round trip with its
+	# scaled stats intact.
+	var fancy_bow = LootTable.materialize(
+		"starter_bow", 6, ItemQuality.Tier.UNCOMMON
+	)
+	roster.gear_stash.append(fancy_bow)
 	RosterSave.save(roster, TEST_PATH)
 
 	var restored = load("res://scripts/game/player_roster.gd").new()
 	assert(RosterSave.load_into(restored, TEST_PATH), "save loads")
 
 	assert(restored.heroes.size() == roster.heroes.size(), "hero count")
-	assert(restored.heroes[1].hero_name == "Legolas", "rename persisted")
+	assert(restored.heroes[0].hero_name == "Aragorn", "rename persisted")
 	var off = restored.heroes[0].equipped.get(Equip.Position.OFF_HAND)
 	assert(off != null and off.gear_id == "fast_dagger", "off-hand dagger persisted")
 	var main = restored.heroes[0].equipped.get(Equip.Position.MAIN_HAND)
@@ -53,12 +59,26 @@ func _ready():
 	assert(off != roster.heroes[0].equipped.get(Equip.Position.OFF_HAND),
 		"restored gear is a fresh instance")
 
+	# Item level and quality survive, with identically re-scaled stats.
+	var restored_bow = null
+	for gear in restored.gear_stash:
+		if gear.gear_id == "starter_bow" and gear.item_level == 6:
+			restored_bow = gear
+	assert(restored_bow != null, "leveled bow persisted")
+	assert(restored_bow.quality == ItemQuality.Tier.UNCOMMON, "quality persisted")
+	assert(restored_bow.damage_max == fancy_bow.damage_max, "scaled stats rebuilt")
+
 	# Unknown ids in a save drop gracefully instead of crashing.
 	var file = FileAccess.open(TEST_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify({
-		"version": 1, "heroes": [{"template": "default_delver",
-		"name": "X", "equipped": {"14": "future_relic"}, "bonus_skills": []}],
-		"stash": ["future_relic", "starter_bow"],
+		"version": 2, "heroes": [{"template": "default_delver",
+		"name": "X",
+		"equipped": {"14": {"id": "future_relic", "level": 3, "quality": 0}},
+		"bonus_skills": []}],
+		"stash": [
+			{"id": "future_relic", "level": 1, "quality": 0},
+			{"id": "starter_bow", "level": 1, "quality": 0},
+		],
 	}))
 	file = null
 	var sparse = load("res://scripts/game/player_roster.gd").new()

@@ -23,7 +23,10 @@ func _run(theater):
 	await get_tree().create_timer(4.0).timeout
 	await _snap("delve_room_battle")
 
-	PlayerRoster.delve_loot = LootTable.roll_room_loot(3) + LootTable.roll_room_loot(4)
+	PlayerRoster.delve_loot = [
+		LootTable.materialize("starter_bow", 4, ItemQuality.Tier.UNCOMMON),
+		LootTable.materialize("starter_helmet", 3, ItemQuality.Tier.COMMON),
+	]
 	theater._show_room_cleared(4, PlayerRoster.delve_loot.slice(0, 2))
 	await get_tree().create_timer(0.5).timeout
 	await _snap("delve_room_cleared")

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://rum3s0txqvjc"]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "slime_king"
+enemy_name = "Slime King"
+base_health = 70
+base_attack = 3
+base_attack_interval = 3.2
+move_speed = 70.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
+loot_ids = Array[String](["starter_sword", "starter_bow", "starter_shield", "starter_helmet", "starter_armor", "fast_dagger", "heavy_axe"])
+drop_chance = 1.0
+is_boss = true

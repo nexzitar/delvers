@@ -61,8 +61,8 @@ static func _render(key: String, rig: Node3D, host: Node) -> Texture2D:
 	vp.add_child(rig)
 	# Bust framing for humanoids, whole-blob framing for slimes.
 	if rig is SlimeRig:
-		camera.position = Vector3(0, 0.42, 1.35)
-		camera.look_at(Vector3(0, 0.26, 0))
+		camera.position = Vector3(0, 0.42, 1.35) * maxf(rig.scale.y, 1.0)
+		camera.look_at(Vector3(0, 0.26 * rig.scale.y, 0))
 	else:
 		var head_y = 0.9 * rig.scale.y
 		camera.position = Vector3(0, head_y + 0.06, 0.98 * rig.scale.y)

@@ -31,7 +31,6 @@ const EMPTY_ICONS := {
 	GearDefinition.Slot.OFF_HAND: preload("res://art/ui/slots/empty_off_hand.png"),
 }
 const EMPTY_SKILL := preload("res://art/ui/slots/empty_skill.png")
-const SKILL_SLOTS := 6
 const SLOT_SIZE := 50
 const STASH_ICON_SIZE := 42
 const STASH_COLUMNS := 10
@@ -51,7 +50,7 @@ var hero_index := -1
 var _name_edit: LineEdit
 var _role_label: Label
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
-var _skill_slots := []        # the SKILL_SLOTS skill DropTarget panels
+var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
 var _preview_holder: Control
 var _preview_rig: Node3D
@@ -218,7 +217,8 @@ func _build_left_panel():
 	for pos in Equip.WEAPON_ROW:
 		weapons.add_child(_build_equip_slot(pos))
 
-	# Skill row (6 slots; only slot 0 is active for now).
+	# Skill row: the weapon attack plus however many bonus slots the
+	# player has unlocked through meta progression.
 	vbox.add_child(_title("Skills"))
 	var skills = HBoxContainer.new()
 	skills.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -226,7 +226,7 @@ func _build_left_panel():
 	skills.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(skills)
 	_skill_slots.clear()
-	for i in range(SKILL_SLOTS):
+	for i in range(1 + PlayerRoster.bonus_skill_slots):
 		var slot = _make_slot("skill_view")  # read-only: rejects drops
 		slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 		_skill_slots.append(slot)
@@ -289,7 +289,7 @@ func _build_right_tabs():
 	skill_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	skills_tab.add_child(skill_box)
 	var note = Label.new()
-	note.text = "Your attack follows your weapon. Drag skills into slots 2-6."
+	note.text = "Your attack follows your weapon. Right-click a skill to slot it."
 	note.add_theme_color_override("font_color", DIM)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	skill_box.add_child(note)
@@ -608,7 +608,7 @@ func _tooltip_gear(gear: GearDefinition):
 	if gear.health_bonus != 0:
 		_tip_line("+%d Health" % gear.health_bonus, PARCHMENT, 18, 1)
 
-	_tip_line("Item level %d" % gear.item_level(), DIM, 16, 1)
+	_tip_line("Item level %d" % gear.item_level, DIM, 16, 1)
 
 	_fill_gear_compare(gear)
 

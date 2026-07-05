@@ -17,3 +17,5 @@ base_attack_interval = 4.0
 move_speed = 80.0
 portrait = ExtResource("4_icon")
 skills = Array[ExtResource("2_sh440")]([ExtResource("3_sh440")])
+loot_ids = Array[String](["starter_sword", "starter_shield", "starter_helmet", "starter_armor"])
+drop_chance = 0.1

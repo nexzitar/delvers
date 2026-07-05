@@ -323,7 +323,9 @@ func _spawn_position(center: Vector2i, index: int, preferred_row, forward: int) 
 	var cell = center + Vector2i(forward * (depth - rank), lane)
 	return grid.tile_to_world(cell)
 
-func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = null):
+## hero_health: optional hero-array-index -> current hp (delve
+## attrition); missing entries enter at full health.
+func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = null, hero_health := {}):
 
 	arena = battle_arena if battle_arena else load("res://resources/arenas/open_arena.tres")
 	grid = BattleGrid.new(arena)
@@ -371,7 +373,9 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		hero.attack_power = hero.base_attack_power
 
-		hero.current_health = hero.max_health
+		hero.current_health = clampi(
+			hero_health.get(heroes.size(), hero.max_health), 1, hero.max_health
+		)
 		hero.current_mana = hero_template.base_mana
 
 		# Main-hand weapon speed sets the interval; unarmed falls back.

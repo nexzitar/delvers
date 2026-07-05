@@ -46,16 +46,24 @@ var battles_fought := 0
 var adventures_completed := 0
 var last_battle_won := false
 
-## A delve is a run of up to DELVE_LENGTH rooms. Loot accumulates in
-## the pouch and only banks into the stash (and the save) when the
-## delve ends — by clearing the last room, dying, or retreating.
+## Bonus skill slots per hero beyond the weapon attack. Grows through
+## meta progression (unlocks, not raw power).
+var bonus_skill_slots := 1
+
+## A delve is a run of up to DELVE_LENGTH rooms ending at the boss.
+## Loot accumulates in the pouch and only banks into the stash (and
+## the save) when the delve ends — victory or death. Health carries
+## between rooms: delve_health maps hero index -> hp entering the next
+## room (missing = full; 0 = down for the rest of the delve).
 const DELVE_LENGTH := 10
 var delve_room := 0
 var delve_loot: Array = []
+var delve_health := {}
 
 func start_delve():
 	delve_room = 1
 	delve_loot = []
+	delve_health = {}
 
 func bank_delve_loot():
 	gear_stash.append_array(delve_loot)
@@ -79,8 +87,8 @@ func _ready():
 	if autosave:
 		RosterSave.save(self)
 
-## Both starting heroes are the same Default Delver, told apart only by
-## the gear they hold. Duplicated so their loadouts are independent.
+## You start with a single sword-and-board Default Delver; more delvers
+## come from meta progression later.
 func _build_heroes():
 	var melee = DEFAULT_DELVER.duplicate(true)
 	melee.equipped = {}
@@ -88,13 +96,7 @@ func _build_heroes():
 	_seed_loadout(melee, [SWORD.duplicate(), SHIELD.duplicate(),
 		HELMET.duplicate(), ARMOR.duplicate()])
 
-	var archer = DEFAULT_DELVER.duplicate(true)
-	archer.equipped = {}
-	archer.bonus_skills = [null, null, null, null, null]
-	_seed_loadout(archer, [BOW.duplicate(), HELMET.duplicate(),
-		ARMOR.duplicate()])
-
-	heroes = [melee, archer]
+	heroes = [melee]
 	for hero in heroes:
 		_sync_role(hero)
 
@@ -128,8 +130,8 @@ func sort_gear_stash() -> void:
 			return a.slot < b.slot
 		if a.quality != b.quality:
 			return a.quality > b.quality
-		if a.item_level() != b.item_level():
-			return a.item_level() > b.item_level()
+		if a.power_score() != b.power_score():
+			return a.power_score() > b.power_score()
 		return a.gear_name < b.gear_name
 	)
 
@@ -156,16 +158,16 @@ func is_ranged(hero_index: int) -> bool:
 	return skill != null \
 		and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
 
-## First empty bonus-skill slot (1-5), or -1 if full.
+## First empty unlocked bonus-skill slot (1-based), or -1 if full.
 func first_empty_bonus_skill_slot(hero_index: int) -> int:
 	var hero = heroes[hero_index]
-	for i in range(5):
+	for i in range(bonus_skill_slots):
 		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
 			return i + 1
 	return -1
 
 func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
-	if slot < 1 or slot > 5:
+	if slot < 1 or slot > bonus_skill_slots:
 		return false
 	var hero = heroes[hero_index]
 	while hero.bonus_skills.size() < 5:

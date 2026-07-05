@@ -38,6 +38,9 @@ enum HeadStyle {
 @export var slot: Slot
 @export var weapon_type: WeaponType = WeaponType.NONE
 @export var quality: ItemQuality.Tier = ItemQuality.Tier.COMMON
+## Drop level: stats scale from the authored (level 1) values via
+## LootTable.materialize. Higher item level = stronger item.
+@export var item_level: int = 1
 
 @export_group("Visuals")
 ## Sprite drawn on the character (paper-doll layer).
@@ -116,8 +119,8 @@ static func paper_doll_layer(category: Slot) -> int:
 		_:
 			return 0
 
-## Rough power rating from stats (for sorting and future loot tables).
-func item_level() -> int:
+## Rough power rating from stats (for stash sorting).
+func power_score() -> int:
 	var score := 1
 	if attack_speed > 0.0:
 		score += int(round(damage_average() * 2.0))

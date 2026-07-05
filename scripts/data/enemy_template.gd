@@ -18,3 +18,10 @@ class_name EnemyDefinition
 
 @export var skills: Array[SkillDefinition]
 @export var preferred_row: Formation.Row = Formation.Row.FRONT
+
+## What this enemy can drop (gear ids from the save registry) and how
+## often it drops anything at all. Bosses always drop, and roll from
+## the rare end of the quality table.
+@export var loot_ids: Array[String] = []
+@export var drop_chance: float = 0.1
+@export var is_boss: bool = false
