@@ -42,6 +42,7 @@ func _on_hero_selected(hero_index):
 	loadout.open(hero_index)
 
 func _on_embark_pressed():
+	PlayerRoster.start_delve()
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 func _on_exit_pressed():

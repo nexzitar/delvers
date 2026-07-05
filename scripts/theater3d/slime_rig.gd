@@ -11,10 +11,19 @@ const DEATH_T := 0.7
 
 const SLIME := Color("4fae4f")
 const SLIME_DARK := Color("3c8a3f")
+const ROYAL := Color("8a4fae")
+const ROYAL_DARK := Color("63398a")
+const CROWN := Color("e8bb3a")
 
 var body: Node3D
 
-func _init():
+## opts: king (royal purple + a golden crown; the factory also scales
+## the whole rig up).
+func _init(opts := {}):
+	var king: bool = opts.get("king", false)
+	var tint = ROYAL if king else SLIME
+	var tint_dark = ROYAL_DARK if king else SLIME_DARK
+
 	body = Node3D.new()
 	add_child(body)
 
@@ -24,7 +33,7 @@ func _init():
 	blob.height = 0.68
 	blob.radial_segments = 10
 	blob.rings = 5
-	var blob_mesh := Builder._add(body, blob, SLIME, Vector3(0, 0.24, 0))
+	var blob_mesh := Builder._add(body, blob, tint, Vector3(0, 0.24, 0))
 	blob_mesh.scale = Vector3(1, 0.72, 1)
 
 	# Base skirt where it meets the ground.
@@ -33,12 +42,33 @@ func _init():
 	skirt.height = 0.74
 	skirt.radial_segments = 10
 	skirt.rings = 5
-	var skirt_mesh := Builder._add(body, skirt, SLIME_DARK, Vector3(0, 0.13, 0))
+	var skirt_mesh := Builder._add(body, skirt, tint_dark, Vector3(0, 0.13, 0))
 	skirt_mesh.scale = Vector3(1, 0.35, 1)
 
 	for side in [-1, 1]:
 		Builder._box(body, Vector3(0.05, 0.09, 0.02), Builder.EYES,
 			Vector3(side * 0.11, 0.28, 0.29))
+
+	if king:
+		# A little golden crown, squashing along with the blob.
+		var band := CylinderMesh.new()
+		band.top_radius = 0.11
+		band.bottom_radius = 0.13
+		band.height = 0.06
+		band.radial_segments = 8
+		Builder._add(body, band, CROWN, Vector3(0, 0.5, 0), Vector3.ZERO, 0.6, 0.4)
+		for i in 4:
+			var a = TAU * i / 4.0
+			var spike := CylinderMesh.new()
+			spike.top_radius = 0.0
+			spike.bottom_radius = 0.03
+			spike.height = 0.09
+			spike.radial_segments = 5
+			Builder._add(
+				body, spike, CROWN,
+				Vector3(0.1 * sin(a), 0.57, 0.1 * cos(a)),
+				Vector3.ZERO, 0.6, 0.4
+			)
 
 func _reset_pose():
 	body.scale = Vector3.ONE

@@ -45,6 +45,10 @@ static func build_enemy(template) -> Node3D:
 	match template.enemy_id:
 		"green_slime":
 			return SlimeRig.new()
+		"slime_king":
+			var king = SlimeRig.new({"king": true})
+			king.scale = Vector3.ONE * 1.7
+			return king
 		"goblin_archer":
 			var rig = DelverRig.new(GOBLIN_OPTS)
 			rig.scale = Vector3.ONE * GOBLIN_SCALE

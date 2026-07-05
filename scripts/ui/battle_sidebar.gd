@@ -73,11 +73,11 @@ func add_unit(event):
 	row.add_theme_constant_override("separation", 8)
 
 	var portrait = TextureRect.new()
-	portrait.texture = event.template.portrait
 	portrait.custom_minimum_size = Vector2(44, 44)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(portrait)
+	_apply_portrait(portrait, event)
 
 	var info = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -105,6 +105,12 @@ func add_unit(event):
 	set_mana(event.entity_id, event.current_mana, event.max_mana)
 
 	_add_meter_row(event.entity_id, event.entity_name)
+
+## Portraits render from the unit's actual 3D rig (one frame late).
+func _apply_portrait(rect: TextureRect, event):
+	var texture = await Portrait3D.from_spawn(event, self)
+	if is_instance_valid(rect) and texture:
+		rect.texture = texture
 
 func set_health(entity_id, current, max_value):
 

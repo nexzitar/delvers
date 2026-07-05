@@ -54,7 +54,7 @@ Delvers is a party-based dungeon crawler where you send heroes — your *delvers
 4. **Theater** — Results play back as a staged battle scene.
 5. **Rewards** — Collect loot, experience, and progress deeper.
 
-The loop's skeleton is in place: from the menu you enter the camp, embark on an adventure (one battle for now), and return to camp with a victory or defeat report. Dungeon exploration and meta-progression are not yet implemented.
+The loop is playable: you start with a single delver (one bonus skill slot — more through future meta progression) and embark on a **delve of ten escalating rooms** ending at the **Slime King's lair**, health carrying between rooms, each room flowing into the next automatically. **Monsters drop resources and knowledge, not equipment**: every enemy has a material identity (goblins carry ash wood and bow strings, slimes ooze gel and acid), recipes drop rarely as permanent unlocks, and finished gear is a memorable fluke — or a boss trophy. Back at camp, the **Forge** turns materials plus known recipes into intentional equipment (item level and quality set by the recipe). Materials are consumed; knowledge is permanent. Everything persists to disk.
 
 ### Combat Design
 
@@ -104,8 +104,9 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Game loop (menu → camp → battle → camp) | Working |
 | Hero loadout (equipment, skills, naming) | Working (session-only, no save yet) |
 | Camp upgrades / recruiting | Not started |
-| Dungeon exploration | Not started |
-| Loot / progression | Not started |
+| Delve (10 escalating rooms, arena variety) | Working |
+| Loot drops + spoils screen | Working |
+| Save / persistence | Working |
 | Multiple skill types | Schema ready, only auto-attack implemented |
 | Sound | Procedural placeholder audio with settings (no composed music yet) |
 | Settings | Fullscreen + volume sliders working |
@@ -133,7 +134,7 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Scene | Path | What it does |
 |-------|------|--------------|
 | Combat simulation | `scenes/combat/combat_simulation.tscn` | Runs a headless fight and prints the combat log |
-| Battle theater | `scenes/theater/battle_theater.tscn` | Simulates a fight and plays it back on the battlefield with animations |
+| Battle theater | `scenes/theater/battle_theater_3d.tscn` | Simulates a fight and plays it back in the 3D battle scene |
 | Screenshot capture | `capture/shots.tscn`, `capture/cast.tscn`, `capture/loadout_shot.tscn` | Regenerates the README screenshots and unit renders into `docs/screenshots/` |
 
 ## Project Structure
@@ -149,13 +150,14 @@ delvers/
 │   ├── camp/         # Camp scene, campfire stage, animated fire
 │   ├── combat/       # Headless combat simulation scene
 │   ├── menus/        # Main menu
-│   └── theater/      # Battle theater and actor scenes
+│   └── theater/      # 3D battle theater scene and 2D actor scenes (camp/loadout)
 └── scripts/
     ├── camp/         # Camp, campfire stage, fire, and hero-loadout screen
     ├── combat/       # Simulation, entities, events, and results
     ├── data/         # Template classes for heroes, enemies, gear, and skills
     ├── game/         # Autoloads: roster/loadout, settings, sounds, scene flow
-    └── theater/      # Visual playback of combat events
+    ├── theater/      # 2D actor visuals still used by the camp and loadout
+    └── theater3d/    # 3D battle theater: procedural rigs, replay, overlays
 ```
 
 ## How Combat Works
@@ -175,6 +177,10 @@ Combat is split into two layers:
 | Enemy  | goblin_archer  | Goblin Archer  | 20 HP, 2 ATK, 3.5s interval, back row, ranged |
 | Skill  | auto_attack    | Slash          | 0–9 bonus damage, melee |
 | Skill  | arrow_shot     | Arrow Shot     | 1–7 bonus damage, projectile |
+| Skill  | frost_nova     | Frost Nova     | Roots everything within 96px for 3s, 10s cooldown |
+| Skill  | hamstring      | Hamstring      | Melee strike, slows 50% for 6s, 8s cooldown |
+| Skill  | charge         | Charge         | Gap-closer up to 400px, stuns 1.5s, 12s cooldown |
+| Skill  | heal           | Heal           | Restores 8–12 to the most injured ally in sight, 6s cooldown |
 | Gear   | starter_sword  | Starter Sword  | Main hand, one-handed, 1–3 dmg, 2.6s speed |
 | Gear   | starter_bow    | Starter Bow    | Main hand, bow, 1–4 dmg, 2.8s speed |
 | Gear   | fast_dagger    | Fast Dagger    | Main hand, one-handed, 1–2 dmg, 1.5s speed |

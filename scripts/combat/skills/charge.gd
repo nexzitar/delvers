@@ -20,7 +20,9 @@ static func try_use(state, caster, skill) -> bool:
 		return false
 
 	var direction = (target.position - caster.position).normalized()
-	caster.position = target.position - direction * CONTACT_DISTANCE
+	caster.position = state.grid.clamp_world(
+		target.position - direction * CONTACT_DISTANCE
+	)
 	caster.facing = direction
 	state.stop_movement(caster)
 	state.log_forced_move(caster)

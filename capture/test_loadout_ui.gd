@@ -12,7 +12,7 @@ func _ready():
 	loadout.open(0)
 	await get_tree().process_frame
 	_ok("16 equip slots built", loadout._equip_slots.size() == 16)
-	_ok("6 skill slots built", loadout._skill_slots.size() == 6)
+	_ok("2 skill slots built (attack + 1 unlocked)", loadout._skill_slots.size() == 2)
 	_ok("main hand slot exists",
 		loadout._equip_slots.has(Equip.Position.MAIN_HAND))
 	_ok("hero name shown", loadout._name_edit.text != "")

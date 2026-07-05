@@ -17,6 +17,9 @@ var combat_log := CombatLog.new()
 
 var combat_over: bool = false
 
+## Deeper delve rooms field stronger foes.
+var enemy_level_bonus: int = 0
+
 var _move_log_time := {}
 
 func update(delta: float):
@@ -205,22 +208,22 @@ func tick_movement(entity, target, delta):
 	if entity.is_rooted():
 		return
 
-	# Re-path when the target moved to a different tile, or when the
-	# path was walked to the end but we're still out of range (e.g.
-	# separation pushed us off). A failed search is cached until the
-	# goal tile changes, so unreachable targets don't re-search every tick.
+	# Re-path when the target moved to a different tile, when the path
+	# was walked to the end but we're still out of range (separation
+	# pushed us off), or when a failed search's retry delay elapsed —
+	# a stall must never cache forever.
 	var goal = grid.world_to_tile(target.position)
-	if entity.path_goal != goal:
+	var consumed = not entity.path.is_empty() \
+		and entity.path_index >= entity.path.size()
+	var retry = entity.path.is_empty() and combat_time >= entity.path_retry_at
+	if entity.path_goal != goal or consumed or retry:
 		entity.path = pathfinder.find_path(
 			grid.world_to_tile(entity.position), goal
 		)
 		entity.path_index = 0
 		entity.path_goal = goal
-	elif not entity.path.is_empty() and entity.path_index >= entity.path.size():
-		entity.path = pathfinder.find_path(
-			grid.world_to_tile(entity.position), goal
-		)
-		entity.path_index = 0
+		if entity.path.is_empty():
+			entity.path_retry_at = combat_time + 0.5
 	if entity.path.is_empty():
 		return
 
@@ -237,10 +240,12 @@ func tick_movement(entity, target, delta):
 			entity.position += (waypoint - entity.position) / dist * budget
 			budget = 0.0
 
-	# Soft collision: paths may overlap, bodies should not stack.
+	# Soft collision: paths may overlap, bodies should not stack. The
+	# push must never shove anyone off the field.
 	entity.position += Separation.compute_offset(
 		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0
 	)
+	entity.position = grid.clamp_world(entity.position)
 
 	var moved = entity.position - before
 	if moved.length_squared() > 0.01:
@@ -290,20 +295,9 @@ func check_victory():
 	if not heroes_alive or not enemies_alive:
 		combat_over = true
 
-## Picks the first free slot, trying the preferred row first.
-func claim_slot(preferred_row, occupied_slots):
-
-	for slot in Formation.fill_order(preferred_row):
-		if not occupied_slots.has(slot):
-			occupied_slots[slot] = true
-			return slot
-
-	push_error("No free formation slot left")
-	return Formation.Slot.FRONT_CENTER
-
 ## Most foes are common rabble; an occasional veteran shows up.
 func roll_enemy_level() -> int:
-	return [1, 1, 2, 2, 2, 3].pick_random()
+	return [1, 1, 2, 2, 2, 3].pick_random() + enemy_level_bonus
 
 ## Stat multiplier for a level, with a touch of individual variance
 ## so two enemies of the same level aren't perfectly identical.
@@ -331,7 +325,9 @@ func _spawn_position(center: Vector2i, index: int, preferred_row, forward: int) 
 	var cell = center + Vector2i(forward * (depth - rank), lane)
 	return grid.tile_to_world(cell)
 
-func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = null):
+## hero_health: optional hero-array-index -> current hp (delve
+## attrition); missing entries enter at full health.
+func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = null, hero_health := {}):
 
 	arena = battle_arena if battle_arena else load("res://resources/arenas/open_arena.tres")
 	grid = BattleGrid.new(arena)
@@ -339,8 +335,6 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 	var next_entity_id = 1
 	var used_names = {}
-	var hero_slots_taken = {}
-	var enemy_slots_taken = {}
 
 	for hero_template in hero_templates:
 
@@ -355,9 +349,6 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		hero.template = hero_template
 		hero.entity_name = unique_name(
 			hero_template.hero_name, used_names
-		)
-		hero.formation_slot = claim_slot(
-			hero_template.preferred_row, hero_slots_taken
 		)
 
 		var loadout = hero_template.equipped.values()
@@ -384,7 +375,9 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		hero.attack_power = hero.base_attack_power
 
-		hero.current_health = hero.max_health
+		hero.current_health = clampi(
+			hero_health.get(heroes.size(), hero.max_health), 1, hero.max_health
+		)
 		hero.current_mana = hero_template.base_mana
 
 		# Main-hand weapon speed sets the interval; unarmed falls back.
@@ -427,9 +420,6 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		enemy.entity_name = (
 			unique_name(enemy_template.enemy_name, used_names)
 			+ " Lv %d" % enemy.level
-		)
-		enemy.formation_slot = claim_slot(
-			enemy_template.preferred_row, enemy_slots_taken
 		)
 
 		enemy.template = enemy_template

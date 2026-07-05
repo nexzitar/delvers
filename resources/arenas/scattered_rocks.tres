@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BattleArena" format=3 uid="uid://imuhwtrbqvjc"]
+
+[ext_resource type="Script" path="res://scripts/combat/battle_arena.gd" id="1_arena"]
+
+[resource]
+script = ExtResource("1_arena")
+arena_id = "scattered_rocks"
+width = 30
+height = 20
+tile_size = 32
+blocked_tiles = Array[Vector2i]([Vector2i(8, 4), Vector2i(12, 9), Vector2i(9, 15), Vector2i(16, 6), Vector2i(15, 12), Vector2i(21, 9), Vector2i(18, 16), Vector2i(13, 3), Vector2i(22, 15), Vector2i(7, 14), Vector2i(17, 2), Vector2i(11, 17)])
+hero_spawn_center = Vector2i(4, 10)
+enemy_spawn_center = Vector2i(25, 10)

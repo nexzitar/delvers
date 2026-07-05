@@ -31,7 +31,6 @@ const EMPTY_ICONS := {
 	GearDefinition.Slot.OFF_HAND: preload("res://art/ui/slots/empty_off_hand.png"),
 }
 const EMPTY_SKILL := preload("res://art/ui/slots/empty_skill.png")
-const SKILL_SLOTS := 6
 const SLOT_SIZE := 50
 const STASH_ICON_SIZE := 42
 const STASH_COLUMNS := 10
@@ -51,9 +50,12 @@ var hero_index := -1
 var _name_edit: LineEdit
 var _role_label: Label
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
-var _skill_slots := []        # the SKILL_SLOTS skill DropTarget panels
+var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
+var _forge_box: VBoxContainer
 var _preview_holder: Control
+var _preview_rig: Node3D
+var _preview_time := 0.0
 var _tooltip_panel: Panel
 var _tooltip_left: VBoxContainer
 var _tooltip_right: VBoxContainer
@@ -216,7 +218,8 @@ func _build_left_panel():
 	for pos in Equip.WEAPON_ROW:
 		weapons.add_child(_build_equip_slot(pos))
 
-	# Skill row (6 slots; only slot 0 is active for now).
+	# Skill row: the weapon attack plus however many bonus slots the
+	# player has unlocked through meta progression.
 	vbox.add_child(_title("Skills"))
 	var skills = HBoxContainer.new()
 	skills.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -224,7 +227,7 @@ func _build_left_panel():
 	skills.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(skills)
 	_skill_slots.clear()
-	for i in range(SKILL_SLOTS):
+	for i in range(1 + PlayerRoster.bonus_skill_slots):
 		var slot = _make_slot("skill_view")  # read-only: rejects drops
 		slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 		_skill_slots.append(slot)
@@ -287,7 +290,7 @@ func _build_right_tabs():
 	skill_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	skills_tab.add_child(skill_box)
 	var note = Label.new()
-	note.text = "Active skills coming soon. Your attack follows your weapon."
+	note.text = "Your attack follows your weapon. Right-click a skill to slot it."
 	note.add_theme_color_override("font_color", DIM)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	skill_box.add_child(note)
@@ -296,6 +299,128 @@ func _build_right_tabs():
 	skill_box.add_child(grid)
 	for skill in PlayerRoster.skill_catalog:
 		grid.add_child(_make_icon("skill", skill, "catalog"))
+
+	# Forge tab: known recipes and the material stash. Materials are
+	# consumed; recipes are the camp's permanent knowledge.
+	var forge_tab = ScrollContainer.new()
+	forge_tab.name = "Forge"
+	forge_tab.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(forge_tab)
+	_forge_box = VBoxContainer.new()
+	_forge_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Hard width cap so recipe rows never push the craft buttons out of
+	# the panel (the tab strip is ~520px inside its margins).
+	_forge_box.custom_minimum_size = Vector2(500, 0)
+	_forge_box.add_theme_constant_override("separation", 10)
+	forge_tab.add_child(_forge_box)
+
+func _fill_forge():
+	_clear(_forge_box)
+
+	_forge_box.add_child(_title("Recipes"))
+	if PlayerRoster.known_recipes.is_empty():
+		var none = Label.new()
+		none.text = "No recipes known yet. Monsters guard that knowledge."
+		none.add_theme_color_override("font_color", DIM)
+		_forge_box.add_child(none)
+	for recipe_id in PlayerRoster.known_recipes:
+		if RosterSave.RECIPE_PATHS.has(recipe_id):
+			_forge_box.add_child(_make_recipe_row(load(RosterSave.RECIPE_PATHS[recipe_id])))
+
+	_forge_box.add_child(_title("Materials"))
+	var grid = GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 8)
+	_forge_box.add_child(grid)
+	var any := false
+	for material_id in RosterSave.MATERIAL_PATHS:
+		var count = PlayerRoster.material_stash.get(material_id, 0)
+		if count <= 0:
+			continue
+		any = true
+		grid.add_child(_material_chip(material_id, count))
+	if not any:
+		var empty = Label.new()
+		empty.text = "The material shelves are bare."
+		empty.add_theme_color_override("font_color", DIM)
+		_forge_box.add_child(empty)
+
+func _material_chip(material_id: String, count: int) -> Control:
+	var material = load(RosterSave.MATERIAL_PATHS[material_id])
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var icon = TextureRect.new()
+	icon.texture = material.icon
+	icon.custom_minimum_size = Vector2(34, 34)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+	var label = Label.new()
+	label.text = "%s x%d" % [material.material_name, count]
+	label.add_theme_font_override("font", FONT)
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", ItemQuality.color(material.tier))
+	row.add_child(label)
+	return row
+
+func _make_recipe_row(recipe: RecipeDefinition) -> Control:
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	panel.add_child(row)
+
+	var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
+	var icon = TextureRect.new()
+	icon.texture = result.icon if result.icon else result.texture
+	icon.custom_minimum_size = Vector2(44, 44)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+
+	var info = VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(info)
+	var name_label = Label.new()
+	name_label.text = recipe.recipe_name
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.add_theme_color_override(
+		"font_color", ItemQuality.color(recipe.result_quality)
+	)
+	info.add_child(name_label)
+	var costs := []
+	for material_id in recipe.costs:
+		var material = load(RosterSave.MATERIAL_PATHS[material_id])
+		var have = PlayerRoster.material_stash.get(material_id, 0)
+		costs.append("%s %d/%d" % [
+			material.material_name, have, recipe.costs[material_id]
+		])
+	var cost_label = Label.new()
+	cost_label.text = ", ".join(costs)
+	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cost_label.add_theme_font_size_override("font_size", 13)
+	cost_label.add_theme_color_override(
+		"font_color",
+		PARCHMENT if PlayerRoster.can_craft(recipe) else Color(0.75, 0.4, 0.35)
+	)
+	info.add_child(cost_label)
+
+	var craft = Button.new()
+	craft.text = "Craft"
+	craft.add_theme_font_override("font", FONT)
+	craft.add_theme_font_size_override("font_size", 18)
+	craft.disabled = not PlayerRoster.can_craft(recipe)
+	craft.custom_minimum_size = Vector2(92, 40)
+	craft.pressed.connect(func():
+		if PlayerRoster.craft(recipe) != null:
+			UiSounds.click()
+			refresh())
+	row.add_child(craft)
+	return panel
 
 func _build_tooltip():
 	_tooltip_compare_panel = _panel(660, -270, -520, -40, 0, 1, 1, 1)
@@ -374,6 +499,7 @@ func refresh():
 		_fill_equip_slot(pos)
 	_fill_skill_slots()
 	_fill_gear_grid()
+	_fill_forge()
 	_update_preview()
 
 func _role_text() -> String:
@@ -449,23 +575,41 @@ func _fill_gear_grid():
 
 func _update_preview():
 	_clear(_preview_holder)
+	_preview_rig = null
 
 	var hero = PlayerRoster.heroes[hero_index]
 
 	var vp_w := PREVIEW_VIEWPORT_W
 	var vp_h := PREVIEW_VIEWPORT_H
 
+	# Live 3D preview: the hero's actual battle rig with its gear,
+	# idling under studio lighting.
 	var vp = SubViewport.new()
 	vp.size = Vector2i(vp_w, vp_h)
 	vp.transparent_bg = true
+	vp.own_world_3d = true
+	vp.msaa_3d = Viewport.MSAA_4X
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 
-	var actor_y := vp_h * 0.5
+	var key_light = DirectionalLight3D.new()
+	key_light.rotation_degrees = Vector3(-35, -28, 0)
+	key_light.light_energy = 1.15
+	vp.add_child(key_light)
 
-	var actor = hero.actor_scene.instantiate()
-	actor.position = Vector2(vp_w / 2.0, actor_y)
-	actor.scale = Vector2(1.0, 1.0)
-	vp.add_child(actor)
+	var camera = Camera3D.new()
+	camera.fov = 30
+	var env = Environment.new()
+	env.background_mode = Environment.BG_CLEAR_COLOR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.75, 0.78, 0.9)
+	env.ambient_light_energy = 0.85
+	camera.environment = env
+	vp.add_child(camera)
+	camera.position = Vector3(0, 0.72, 2.7)
+	camera.look_at(Vector3(0, 0.62, 0))
+
+	_preview_rig = ActorFactory3D.build_hero(hero.equipped)
+	vp.add_child(_preview_rig)
 
 	var container = SubViewportContainer.new()
 	container.stretch = false
@@ -478,7 +622,6 @@ func _update_preview():
 	container.offset_bottom = vp_h / 2.0
 	container.add_child(vp)
 	_preview_holder.add_child(container)
-	actor.equip_gear(hero.equipped)
 
 # --- Drag-and-drop policy --------------------------------------------
 
@@ -589,7 +732,7 @@ func _tooltip_gear(gear: GearDefinition):
 	if gear.health_bonus != 0:
 		_tip_line("+%d Health" % gear.health_bonus, PARCHMENT, 18, 1)
 
-	_tip_line("Item level %d" % gear.item_level(), DIM, 16, 1)
+	_tip_line("Item level %d" % gear.item_level, DIM, 16, 1)
 
 	_fill_gear_compare(gear)
 
@@ -691,10 +834,16 @@ func _tooltip_skill(skill: SkillDefinition):
 func is_carrying() -> bool:
 	return _carried != null
 
-func _process(_delta):
+func _process(delta):
 	if _carry_visual and is_instance_valid(_carry_visual):
 		var m = _carry_visual.get_global_mouse_position()
 		_carry_visual.global_position = m - _carry_visual.size * 0.5
+
+	# Gentle idle + sway so the 3D preview reads as alive.
+	if is_instance_valid(_preview_rig):
+		_preview_time += delta
+		_preview_rig.pose_idle(_preview_time)
+		_preview_rig.rotation.y = 0.4 * sin(_preview_time * 0.4)
 
 func _input(event):
 	if _carried == null:

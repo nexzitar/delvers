@@ -4,6 +4,12 @@ func _ok(label, cond):
 	print(("PASS " if cond else "FAIL ") + label)
 
 func _ready():
+	# The camp uses the PlayerRoster autoload; reset it to defaults with
+	# autosave off so this test is deterministic and save-neutral.
+	PlayerRoster.autosave = false
+	PlayerRoster._build_heroes()
+	PlayerRoster._build_stash()
+
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
 	add_child(camp)
 	await get_tree().process_frame

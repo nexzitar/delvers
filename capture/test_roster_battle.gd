@@ -7,16 +7,29 @@ const GREEN_SLIME = preload("res://resources/enemies/green_slime.tres")
 const GOBLIN_ARCHER = preload("res://resources/enemies/goblin_archer.tres")
 
 func _ready():
+	# Built by hand with autosave off, so the test neither reads nor
+	# writes the player's real save.
 	var roster = load("res://scripts/game/player_roster.gd").new()
-	add_child(roster)
+	roster.autosave = false
+	roster._build_heroes()
+	roster._build_stash()
 
+	# A heal-slotted solo hero across every arena (the exact setup that
+	# once froze when a failed path got cached forever).
+	roster.equip_bonus_skill(0, load("res://resources/skills/heal.tres"), 1)
+	var arenas = [
+		null,
+		load("res://resources/arenas/pillared_hall.tres"),
+		load("res://resources/arenas/broken_wall.tres"),
+		load("res://resources/arenas/scattered_rocks.tres"),
+	]
 	for trial in 12:
 		var encounter = []
 		for i in randi_range(2, 4):
 			encounter.append([GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER].pick_random())
 
 		var combat = CombatState.new()
-		combat.setup_combat(roster.heroes, encounter)
+		combat.setup_combat(roster.heroes, encounter, arenas[trial % arenas.size()])
 		var steps := 0
 		while not combat.combat_over and steps < 3000:
 			combat.update(0.1)

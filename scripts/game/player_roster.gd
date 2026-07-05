@@ -6,6 +6,10 @@ extends Node
 const DEFAULT_DELVER = preload("res://resources/heroes/default_delver.tres")
 const AUTO_ATTACK = preload("res://resources/skills/auto_attack.tres")
 const ARROW_SHOT = preload("res://resources/skills/arrow_shot.tres")
+const FROST_NOVA = preload("res://resources/skills/frost_nova.tres")
+const HAMSTRING = preload("res://resources/skills/hamstring.tres")
+const CHARGE = preload("res://resources/skills/charge.tres")
+const HEAL = preload("res://resources/skills/heal.tres")
 
 const SWORD = preload("res://resources/gear/starter_sword.tres")
 const BOW = preload("res://resources/gear/starter_bow.tres")
@@ -16,6 +20,10 @@ const FAST_DAGGER = preload("res://resources/gear/fast_dagger.tres")
 const HEAVY_AXE = preload("res://resources/gear/heavy_axe.tres")
 
 var heroes: Array = []
+
+## Loadout edits write straight to disk; tests that build throwaway
+## rosters turn this off so they never touch the player's save.
+var autosave := true
 
 ## Spare gear the player can drag onto heroes. Each entry is a single
 ## physical item: equipping it moves it onto a hero, unequipping puts
@@ -28,11 +36,87 @@ var gear_stash: Array = []
 var skill_catalog: Array = [
 	AUTO_ATTACK,
 	ARROW_SHOT,
+	FROST_NOVA,
+	HAMSTRING,
+	CHARGE,
+	HEAL,
 ]
+
+## Materials are consumed; knowledge is permanent. The camp grows more
+## knowledgeable with every recipe brought home.
+var material_stash := {}
+var known_recipes: Array = ["iron_sword"]
 
 var battles_fought := 0
 var adventures_completed := 0
 var last_battle_won := false
+
+## Bonus skill slots per hero beyond the weapon attack. Grows through
+## meta progression (unlocks, not raw power).
+var bonus_skill_slots := 1
+
+## A delve is a run of up to DELVE_LENGTH rooms ending at the boss.
+## Loot accumulates in the pouch and only banks into the stash (and
+## the save) when the delve ends — victory or death. Health carries
+## between rooms: delve_health maps hero index -> hp entering the next
+## room (missing = full; 0 = down for the rest of the delve).
+const DELVE_LENGTH := 10
+var delve_room := 0
+var delve_loot: Array = []
+var delve_materials := {}
+var delve_recipes: Array = []
+var delve_health := {}
+
+func start_delve():
+	delve_room = 1
+	delve_loot = []
+	delve_materials = {}
+	delve_recipes = []
+	delve_health = {}
+
+func bank_delve_loot():
+	gear_stash.append_array(delve_loot)
+	for material_id in delve_materials:
+		material_stash[material_id] = (
+			material_stash.get(material_id, 0) + delve_materials[material_id]
+		)
+	for recipe_id in delve_recipes:
+		if not known_recipes.has(recipe_id):
+			known_recipes.append(recipe_id)
+	delve_loot = []
+	delve_materials = {}
+	delve_recipes = []
+	delve_room = 0
+	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
+
+# --- Crafting ---------------------------------------------------------
+
+func can_craft(recipe: RecipeDefinition) -> bool:
+	if not known_recipes.has(recipe.recipe_id):
+		return false
+	for material_id in recipe.costs:
+		if material_stash.get(material_id, 0) < recipe.costs[material_id]:
+			return false
+	return true
+
+## Consumes materials and forges the recipe's item into the stash.
+func craft(recipe: RecipeDefinition) -> GearDefinition:
+	if not can_craft(recipe):
+		return null
+	for material_id in recipe.costs:
+		material_stash[material_id] -= recipe.costs[material_id]
+		if material_stash[material_id] <= 0:
+			material_stash.erase(material_id)
+	var gear = LootTable.materialize(
+		recipe.result_gear_id, recipe.result_item_level, recipe.result_quality
+	)
+	gear_stash.append(gear)
+	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
+	return gear
 
 ## Seat assignments (seat node name -> hero index) from the last
 ## campfire stage. When keep_seating is set, the next stage reuses
@@ -41,11 +125,15 @@ var saved_seating := {}
 var keep_seating := false
 
 func _ready():
+	if RosterSave.load_into(self):
+		return
 	_build_heroes()
 	_build_stash()
+	if autosave:
+		RosterSave.save(self)
 
-## Both starting heroes are the same Default Delver, told apart only by
-## the gear they hold. Duplicated so their loadouts are independent.
+## You start with a single sword-and-board Default Delver; more delvers
+## come from meta progression later.
 func _build_heroes():
 	var melee = DEFAULT_DELVER.duplicate(true)
 	melee.equipped = {}
@@ -53,13 +141,7 @@ func _build_heroes():
 	_seed_loadout(melee, [SWORD.duplicate(), SHIELD.duplicate(),
 		HELMET.duplicate(), ARMOR.duplicate()])
 
-	var archer = DEFAULT_DELVER.duplicate(true)
-	archer.equipped = {}
-	archer.bonus_skills = [null, null, null, null, null]
-	_seed_loadout(archer, [BOW.duplicate(), HELMET.duplicate(),
-		ARMOR.duplicate()])
-
-	heroes = [melee, archer]
+	heroes = [melee]
 	for hero in heroes:
 		_sync_role(hero)
 
@@ -93,8 +175,8 @@ func sort_gear_stash() -> void:
 			return a.slot < b.slot
 		if a.quality != b.quality:
 			return a.quality > b.quality
-		if a.item_level() != b.item_level():
-			return a.item_level() > b.item_level()
+		if a.power_score() != b.power_score():
+			return a.power_score() > b.power_score()
 		return a.gear_name < b.gear_name
 	)
 
@@ -121,21 +203,23 @@ func is_ranged(hero_index: int) -> bool:
 	return skill != null \
 		and skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
 
-## First empty bonus-skill slot (1-5), or -1 if full.
+## First empty unlocked bonus-skill slot (1-based), or -1 if full.
 func first_empty_bonus_skill_slot(hero_index: int) -> int:
 	var hero = heroes[hero_index]
-	for i in range(5):
+	for i in range(bonus_skill_slots):
 		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
 			return i + 1
 	return -1
 
 func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
-	if slot < 1 or slot > 5:
+	if slot < 1 or slot > bonus_skill_slots:
 		return false
 	var hero = heroes[hero_index]
 	while hero.bonus_skills.size() < 5:
 		hero.bonus_skills.append(null)
 	hero.bonus_skills[slot - 1] = skill
+	if autosave:
+		RosterSave.save(self)
 	return true
 
 func unequip_bonus_skill(hero_index: int, slot: int) -> void:
@@ -144,6 +228,8 @@ func unequip_bonus_skill(hero_index: int, slot: int) -> void:
 	var hero = heroes[hero_index]
 	if slot - 1 < hero.bonus_skills.size():
 		hero.bonus_skills[slot - 1] = null
+		if autosave:
+			RosterSave.save(self)
 
 ## Positions a stash item may go into right now (off hand is blocked by a
 ## two-hander/bow in the main hand).
@@ -205,6 +291,8 @@ func equip_gear(hero_index: int, gear: GearDefinition, position := -1) -> bool:
 		_sync_role(hero)
 
 	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
 	return true
 
 func unequip_gear(hero_index: int, position: int) -> void:
@@ -217,11 +305,15 @@ func unequip_gear(hero_index: int, position: int) -> void:
 	if position in [Equip.Position.MAIN_HAND, Equip.Position.OFF_HAND]:
 		_sync_role(hero)
 	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
 
 func rename_hero(hero_index: int, new_name: String) -> void:
 	var trimmed = new_name.strip_edges()
 	if not trimmed.is_empty():
 		heroes[hero_index].hero_name = trimmed
+		if autosave:
+			RosterSave.save(self)
 
 func _main_hand_two_handed(hero) -> bool:
 	var main = hero.equipped.get(Equip.Position.MAIN_HAND, null)

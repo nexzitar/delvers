@@ -13,6 +13,7 @@ const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
 
 const GREEN_SLIME = preload("res://resources/enemies/green_slime.tres")
 const GOBLIN_ARCHER = preload("res://resources/enemies/goblin_archer.tres")
+const SLIME_KING = preload("res://resources/enemies/slime_king.tres")
 const MELEE_HIT_SOUND = preload("res://audio/melee_hit.wav")
 const ARROW_HIT_SOUND = preload("res://audio/arrow_hit.wav")
 const FONT = preload("res://art/fonts/Herculanum.ttf")
@@ -54,27 +55,77 @@ var _wrapping_up := false
 static func to_world(sim_pos: Vector2) -> Vector3:
 	return Vector3(sim_pos.x * WORLD_SCALE, 0.0, sim_pos.y * WORLD_SCALE)
 
+const ARENA_POOL := [
+	"res://resources/arenas/open_arena.tres",
+	"res://resources/arenas/pillared_hall.tres",
+	"res://resources/arenas/broken_wall.tres",
+	"res://resources/arenas/scattered_rocks.tres",
+]
+
+## Harness hook: force a specific arena (set before adding to the tree).
+var forced_arena_path := ""
+
+## Roster indices of the heroes fielded this room (attrition can
+## bench the fallen for the rest of the delve).
+var _party_indices := []
+
 func _ready():
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 
+	var room = maxi(1, PlayerRoster.delve_room)
+
+	# Attrition: health carries between rooms; downed heroes sit out.
+	var party := []
+	var entry_health := {}
+	_party_indices = []
+	for i in PlayerRoster.heroes.size():
+		var carried = PlayerRoster.delve_health.get(i, -1)
+		if carried == 0:
+			continue
+		if carried > 0:
+			entry_health[party.size()] = carried
+		party.append(PlayerRoster.heroes[i])
+		_party_indices.append(i)
+
 	var combat = CombatState.new()
-	combat.setup_combat(PlayerRoster.heroes, roll_encounter())
+	# Rooms deepen: bigger packs, higher enemy levels.
+	combat.enemy_level_bonus = (room - 1) / 4
+	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
 	while not combat.combat_over:
 		combat.update(0.1)
 	combat_result = combat.build_result()
 
+	# Record how the party came out of the fight.
+	for k in combat.heroes.size():
+		PlayerRoster.delve_health[_party_indices[k]] = combat.heroes[k].current_health
+
 	_setup_world(combat.arena)
 	_setup_ui()
+	_show_room_banner(room)
 	_build_timeline(combat_result.combat_log)
 	_playing = true
 
-## A random pack of enemies for this adventure.
-func roll_encounter() -> Array:
+## A random pack of enemies, growing with the delve's depth. The final
+## room is the boss lair: the Slime King and his retinue.
+func roll_encounter(room: int) -> Array:
+	if room >= PlayerRoster.DELVE_LENGTH:
+		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
 	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER]
+	var low = clampi(2 + (room - 1) / 4, 2, 4)
+	var high = clampi(3 + (room - 1) / 2, 3, 6)
 	var encounter = []
-	for i in randi_range(2, 4):
+	for i in randi_range(low, high):
 		encounter.append(pool.pick_random())
 	return encounter
+
+## The first room is always the open field, the boss lair too (a clean
+## stage for the fight); rooms between draw from the full arena pool.
+func _pick_arena(room: int) -> BattleArena:
+	if forced_arena_path != "":
+		return load(forced_arena_path)
+	if room <= 1 or room >= PlayerRoster.DELVE_LENGTH:
+		return load(ARENA_POOL[0])
+	return load(ARENA_POOL.pick_random())
 
 # --- Replay loop --------------------------------------------------------
 
@@ -403,16 +454,170 @@ func _spawn_floating_text(at: Vector3, text: String, color: Color):
 		.set_ease(Tween.EASE_IN)
 	tween.tween_callback(label.queue_free)
 
+## Fades a "Room N of 10" banner at the top as the fight opens.
+func _show_room_banner(room: int):
+	var layer := CanvasLayer.new()
+	layer.layer = 11
+	add_child(layer)
+	var label := Label.new()
+	label.text = "Room %d of %d" % [room, PlayerRoster.DELVE_LENGTH]
+	label.anchor_left = 0.0
+	label.anchor_right = 1.0
+	label.offset_top = 40
+	label.offset_bottom = 110
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", FONT)
+	label.add_theme_font_size_override("font_size", 52)
+	label.add_theme_color_override("font_color", Color(0.85, 0.72, 0.42))
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 10)
+	label.modulate.a = 0.0
+	layer.add_child(label)
+	var tween := create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.5)
+	tween.tween_interval(1.8)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(layer.queue_free)
+
 func _finish_battle():
 	await get_tree().create_timer(1.4).timeout
 
+	var room = maxi(1, PlayerRoster.delve_room)
 	PlayerRoster.battles_fought += 1
 	PlayerRoster.last_battle_won = combat_result.victory
-	if combat_result.victory:
-		PlayerRoster.adventures_completed += 1
 
-	await _show_battle_result(combat_result.victory)
-	await get_tree().create_timer(2.2).timeout
+	if not combat_result.victory:
+		RosterSave.save(PlayerRoster)
+		await _show_battle_result(false)
+		await get_tree().create_timer(1.2).timeout
+		_show_summary(
+			"The Party Falls...",
+			"%d room%s cleared. Their spoils make it home." % [
+				room - 1, "" if room == 2 else "s"
+			]
+		)
+		return
+
+	# Monsters drop resources and knowledge: pouch it all.
+	var slain = combat_result.enemies.map(func(e): return e.template)
+	var found = LootTable.roll_enemy_drops(
+		slain, room, PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+	)
+	PlayerRoster.delve_loot.append_array(found.gear)
+	for material_id in found.materials:
+		PlayerRoster.delve_materials[material_id] = (
+			PlayerRoster.delve_materials.get(material_id, 0)
+			+ found.materials[material_id]
+		)
+	PlayerRoster.delve_recipes.append_array(found.recipes)
+
+	if room >= PlayerRoster.DELVE_LENGTH:
+		PlayerRoster.adventures_completed += 1
+		RosterSave.save(PlayerRoster)
+		await _show_battle_result(true)
+		await get_tree().create_timer(1.2).timeout
+		_show_summary(
+			"Delve Complete!",
+			"The Slime King is slain. All %d rooms conquered." % PlayerRoster.DELVE_LENGTH
+		)
+		return
+
+	RosterSave.save(PlayerRoster)
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes))
+	await get_tree().create_timer(2.6).timeout
+	PlayerRoster.delve_room += 1
+	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
+
+## Display entries for spoils: gear, materials with counts, and the
+## crown jewels — newly learned recipes.
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array) -> Array:
+	var entries := []
+	for recipe_id in recipes:
+		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+		var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
+		entries.append({
+			"texture": result.icon if result.icon else result.texture,
+			"text": "Recipe:\n%s" % recipe.recipe_name,
+			"color": ItemQuality.color(ItemQuality.Tier.RARE),
+		})
+	for item in gear:
+		entries.append({
+			"texture": item.icon if item.icon else item.texture,
+			"text": item.gear_name,
+			"color": ItemQuality.color(item.quality),
+		})
+	for material_id in materials:
+		var material = load(RosterSave.MATERIAL_PATHS[material_id])
+		entries.append({
+			"texture": material.icon,
+			"text": "%s x%d" % [material.material_name, materials[material_id]],
+			"color": ItemQuality.color(material.tier),
+		})
+	return entries
+
+## Brief bottom-center spoils toast; the delve marches on by itself.
+func _show_room_toast(room: int, entries: Array):
+	var layer := CanvasLayer.new()
+	layer.layer = 12
+	add_child(layer)
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.045, 0.06, 0.92)
+	style.border_color = Color(0.35, 0.28, 0.16, 0.9)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(16)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -340
+	panel.offset_right = 340
+	panel.offset_top = -190
+	panel.offset_bottom = -40
+	layer.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	var title := Label.new()
+	title.text = (
+		"Room %d cleared — pressing on..." % room
+		if not entries.is_empty()
+		else "Room %d cleared — nothing worth carrying. Pressing on..." % room
+	)
+	title.add_theme_font_override("font", FONT)
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(0.85, 0.72, 0.42))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	if not entries.is_empty():
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 14)
+		box.add_child(row)
+		for entry in entries:
+			row.add_child(DelvePanel.loot_entry(entry))
+
+	panel.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(panel, "modulate:a", 1.0, 0.35)
+
+## Final spoils screen: everything gathered this delve, then camp.
+func _show_summary(title: String, subtitle: String):
+	var panel := DelvePanel.new()
+	add_child(panel)
+	var entries = _drop_entries(
+		PlayerRoster.delve_loot,
+		PlayerRoster.delve_materials,
+		PlayerRoster.delve_recipes
+	)
+	panel.setup(title, subtitle, entries, "Return to Camp")
+	panel.primary_pressed.connect(_bank_and_return)
+
+func _bank_and_return():
+	PlayerRoster.bank_delve_loot()
 	SceneFlow.change_scene("res://scenes/camp/camp.tscn")
 
 func _show_battle_result(victory):
@@ -481,6 +686,25 @@ func _setup_world(arena):
 	ground.material_override = mat
 	ground.position = center
 	add_child(ground)
+
+	# Blocked tiles rise as stone pillars: the same cells the sim's
+	# pathfinding and line of sight respect.
+	var pillar_mat := StandardMaterial3D.new()
+	pillar_mat.albedo_color = Color("5b5e57")
+	pillar_mat.roughness = 1.0
+	for tile in arena.blocked_tiles:
+		var pillar := BoxMesh.new()
+		var wobble = 0.15 * ((tile.x * 7 + tile.y * 13) % 5) / 4.0
+		pillar.size = Vector3(1.0, 1.3 + wobble, 1.0)
+		var mesh := MeshInstance3D.new()
+		mesh.mesh = pillar
+		mesh.material_override = pillar_mat
+		var base = to_world(Vector2(
+			(tile.x + 0.5) * arena.tile_size,
+			(tile.y + 0.5) * arena.tile_size
+		))
+		mesh.position = base + Vector3(0, pillar.size.y * 0.5, 0)
+		add_child(mesh)
 
 	# Deterministic scatter so the field reads as a place.
 	for i in 14:

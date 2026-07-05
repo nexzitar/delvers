@@ -13,6 +13,37 @@ func is_walkable(cell: Vector2i) -> bool:
 		return false
 	return not _blocked.has(cell)
 
+func clamp_cell(cell: Vector2i) -> Vector2i:
+	return Vector2i(
+		clampi(cell.x, 0, _arena.width - 1),
+		clampi(cell.y, 0, _arena.height - 1)
+	)
+
+## World-space arena bounds with a half-tile margin, for keeping unit
+## positions on the field no matter what pushed them.
+func clamp_world(p: Vector2) -> Vector2:
+	var ts = _arena.tile_size
+	return Vector2(
+		clampf(p.x, ts * 0.5, _arena.width * ts - ts * 0.5),
+		clampf(p.y, ts * 0.5, _arena.height * ts - ts * 0.5)
+	)
+
+## Nearest walkable cell, searching outward in rings. Falls back to the
+## (clamped) input if a 3-ring search finds nothing.
+func nearest_walkable(cell: Vector2i) -> Vector2i:
+	cell = clamp_cell(cell)
+	if is_walkable(cell):
+		return cell
+	for ring in range(1, 4):
+		for dy in range(-ring, ring + 1):
+			for dx in range(-ring, ring + 1):
+				if maxi(absi(dx), absi(dy)) != ring:
+					continue
+				var candidate = clamp_cell(cell + Vector2i(dx, dy))
+				if is_walkable(candidate):
+					return candidate
+	return cell
+
 func world_to_tile(p: Vector2) -> Vector2i:
 	return Vector2i(
 		floori(p.x / _arena.tile_size),

@@ -16,7 +16,6 @@ var current_health: int
 var max_health: int
 var current_mana: int
 var attack_power: int
-var formation_slot: int
 var gear := []
 var equipped := {}
 
@@ -26,6 +25,8 @@ var move_speed: float = 120.0
 var path: PackedVector2Array = []
 var path_index: int = 0
 var path_goal: Vector2i = Vector2i(-9999, -9999)
+## Failed searches retry after a short delay instead of caching forever.
+var path_retry_at: float = 0.0
 var moving: bool = false
 var last_logged_facing: Vector2 = Vector2.RIGHT
 var target_id: int = -1

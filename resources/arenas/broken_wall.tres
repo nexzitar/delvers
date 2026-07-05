@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BattleArena" format=3 uid="uid://da2w160pwdab5"]
+
+[ext_resource type="Script" path="res://scripts/combat/battle_arena.gd" id="1_arena"]
+
+[resource]
+script = ExtResource("1_arena")
+arena_id = "broken_wall"
+width = 30
+height = 20
+tile_size = 32
+blocked_tiles = Array[Vector2i]([Vector2i(15, 0), Vector2i(15, 1), Vector2i(15, 2), Vector2i(15, 3), Vector2i(15, 4), Vector2i(15, 5), Vector2i(15, 6), Vector2i(15, 9), Vector2i(15, 10), Vector2i(15, 11), Vector2i(15, 14), Vector2i(15, 15), Vector2i(15, 16), Vector2i(15, 17), Vector2i(15, 18), Vector2i(15, 19)])
+hero_spawn_center = Vector2i(4, 10)
+enemy_spawn_center = Vector2i(25, 10)

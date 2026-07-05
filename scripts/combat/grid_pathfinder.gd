@@ -6,6 +6,12 @@ func _init(grid):
 	_grid = grid
 
 func find_path(from_cell: Vector2i, to_cell: Vector2i) -> PackedVector2Array:
+	# Never hard-fail on an unwalkable endpoint: units get pushed onto
+	# blocked cells or out of bounds (separation, displacement skills),
+	# and targets standing there must still be approachable.
+	from_cell = _grid.nearest_walkable(from_cell)
+	to_cell = _grid.nearest_walkable(to_cell)
+
 	if from_cell == to_cell:
 		return PackedVector2Array([_grid.tile_to_world(to_cell)])
 
