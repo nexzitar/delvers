@@ -54,5 +54,40 @@ func _ready():
 		"turn logged as FACE event"
 	)
 
+	# Regression: a target standing on an unwalkable cell (pushed onto a
+	# rock, or out of bounds) must never freeze the attacker — the old
+	# pathfinder hard-failed and the failure was cached forever.
+	var arena = load("res://resources/arenas/open_arena.tres").duplicate()
+	var wall_tiles: Array[Vector2i] = [Vector2i(20, 10)]
+	arena.blocked_tiles = wall_tiles
+	var combat3 = CombatState.new()
+	combat3.setup_combat([delver], [slime], arena)
+	var chaser = combat3.heroes[0]
+	var prey = combat3.enemies[0]
+	# Prey parked exactly on the blocked tile.
+	prey.position = combat3.grid.tile_to_world(Vector2i(20, 10))
+	var d_before = chaser.position.distance_to(prey.position)
+	for i in 30:
+		combat3.tick_movement(chaser, prey, 0.1)
+	assert(
+		chaser.position.distance_to(prey.position) < d_before - 20.0,
+		"attacker approaches a target on a blocked tile"
+	)
+	# Prey shoved out of bounds entirely.
+	prey.position = Vector2(-120, 320)
+	chaser.path_goal = Vector2i(-9999, -9999)
+	d_before = chaser.position.distance_to(prey.position)
+	for i in 30:
+		combat3.tick_movement(chaser, prey, 0.1)
+	assert(
+		chaser.position.distance_to(prey.position) < d_before - 20.0,
+		"attacker approaches an out-of-bounds target"
+	)
+
+	# Separation can never push a unit off the field.
+	chaser.position = Vector2(2.0, 320.0)
+	combat3.tick_movement(chaser, prey, 0.1)
+	assert(chaser.position.x >= 16.0, "positions clamp to the arena")
+
 	print("PASS spatial move")
 	get_tree().quit()

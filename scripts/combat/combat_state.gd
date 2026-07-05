@@ -208,22 +208,22 @@ func tick_movement(entity, target, delta):
 	if entity.is_rooted():
 		return
 
-	# Re-path when the target moved to a different tile, or when the
-	# path was walked to the end but we're still out of range (e.g.
-	# separation pushed us off). A failed search is cached until the
-	# goal tile changes, so unreachable targets don't re-search every tick.
+	# Re-path when the target moved to a different tile, when the path
+	# was walked to the end but we're still out of range (separation
+	# pushed us off), or when a failed search's retry delay elapsed —
+	# a stall must never cache forever.
 	var goal = grid.world_to_tile(target.position)
-	if entity.path_goal != goal:
+	var consumed = not entity.path.is_empty() \
+		and entity.path_index >= entity.path.size()
+	var retry = entity.path.is_empty() and combat_time >= entity.path_retry_at
+	if entity.path_goal != goal or consumed or retry:
 		entity.path = pathfinder.find_path(
 			grid.world_to_tile(entity.position), goal
 		)
 		entity.path_index = 0
 		entity.path_goal = goal
-	elif not entity.path.is_empty() and entity.path_index >= entity.path.size():
-		entity.path = pathfinder.find_path(
-			grid.world_to_tile(entity.position), goal
-		)
-		entity.path_index = 0
+		if entity.path.is_empty():
+			entity.path_retry_at = combat_time + 0.5
 	if entity.path.is_empty():
 		return
 
@@ -240,10 +240,12 @@ func tick_movement(entity, target, delta):
 			entity.position += (waypoint - entity.position) / dist * budget
 			budget = 0.0
 
-	# Soft collision: paths may overlap, bodies should not stack.
+	# Soft collision: paths may overlap, bodies should not stack. The
+	# push must never shove anyone off the field.
 	entity.position += Separation.compute_offset(
 		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0
 	)
+	entity.position = grid.clamp_world(entity.position)
 
 	var moved = entity.position - before
 	if moved.length_squared() > 0.01:
