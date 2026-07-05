@@ -9,6 +9,7 @@ func _ready():
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	PlayerRoster.start_delve()
 	PlayerRoster.delve_room = 5
+	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/heal.tres"), 1)
 	var scene = load("res://scenes/theater/battle_theater_3d.tscn").instantiate()
 	add_child(scene)
 	_run()

@@ -403,6 +403,9 @@ func _update_actors(delta):
 					if state.anim_t >= DelverRig.SWING_T:
 						state.mode = "idle"
 			"shoot":
+				if not rig.has_method("pose_shoot"):
+					state.mode = "idle"
+					continue
 				state.anim_t += delta * state.anim_speed
 				rig.pose_shoot(state.anim_t, state.shoot_dist)
 				if state.anim_t >= DelverRig.SHOOT_T:

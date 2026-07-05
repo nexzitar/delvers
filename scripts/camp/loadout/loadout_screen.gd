@@ -780,7 +780,7 @@ func _update_preview():
 	camera.environment = env
 	vp.add_child(camera)
 	camera.position = Vector3(0, 0.72, 2.7)
-	camera.look_at(Vector3(0, 0.62, 0))
+	camera.look_at_from_position(camera.position, Vector3(0, 0.62, 0))
 
 	_preview_rig = ActorFactory3D.build_hero(hero.equipped)
 	vp.add_child(_preview_rig)

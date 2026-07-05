@@ -55,5 +55,15 @@ func _ready():
 	for rig in [knight, archer, slime, goblin]:
 		rig.free()
 
+	# Regression: a sword hero casting (Heal) enters the shoot clock
+	# with no bow — must fall back to the spellcast pose, not crash.
+	var caster = ActorFactory3D.build_hero({
+		Equip.Position.MAIN_HAND: load("res://resources/gear/starter_sword.tres"),
+	})
+	assert(caster.bow == null, "sword hero carries no bow")
+	caster.pose_shoot(0.7)
+	assert(caster.arm_l.rotation.x < -0.5, "spellcast raises the arms")
+	caster.free()
+
 	print("PASS actor factory 3d")
 	get_tree().quit()
