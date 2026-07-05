@@ -7,6 +7,7 @@
 script = ExtResource("1_affix")
 affix_id = "flaming"
 tome_name = "Royal Slime Alchemy Notes"
+tome_lore = "The royal jelly resisted every known solvent except fire."
 affix_name = "Flaming"
 icon = ExtResource("2_icon")
 applies_to_weapons = true

@@ -72,11 +72,13 @@ static func materialize(gear_id: String, item_level: int, quality: int, affix_id
 ## "recipes": [recipe_id], "affixes": [affix_id], "gear": [...]}.
 ## known_recipes / known_affixes suppress already-learned knowledge
 ## (nothing wasted: known knowledge simply doesn't drop).
+const LORE_DROP_CHANCE := 0.03
+
 static func roll_enemy_drops(
 		enemy_templates: Array, room: int,
-		known_recipes := [], known_affixes := [],
+		known_recipes := [], known_affixes := [], known_lore := [],
 ) -> Dictionary:
-	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": []}
+	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [], "lore": []}
 	var seen: Array = known_recipes.duplicate()
 	var seen_affixes: Array = known_affixes.duplicate()
 
@@ -108,6 +110,14 @@ static func roll_enemy_drops(
 				var affix_id = unknown_affixes.pick_random()
 				drops.affixes.append(affix_id)
 				seen_affixes.append(affix_id)
+
+		# History: the next unrecovered fragment, in order — evidence
+		# assembles the way a trail would.
+		if randf() <= LORE_DROP_CHANCE:
+			for lore_id in RosterSave.LORE_PATHS:
+				if not known_lore.has(lore_id) and not drops.lore.has(lore_id):
+					drops.lore.append(lore_id)
+					break
 
 		# Finished equipment: a memorable fluke, or a boss trophy.
 		if not template.loot_ids.is_empty() and randf() <= template.drop_chance:

@@ -47,6 +47,9 @@ var skill_catalog: Array = [
 var material_stash := {}
 var known_recipes: Array = ["iron_sword"]
 var known_affixes: Array = []
+## Recovered history (expedition logs etc.) — pure memory, shelved in
+## the camp library.
+var known_lore: Array = []
 
 var battles_fought := 0
 var adventures_completed := 0
@@ -67,6 +70,7 @@ var delve_loot: Array = []
 var delve_materials := {}
 var delve_recipes: Array = []
 var delve_affixes: Array = []
+var delve_lore: Array = []
 var delve_health := {}
 
 func start_delve():
@@ -75,6 +79,7 @@ func start_delve():
 	delve_materials = {}
 	delve_recipes = []
 	delve_affixes = []
+	delve_lore = []
 	delve_health = {}
 
 func bank_delve_loot():
@@ -89,10 +94,14 @@ func bank_delve_loot():
 	for affix_id in delve_affixes:
 		if not known_affixes.has(affix_id):
 			known_affixes.append(affix_id)
+	for lore_id in delve_lore:
+		if not known_lore.has(lore_id):
+			known_lore.append(lore_id)
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
 	delve_affixes = []
+	delve_lore = []
 	delve_room = 0
 	sort_gear_stash()
 	if autosave:

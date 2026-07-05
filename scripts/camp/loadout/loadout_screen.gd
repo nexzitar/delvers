@@ -53,6 +53,7 @@ var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
+var _library_box: VBoxContainer
 ## recipe_id -> chosen affix_id ("" = plain craft), kept across refreshes.
 var _forge_affix_choice := {}
 var _preview_holder: Control
@@ -316,6 +317,110 @@ func _build_right_tabs():
 	_forge_box.add_theme_constant_override("separation", 10)
 	forge_tab.add_child(_forge_box)
 
+	# Library tab: the guild's memory. Every recovered tome and every
+	# expedition log, shelved. No gameplay — archaeology.
+	var library_tab = ScrollContainer.new()
+	library_tab.name = "Library"
+	library_tab.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(library_tab)
+	_library_box = VBoxContainer.new()
+	_library_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_library_box.custom_minimum_size = Vector2(500, 0)
+	_library_box.add_theme_constant_override("separation", 10)
+	library_tab.add_child(_library_box)
+
+func _fill_library():
+	_clear(_library_box)
+
+	_library_box.add_child(_title("Recovered Tomes"))
+	var tomes := []
+	for recipe_id in PlayerRoster.known_recipes:
+		if RosterSave.RECIPE_PATHS.has(recipe_id):
+			var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+			tomes.append({
+				"icon": preload("res://art/tomes/tome_recipe.png"),
+				"name": recipe.tome_name, "teaches": recipe.recipe_name,
+				"lore": recipe.tome_lore,
+				"color": ItemQuality.color(ItemQuality.Tier.RARE),
+			})
+	for affix_id in PlayerRoster.known_affixes:
+		if RosterSave.AFFIX_PATHS.has(affix_id):
+			var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+			tomes.append({
+				"icon": preload("res://art/tomes/tome_affix.png"),
+				"name": affix.tome_name, "teaches": affix.affix_name,
+				"lore": affix.tome_lore,
+				"color": ItemQuality.color(ItemQuality.Tier.EPIC),
+			})
+	if tomes.is_empty():
+		var bare = Label.new()
+		bare.text = "The shelves stand empty. What the guild recovers will be remembered here."
+		bare.add_theme_color_override("font_color", DIM)
+		bare.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_library_box.add_child(bare)
+	for tome in tomes:
+		_library_box.add_child(_make_tome_row(tome))
+
+	var logs := []
+	for lore_id in RosterSave.LORE_PATHS:
+		if PlayerRoster.known_lore.has(lore_id):
+			logs.append(load(RosterSave.LORE_PATHS[lore_id]))
+	if not logs.is_empty():
+		_library_box.add_child(_title("Expedition Logs"))
+		logs.sort_custom(func(a, b): return a.order < b.order)
+		for log in logs:
+			var entry = VBoxContainer.new()
+			entry.add_theme_constant_override("separation", 2)
+			var title_label = Label.new()
+			title_label.text = log.title
+			title_label.add_theme_font_override("font", FONT)
+			title_label.add_theme_font_size_override("font_size", 19)
+			title_label.add_theme_color_override("font_color", Color("d8c684"))
+			entry.add_child(title_label)
+			var body_label = Label.new()
+			body_label.text = "\"%s\"" % log.body
+			body_label.add_theme_font_size_override("font_size", 14)
+			body_label.add_theme_color_override("font_color", PARCHMENT)
+			body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			entry.add_child(body_label)
+			_library_box.add_child(entry)
+
+func _make_tome_row(tome: Dictionary) -> Control:
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	panel.add_child(row)
+	var icon = TextureRect.new()
+	icon.texture = tome.icon
+	icon.custom_minimum_size = Vector2(40, 40)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+	var info = VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 1)
+	row.add_child(info)
+	var name_label = Label.new()
+	name_label.text = tome.name
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.add_theme_color_override("font_color", tome.color)
+	info.add_child(name_label)
+	var teaches = Label.new()
+	teaches.text = "Teaches: %s" % tome.teaches
+	teaches.add_theme_font_size_override("font_size", 13)
+	teaches.add_theme_color_override("font_color", DIM)
+	info.add_child(teaches)
+	if tome.lore != "":
+		var lore_label = Label.new()
+		lore_label.text = "\"%s\"" % tome.lore
+		lore_label.add_theme_font_size_override("font_size", 13)
+		lore_label.add_theme_color_override("font_color", PARCHMENT)
+		lore_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		info.add_child(lore_label)
+	return panel
+
 func _fill_forge():
 	_clear(_forge_box)
 
@@ -568,6 +673,7 @@ func refresh():
 	_fill_skill_slots()
 	_fill_gear_grid()
 	_fill_forge()
+	_fill_library()
 	_update_preview()
 
 func _role_text() -> String:

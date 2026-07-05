@@ -7,6 +7,7 @@
 script = ExtResource("1_affix")
 affix_id = "frostforged"
 tome_name = "Codex of the Frozen Ooze"
+tome_lore = "Cold slows them. It is written in a shaking hand."
 affix_name = "Frostforged"
 icon = ExtResource("2_icon")
 applies_to_weapons = true

@@ -539,7 +539,8 @@ func _finish_battle():
 	var found = LootTable.roll_enemy_drops(
 		slain, room,
 		PlayerRoster.known_recipes + PlayerRoster.delve_recipes,
-		PlayerRoster.known_affixes + PlayerRoster.delve_affixes
+		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
+		PlayerRoster.known_lore + PlayerRoster.delve_lore
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -549,6 +550,7 @@ func _finish_battle():
 		)
 	PlayerRoster.delve_recipes.append_array(found.recipes)
 	PlayerRoster.delve_affixes.append_array(found.affixes)
+	PlayerRoster.delve_lore.append_array(found.lore)
 
 	if room >= PlayerRoster.DELVE_LENGTH:
 		PlayerRoster.adventures_completed += 1
@@ -562,15 +564,22 @@ func _finish_battle():
 		return
 
 	RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
 ## crown jewels — newly learned recipes and affixes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = []) -> Array:
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = []) -> Array:
 	var entries := []
+	for lore_id in lore:
+		var fragment = load(RosterSave.LORE_PATHS[lore_id])
+		entries.append({
+			"texture": preload("res://art/tomes/tome_journal.png"),
+			"text": fragment.title,
+			"color": Color("d8c684"),
+		})
 	for affix_id in affixes:
 		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
 		entries.append({
@@ -657,7 +666,8 @@ func _show_summary(title: String, subtitle: String):
 		PlayerRoster.delve_loot,
 		PlayerRoster.delve_materials,
 		PlayerRoster.delve_recipes,
-		PlayerRoster.delve_affixes
+		PlayerRoster.delve_affixes,
+		PlayerRoster.delve_lore
 	)
 	panel.setup(title, subtitle, entries, "Return to Camp")
 	panel.primary_pressed.connect(_bank_and_return)

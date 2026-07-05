@@ -18,6 +18,7 @@ func _init():
 	_save(_leather(), "res://art/materials/mat_leather.png")
 	_save(_tome(Color("2a3a5e"), Color("18233c"), Color("7fa4d8")), "res://art/tomes/tome_recipe.png")
 	_save(_tome(Color("42285e"), Color("2a173c"), Color("a06fd0")), "res://art/tomes/tome_affix.png")
+	_save(_tome(Color("4a3a22"), Color("2e2412"), Color("d8c684")), "res://art/tomes/tome_journal.png")
 	print("material icons written")
 	quit()
 

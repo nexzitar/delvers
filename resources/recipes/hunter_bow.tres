@@ -6,6 +6,7 @@
 script = ExtResource("1_recipe")
 recipe_id = "hunter_bow"
 tome_name = "Fletcher's Weathered Field Notes"
+tome_lore = "We lost three scouts to the spiders before discovering the venom could be tempered into steel."
 recipe_name = "Hunter Bow"
 result_gear_id = "starter_bow"
 result_item_level = 4

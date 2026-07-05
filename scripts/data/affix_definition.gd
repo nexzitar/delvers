@@ -12,6 +12,9 @@ class_name AffixDefinition
 ## Provenance: the artifact this knowledge was recovered as
 ## ("Spider Venom Treatise"). Worldbuilding for the drop screen.
 @export var tome_name: String = ""
+## A fragment of the world recovered along with the technique — shown
+## in the library, never narrated.
+@export_multiline var tome_lore: String = ""
 @export var icon: Texture2D
 
 ## Compatibility: weapons (anything that swings or shoots) and/or

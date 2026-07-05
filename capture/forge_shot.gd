@@ -14,6 +14,7 @@ func _ready():
 	}
 	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield"]
 	PlayerRoster.known_affixes = ["virulent", "frostforged", "guarding"]
+	PlayerRoster.known_lore = ["expedition_log_1", "expedition_log_2"]
 	PlayerRoster.material_stash["corrosion_core"] = 2
 
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
@@ -37,4 +38,12 @@ func _ready():
 	await RenderingServer.frame_post_draw
 	var img = get_viewport().get_texture().get_image()
 	img.save_png("%s/forge_tab.png" % out_dir)
+
+	loadout.hide_tooltip()
+	for tabs in loadout.find_children("*", "TabContainer", true, false):
+		tabs.current_tab = 3
+	await get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	img = get_viewport().get_texture().get_image()
+	img.save_png("%s/library_tab.png" % out_dir)
 	get_tree().quit()

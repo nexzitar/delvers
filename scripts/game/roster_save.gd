@@ -6,7 +6,7 @@ class_name RosterSave
 ## the "each item is one physical object" model.
 
 const SAVE_PATH := "user://delvers_save.json"
-const VERSION := 4
+const VERSION := 5
 
 const MATERIAL_PATHS := {
 	"gel": "res://resources/materials/gel.tres",
@@ -34,6 +34,15 @@ const AFFIX_PATHS := {
 	"flaming": "res://resources/affixes/flaming.tres",
 	"quick": "res://resources/affixes/quick.tres",
 	"guarding": "res://resources/affixes/guarding.tres",
+}
+
+## Ordered: fragments are recovered lowest-order first, so the story
+## assembles like a trail of evidence.
+const LORE_PATHS := {
+	"expedition_log_1": "res://resources/lore/expedition_log_1.tres",
+	"expedition_log_2": "res://resources/lore/expedition_log_2.tres",
+	"expedition_log_3": "res://resources/lore/expedition_log_3.tres",
+	"expedition_log_4": "res://resources/lore/expedition_log_4.tres",
 }
 
 const HERO_PATHS := {
@@ -96,6 +105,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"materials": roster.material_stash,
 		"known_recipes": roster.known_recipes,
 		"known_affixes": roster.known_affixes,
+		"known_lore": roster.known_lore,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -152,6 +162,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	for affix_id in data.get("known_affixes", []):
 		if AFFIX_PATHS.has(affix_id) and not roster.known_affixes.has(affix_id):
 			roster.known_affixes.append(affix_id)
+
+	roster.known_lore = []
+	for lore_id in data.get("known_lore", []):
+		if LORE_PATHS.has(lore_id) and not roster.known_lore.has(lore_id):
+			roster.known_lore.append(lore_id)
 	return true
 
 static func _restore_hero(entry):

@@ -6,6 +6,7 @@
 script = ExtResource("1_recipe")
 recipe_id = "leather_hood"
 tome_name = "Tanner's Stitching Primer"
+tome_lore = "The tanner of the Black Hollow signed every page. The last page is unsigned."
 recipe_name = "Leather Hood"
 result_gear_id = "starter_helmet"
 result_item_level = 4
