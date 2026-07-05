@@ -1,6 +1,6 @@
 # Delvers
 
-A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). Lead your delvers into battle against monsters, with combat resolved by a simulation engine and replayed as animated theater scenes.
+A crafting-driven dungeon crawler built with [Godot 4.6](https://godotengine.org/). Lead your delvers through escalating dungeon rooms, hunt monsters for **materials and recipes**, and grow your camp's knowledge — combat resolves in a headless simulation and replays as a low-poly 3D theater scene built entirely from procedural rigs.
 
 ## Screenshots
 
@@ -22,12 +22,22 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 |------------------------|
 | ![Carrying an item](docs/screenshots/loadout_carry.png) |
 
+## In Motion
+
+**From the menu into camp** — the camera glides from the title framing down to the fire:
+
+![Menu to camp](docs/gifs/menu_to_camp.gif)
+
+**A delve room** — pathfinding around pillars, target arrows, swings landing on the damage beat, floating numbers, slimes hopping in:
+
+![Battle](docs/gifs/battle.gif)
+
 ## Meet the Cast
 
-| Default Delver (melee) | Default Delver (archer) | Goblin Archer | Green Slime |
-|:--:|:--:|:--:|:--:|
-| <img src="docs/screenshots/hero_default_delver.png" height="190" alt="Default Delver melee"> | <img src="docs/screenshots/hero_default_delver_archer.png" height="190" alt="Default Delver archer"> | <img src="docs/screenshots/enemy_goblin_archer.png" height="180" alt="Goblin Archer"> | <img src="docs/screenshots/enemy_green_slime.png" height="130" alt="Green Slime"> |
-| Sword-and-board front row | Bow back row | Ranged enemy | Front-row enemy |
+| Default Delver (melee) | Default Delver (archer) | Goblin Archer | Green Slime | Slime King |
+|:--:|:--:|:--:|:--:|:--:|
+| <img src="docs/screenshots/cast_delver.png" height="190" alt="Default Delver melee"> | <img src="docs/screenshots/cast_delver_archer.png" height="190" alt="Default Delver archer"> | <img src="docs/screenshots/cast_goblin_archer.png" height="170" alt="Goblin Archer"> | <img src="docs/screenshots/cast_green_slime.png" height="130" alt="Green Slime"> | <img src="docs/screenshots/cast_slime_king.png" height="170" alt="Slime King"> |
+| Sword-and-board melee | Bow-wielding ranged | Ranged skirmisher | Gel on the move | Boss of the first delve |
 
 ## Features
 
@@ -36,7 +46,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
 - **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
 - **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds. Soft ground shadows sit under every actor at camp and in battle. Entering camp from the menu plays a zoom-and-fade transition, and the party keeps their seats across it.
-- **Hero loadout** — Hover a hero at camp for a golden outline and nameplate, then click to open their loadout: a live paper-doll preview with flanking equipment columns, a weapon row, and a skill row; tabbed gear and skill catalogs; and a shared stash sorted by slot and rarity. Head gear layers cleanly — full helms hide the hero's hair, open pieces like circlets leave it visible. Off-hand weapons render on a mirrored pivot beside the body (separate from the main-hand arm). Move items by drag-and-drop or click-to-carry (handy on a trackpad). Dropping gear on the hero panel auto-equips it; right-click equips from the stash or unequips worn gear. Weapons show a damage range, swing speed, and average DPS in a two-column tooltip, with equipped-gear comparison in a separate panel. Dual-wielding a one-handed weapon in each hand adds off-hand swings at 50% damage. A bow or two-hander blocks the off-hand slot with a dimmed ghost. Equipping a bow turns a hero into a back-row archer; melee weapons keep them in the front row — changes that carry straight into the next battle.
+- **Hero loadout** — Hover a hero at camp for a golden outline and nameplate, then click to open their loadout: a live paper-doll preview with flanking equipment columns, a weapon row, and a skill row; tabbed gear and skill catalogs; and a shared stash sorted by slot and rarity. Head gear layers cleanly — full helms hide the hero's hair, open pieces like circlets leave it visible. Off-hand weapons render on a mirrored pivot beside the body (separate from the main-hand arm). Move items by drag-and-drop or click-to-carry (handy on a trackpad). Dropping gear on the hero panel auto-equips it; right-click equips from the stash or unequips worn gear. Weapons show a damage range, swing speed, and average DPS in a two-column tooltip, with equipped-gear comparison in a separate panel. Dual-wielding a one-handed weapon in each hand adds off-hand swings at 50% damage. A bow or two-hander blocks the off-hand slot with a dimmed ghost. Equipping a bow turns a hero into a back-row archer; melee weapons keep them in the front row — changes that carry straight into the next battle — and persist to disk.
 - **Sound** — Procedurally synthesized placeholder audio: looping menu and combat themes, fire-crackle ambience, a creaking sign, UI hover/click feedback, and combat hits, swings, and bow shots. Mixed through Master/Music/SFX/Ambience buses.
 - **Settings** — Fullscreen toggle and four volume sliders, persisted to disk and applied on startup.
 
@@ -44,7 +54,7 @@ A dungeon-crawler style game built with [Godot 4.6](https://godotengine.org/). L
 
 ### Vision
 
-Delvers is a party-based dungeon crawler where you send heroes — your *delvers* — into dangerous places and watch them fight. The long-term goal is a full loop of **prepare → delve → fight → recover → repeat**, with tactical depth coming from party composition, formation placement, and skill choices rather than direct real-time control.
+Delvers is a party-based dungeon crawler where you send heroes — your *delvers* — into dangerous places and watch them fight. You're running and growing an adventurers' guild: **materials are consumed, knowledge is permanent**, and every expedition brings home resources to build with or recipes that permanently expand what the camp can create. Tactical depth comes from party composition, gear/skill combinations, and crafting toward specific builds rather than direct real-time control — power comes from good combinations, not grinding.
 
 ### Core Loop (planned)
 
@@ -60,18 +70,18 @@ The loop is playable: you start with a single delver (one bonus skill slot — m
 
 Combat is **auto-battler** style: units act on attack timers rather than player input. Each entity has:
 
-- **Health and mana** — Base stats from their template resource.
-- **Attack interval** — How often they perform their primary skill. For heroes, the main-hand weapon's swing speed sets this interval when equipped.
-- **Formation slot** — Position on the battlefield, used by the theater layer for visual placement.
-- **Skills** — Data-driven abilities with damage ranges, targeting rules, cooldowns, and cast types.
+- **Health and mana** — Base stats from their template resource; health carries between delve rooms (attrition).
+- **Attack interval** — How often they swing. For heroes, the main-hand weapon's swing speed sets this interval when equipped.
+- **Position and movement** — A spot on the battle grid; units path toward targets with A* and soft separation, and stop at striking distance.
+- **Skills** — Data-driven abilities with ranges, cooldowns, status effects, and behavior scripts (Frost Nova roots, Hamstring slows, Charge gap-closes, Heal mends).
 
 Damage is rolled as `base_attack + random(skill.min_damage, skill.max_damage)` for skills, plus a per-swing weapon damage roll for equipped weapons. Combat ends when one side is wiped out.
 
-**Formations and targeting** — Each side has six named slots in two rows (front/back × top/center/bottom). Units fill their template's preferred row first (melee prefer front, archers prefer back), spreading from the center outwards. Melee attacks must target a random living front-row enemy while any remain; ranged attacks pick a random target from either row.
+**Spatial targeting** — Attacks are gated on weapon/skill range and line of sight: melee closes in before swinging, archers stop and wind up in place, and nobody shoots through pillars. Enemies pick targets from **threat tables** (damage and heals generate threat; a rooted enemy falls through to whoever is in range), while heroes engage the nearest foe.
 
-**Encounters and enemy levels** — Each adventure rolls a random pack of 2–4 enemies. Every enemy rolls a level (mostly 1–2, occasionally 3) that scales its health and attack, with a little individual variance on top, and the level is shown in its name (e.g. *Green Slime Lv 2*).
+**The delve** — Ten rooms of escalating packs and enemy levels across an arena pool (open field, pillared hall, choke-point wall, scattered rocks), ending at the Slime King. Every enemy rolls a level that scales its health and attack, shown in its name (e.g. *Green Slime Lv 2*). Rooms flow into each other automatically; death or triumph banks the spoils either way.
 
-**Loadout and roles** — A hero's combat role is driven by what they wield. Equipping a bow assigns the Arrow Shot skill and a back-row slot; equipping a one-handed weapon assigns Slash and a front-row slot, and bows/two-handers free the off-hand. Gear lives in a shared stash (each item is a single physical object), skills are a known catalog, and every change a hero makes is read directly off its template by the next battle. Loadout edits persist for the session.
+**Loadout and roles** — A hero's combat role is driven by what they wield. Equipping a bow assigns the Arrow Shot skill and a back-row slot; equipping a one-handed weapon assigns Slash and a front-row slot, and bows/two-handers free the off-hand. Gear lives in a shared stash (each item is a single physical object), skills are a known catalog, and every change a hero makes is read directly off its template by the next battle. Everything persists to disk.
 
 **Weapon speed and dual-wield** — Each weapon has a damage range (e.g. 1–3) and a swing speed in seconds. Per-hit damage is rolled from that range; listed DPS uses the average. Faster weapons hit more often with smaller rolls; slower weapons hit harder per swing. Weapons are tuned so similar item levels land in a comparable DPS band, leaving room for future trade-offs (armor stats, procs, etc.). A one-handed weapon in the off hand swings on the same timer at 50% of its rolled damage, so dual-wielding trades shield or stat slots for extra attacks. In the theater replay, off-hand strikes jump to melee range and play a quick mirrored swing from the off-hand weapon — independent of the main-hand animation.
 
@@ -107,7 +117,9 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 | Delve (10 escalating rooms, arena variety) | Working |
 | Loot drops + spoils screen | Working |
 | Save / persistence | Working |
-| Multiple skill types | Schema ready, only auto-attack implemented |
+| Crafting (materials, recipes, the Forge) | Working (slice 1 — affixes and salvaging planned) |
+| Dungeon boss (Slime King) | Working |
+| Skills (root/slow/charge/heal + auto-attacks) | Working, equippable via loadout |
 | Sound | Procedural placeholder audio with settings (no composed music yet) |
 | Settings | Fullscreen + volume sliders working |
 
@@ -145,7 +157,7 @@ delvers/
 ├── audio/            # Procedurally synthesized sounds and music loops
 ├── capture/          # Harnesses that regenerate the README screenshots
 ├── docs/             # README screenshots and unit renders (not imported by Godot)
-├── resources/        # Hero, enemy, gear, and skill definitions (.tres)
+├── resources/        # Hero, enemy, gear, skill, material, recipe, and arena definitions (.tres)
 ├── scenes/
 │   ├── camp/         # Camp scene, campfire stage, animated fire
 │   ├── combat/       # Headless combat simulation scene
@@ -188,6 +200,7 @@ Combat is split into two layers:
 | Gear   | starter_shield | Starter Shield | Off hand, +10 HP |
 | Gear   | starter_helmet | Starter Helmet | Head, +5 HP |
 | Gear   | starter_armor  | Starter Armor  | Chest, +15 HP |
+| Enemy  | slime_king     | Slime King     | Boss of room 10: crowned, royal purple, always drops rare |
 
 ## License
 
