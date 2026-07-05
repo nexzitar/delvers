@@ -17,6 +17,7 @@ const MATERIAL_PATHS := {
 	"bow_string": "res://resources/materials/bow_string.tres",
 	"poison_sac": "res://resources/materials/poison_sac.tres",
 	"royal_jelly": "res://resources/materials/royal_jelly.tres",
+	"leather": "res://resources/materials/leather.tres",
 }
 
 const RECIPE_PATHS := {
@@ -24,6 +25,7 @@ const RECIPE_PATHS := {
 	"hunter_bow": "res://resources/recipes/hunter_bow.tres",
 	"reinforced_shield": "res://resources/recipes/reinforced_shield.tres",
 	"iron_helm": "res://resources/recipes/iron_helm.tres",
+	"leather_hood": "res://resources/recipes/leather_hood.tres",
 }
 
 const AFFIX_PATHS := {

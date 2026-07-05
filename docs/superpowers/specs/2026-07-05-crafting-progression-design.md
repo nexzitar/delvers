@@ -106,6 +106,13 @@ beat "another random rare sword".
   affix picker with combined material costs ("Virulent Iron Sword").
   The sim gained POISON damage-over-time with attribution, on-hit
   weapon riders, and refresh-not-stack statuses. Save schema v4.
+- **2026-07-05 (slice 3)**: the menagerie grows so every material has
+  one clear owner — Goblin Warrior (iron scrap ×2, leather; teaches
+  Guarding + the new Leather Hood recipe), Venomous Spider (poison
+  sac ×2, bow string; from room 3; its Venom Bite applies the real
+  poison DoT; teaches Virulent), slimes own gel/ooze/cores, archers
+  own wood/strings. New spider rig (fanned two-segment legs, rear-up
+  bite attack) and helmeted warrior goblin.
 - **Deferred**: salvaging, camp buildings & material spending beyond
   crafting, essences as a distinct material class, multiple dungeons
   with material identity, difficulty tiers, crafting stations.

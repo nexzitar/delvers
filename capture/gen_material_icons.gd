@@ -15,6 +15,7 @@ func _init():
 	_save(_coil(), "res://art/materials/mat_bow_string.png")
 	_save(_droplet(Color("32204a"), Color("a06fd0")), "res://art/materials/mat_poison_sac.png")
 	_save(_jelly(), "res://art/materials/mat_royal_jelly.png")
+	_save(_leather(), "res://art/materials/mat_leather.png")
 	print("material icons written")
 	quit()
 
@@ -107,4 +108,18 @@ func _jelly() -> Image:
 		if p.y < 14.0 or p.y > 19.0 or absf(p.x - C) > 10.0:
 			return false
 		return int(p.x) % 6 < 3 or p.y > 16.0, Color("ffe27a"))
+	return img
+
+## Tanned hide with stitch marks.
+func _leather() -> Image:
+	var img = _tile(Color("3e2a1a"), Color("281a10"))
+	_paint(img, func(p):
+		var dx = absf(p.x - C)
+		var dy = absf(p.y - C)
+		return dx + dy * 0.9 < 18.0 and dx < 15.0, Color("9a6a3c"))
+	_paint(img, func(p):
+		var dx = absf(p.x - C)
+		var dy = absf(p.y - C)
+		var on_edge = absf(dx + dy * 0.9 - 15.5) < 1.2 and dx < 13.0
+		return on_edge and int(p.x + p.y) % 5 < 3, Color("5e3d20"))
 	return img

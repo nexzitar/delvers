@@ -14,6 +14,8 @@ const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
 const GREEN_SLIME = preload("res://resources/enemies/green_slime.tres")
 const GOBLIN_ARCHER = preload("res://resources/enemies/goblin_archer.tres")
 const SLIME_KING = preload("res://resources/enemies/slime_king.tres")
+const GOBLIN_WARRIOR = preload("res://resources/enemies/goblin_warrior.tres")
+const VENOMOUS_SPIDER = preload("res://resources/enemies/venomous_spider.tres")
 const MELEE_HIT_SOUND = preload("res://audio/melee_hit.wav")
 const ARROW_HIT_SOUND = preload("res://audio/arrow_hit.wav")
 const FONT = preload("res://art/fonts/Herculanum.ttf")
@@ -37,6 +39,7 @@ const STATUS_TEXT := {
 	"charge_stun": "Stunned!",
 	"poison_virulent": "Poisoned!",
 	"slow_frostforged": "Chilled!",
+	"venom_bite_poison": "Poisoned!",
 }
 
 var actors := {}
@@ -112,7 +115,10 @@ func _ready():
 func roll_encounter(room: int) -> Array:
 	if room >= PlayerRoster.DELVE_LENGTH:
 		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
-	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER]
+	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER, GOBLIN_WARRIOR]
+	if room >= 3:
+		pool.append(VENOMOUS_SPIDER)
+		pool.append(VENOMOUS_SPIDER)
 	var low = clampi(2 + (room - 1) / 4, 2, 4)
 	var high = clampi(3 + (room - 1) / 2, 3, 6)
 	var encounter = []
@@ -153,7 +159,7 @@ func _build_timeline(log):
 	for event in log.events:
 		if event.type == CombatEvent.EventType.SPAWN \
 				and event.team == CombatEntity.Team.ENEMY:
-			is_slime[event.entity_id] = event.template.enemy_id == "green_slime"
+			is_slime[event.entity_id] = event.template.enemy_id in ["green_slime", "slime_king", "venomous_spider"]
 
 	var events: Array = log.events
 	for i in events.size():
@@ -232,7 +238,7 @@ func _play_spawn(event):
 
 	actors[event.entity_id] = {
 		"rig": rig,
-		"is_slime": rig is SlimeRig,
+		"is_slime": rig.has_method("pose_attack"),
 		"team": event.team,
 		"mode": "idle",
 		"anim_t": 0.0,
