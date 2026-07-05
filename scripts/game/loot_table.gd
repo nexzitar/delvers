@@ -87,7 +87,7 @@ static func roll_enemy_drops(
 		if not template.material_loot.is_empty() \
 				and randf() <= template.material_drop_chance:
 			var material_id = template.material_loot.pick_random()
-			var count = 1 + (1 if randf() < 0.25 else 0)
+			var count = template.material_drop_count + (1 if randf() < 0.25 else 0)
 			drops.materials[material_id] = drops.materials.get(material_id, 0) + count
 
 		# Recipes: rare permanent knowledge (bosses teach something new

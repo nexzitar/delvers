@@ -115,7 +115,8 @@ func _ready():
 func roll_encounter(room: int) -> Array:
 	if room >= PlayerRoster.DELVE_LENGTH:
 		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
-	# Warriors show up in force: iron is what everyone is hunting.
+	# The warband holds the Darkwood: every room fields at least one
+	# warrior, so iron scales with rooms cleared instead of pool luck.
 	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER,
 		GOBLIN_WARRIOR, GOBLIN_WARRIOR]
 	if room >= 3:
@@ -123,8 +124,8 @@ func roll_encounter(room: int) -> Array:
 		pool.append(VENOMOUS_SPIDER)
 	var low = clampi(2 + (room - 1) / 4, 2, 4)
 	var high = clampi(3 + (room - 1) / 2, 3, 6)
-	var encounter = []
-	for i in randi_range(low, high):
+	var encounter = [GOBLIN_WARRIOR]
+	for i in range(randi_range(low, high) - 1):
 		encounter.append(pool.pick_random())
 	return encounter
 

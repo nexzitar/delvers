@@ -25,6 +25,8 @@ class_name EnemyDefinition
 ## fluke outside of bosses.
 @export var material_loot: Array[String] = []
 @export var material_drop_chance: float = 0.75
+## Base pieces per material drop (warriors haul iron in bulk).
+@export var material_drop_count: int = 1
 @export var recipe_loot: Array[String] = []
 @export var recipe_drop_chance: float = 0.05
 ## Affix knowledge this enemy can teach (rarer than base recipes).
