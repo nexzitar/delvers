@@ -15,6 +15,10 @@ func _init():
 	_save(_coil(), "res://art/materials/mat_bow_string.png")
 	_save(_droplet(Color("32204a"), Color("a06fd0")), "res://art/materials/mat_poison_sac.png")
 	_save(_jelly(), "res://art/materials/mat_royal_jelly.png")
+	_save(_leather(), "res://art/materials/mat_leather.png")
+	_save(_tome(Color("2a3a5e"), Color("18233c"), Color("7fa4d8")), "res://art/tomes/tome_recipe.png")
+	_save(_tome(Color("42285e"), Color("2a173c"), Color("a06fd0")), "res://art/tomes/tome_affix.png")
+	_save(_tome(Color("4a3a22"), Color("2e2412"), Color("d8c684")), "res://art/tomes/tome_journal.png")
 	print("material icons written")
 	quit()
 
@@ -107,4 +111,35 @@ func _jelly() -> Image:
 		if p.y < 14.0 or p.y > 19.0 or absf(p.x - C) > 10.0:
 			return false
 		return int(p.x) % 6 < 3 or p.y > 16.0, Color("ffe27a"))
+	return img
+
+## Tanned hide with stitch marks.
+func _leather() -> Image:
+	var img = _tile(Color("3e2a1a"), Color("281a10"))
+	_paint(img, func(p):
+		var dx = absf(p.x - C)
+		var dy = absf(p.y - C)
+		return dx + dy * 0.9 < 18.0 and dx < 15.0, Color("9a6a3c"))
+	_paint(img, func(p):
+		var dx = absf(p.x - C)
+		var dy = absf(p.y - C)
+		var on_edge = absf(dx + dy * 0.9 - 15.5) < 1.2 and dx < 13.0
+		return on_edge and int(p.x + p.y) % 5 < 3, Color("5e3d20"))
+	return img
+
+## A bound tome: cover, spine band, and page block.
+func _tome(bg: Color, bg2: Color, trim: Color) -> Image:
+	var img = _tile(bg, bg2)
+	_paint(img, func(p):
+		return p.x >= 16.0 and p.x <= 48.0 and p.y >= 14.0 and p.y <= 50.0,
+		trim.darkened(0.35))
+	_paint(img, func(p):
+		return p.x >= 19.0 and p.x <= 45.0 and p.y >= 17.0 and p.y <= 47.0,
+		trim.darkened(0.1))
+	_paint(img, func(p):
+		return p.x >= 19.0 and p.x <= 23.0 and p.y >= 14.0 and p.y <= 50.0,
+		trim.lightened(0.15))
+	_paint(img, func(p):
+		return p.x >= 28.0 and p.x <= 40.0 and absf(p.y - 32.0) < 5.0 \
+			and int(p.y) % 4 < 2, trim.lightened(0.45))
 	return img

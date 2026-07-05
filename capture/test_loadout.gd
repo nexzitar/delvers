@@ -17,6 +17,15 @@ func _ready():
 	var h0_main = roster.equipped_item(0, Equip.Position.MAIN_HAND)
 	_ok("hero0 has main-hand weapon", h0_main != null)
 	_ok("hero0 melee", not roster.is_ranged(0))
+	_ok("a new guild starts with an empty stash", roster.gear_stash.is_empty())
+
+	# Seed spares the way play would: found or forged.
+	roster.gear_stash.append_array([
+		LootTable.materialize("starter_sword", 1, ItemQuality.Tier.COMMON),
+		LootTable.materialize("starter_bow", 1, ItemQuality.Tier.COMMON),
+		LootTable.materialize("starter_helmet", 1, ItemQuality.Tier.COMMON),
+	])
+	roster.sort_gear_stash()
 
 	# Equip a stash sword into hero0's OFF hand (dual wield).
 	var spare_sword = null

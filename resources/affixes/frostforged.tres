@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AffixDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/affix_definition.gd" id="1_affix"]
+[ext_resource type="Texture2D" path="res://art/affixes/affix_frostforged.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_affix")
+affix_id = "frostforged"
+tome_name = "Codex of the Frozen Ooze"
+tome_lore = "Cold slows them. It is written in a shaking hand."
+affix_name = "Frostforged"
+icon = ExtResource("2_icon")
+applies_to_weapons = true
+applies_to_armor = false
+on_hit_status = "slow"
+on_hit_duration = 3.0
+on_hit_magnitude = 0.6
+costs = {"acidic_ooze": 3, "gel": 2}

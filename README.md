@@ -1,5 +1,7 @@
 # Delvers
 
+Delvers is a roguelite guild-building RPG where you recruit adventurers, craft equipment from monster materials, discover permanent recipes, and send your party into dangerous multi-room expeditions. Every expedition strengthens your camp—not through endless stat inflation, but through new knowledge, new heroes, and new possibilities.
+
 A crafting-driven dungeon crawler built with [Godot 4.6](https://godotengine.org/). Lead your delvers through escalating dungeon rooms, hunt monsters for **materials and recipes**, and grow your camp's knowledge — combat resolves in a headless simulation and replays as a low-poly 3D theater scene built entirely from procedural rigs.
 
 ## Screenshots
@@ -34,10 +36,10 @@ A crafting-driven dungeon crawler built with [Godot 4.6](https://godotengine.org
 
 ## Meet the Cast
 
-| Default Delver (melee) | Default Delver (archer) | Goblin Archer | Green Slime | Slime King |
-|:--:|:--:|:--:|:--:|:--:|
-| <img src="docs/screenshots/cast_delver.png" height="190" alt="Default Delver melee"> | <img src="docs/screenshots/cast_delver_archer.png" height="190" alt="Default Delver archer"> | <img src="docs/screenshots/cast_goblin_archer.png" height="170" alt="Goblin Archer"> | <img src="docs/screenshots/cast_green_slime.png" height="130" alt="Green Slime"> | <img src="docs/screenshots/cast_slime_king.png" height="170" alt="Slime King"> |
-| Sword-and-board melee | Bow-wielding ranged | Ranged skirmisher | Gel on the move | Boss of the first delve |
+| Default Delver (melee) | Default Delver (archer) | Goblin Archer | Goblin Warrior | Green Slime | Venomous Spider | Slime King |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| <img src="docs/screenshots/cast_delver.png" height="170" alt="Default Delver melee"> | <img src="docs/screenshots/cast_delver_archer.png" height="170" alt="Default Delver archer"> | <img src="docs/screenshots/cast_goblin_archer.png" height="150" alt="Goblin Archer"> | <img src="docs/screenshots/cast_goblin_warrior.png" height="150" alt="Goblin Warrior"> | <img src="docs/screenshots/cast_green_slime.png" height="110" alt="Green Slime"> | <img src="docs/screenshots/cast_venomous_spider.png" height="110" alt="Venomous Spider"> | <img src="docs/screenshots/cast_slime_king.png" height="150" alt="Slime King"> |
+| Sword-and-board melee | Bow-wielding ranged | Owns wood & strings | Owns iron & leather | Owns gel & ooze | Owns poison; its bite envenoms | Boss of the first delve |
 
 ## Features
 
@@ -200,6 +202,8 @@ Combat is split into two layers:
 | Gear   | starter_shield | Starter Shield | Off hand, +10 HP |
 | Gear   | starter_helmet | Starter Helmet | Head, +5 HP |
 | Gear   | starter_armor  | Starter Armor  | Chest, +15 HP |
+| Enemy  | goblin_warrior | Goblin Warrior | Melee bruiser; drops iron scrap and leather |
+| Enemy  | venomous_spider | Venomous Spider | Fast skitterer from room 3; venom bite poisons, drops poison sacs |
 | Enemy  | slime_king     | Slime King     | Boss of room 10: crowned, royal purple, always drops rare |
 
 ## License

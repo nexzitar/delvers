@@ -99,6 +99,31 @@ beat "another random rare sword".
   recipes as rare permanent drops (saved as knowledge), Forge tab in
   the loadout for crafting, finished gear reduced to boss drops +
   2% from normals, rooms auto-advance (no Delve Deeper click).
-- **Deferred**: affix recipes, salvaging, camp buildings & material
-  spending beyond crafting, multiple dungeons with material identity,
-  difficulty tiers, crafting stations.
+- **2026-07-05 (slice 2)**: affix recipes — Virulent (poison DoT on
+  hit), Frostforged (chill on hit), Flaming (+damage), Quick (faster
+  swings), Guarding (+health) — learnable from themed enemy pools
+  (the Slime King teaches Flaming), applied at craft time via a Forge
+  affix picker with combined material costs ("Virulent Iron Sword").
+  The sim gained POISON damage-over-time with attribution, on-hit
+  weapon riders, and refresh-not-stack statuses. Save schema v4.
+- **2026-07-05 (slice 3)**: the menagerie grows so every material has
+  one clear owner — Goblin Warrior (iron scrap ×2, leather; teaches
+  Guarding + the new Leather Hood recipe), Venomous Spider (poison
+  sac ×2, bow string; from room 3; its Venom Bite applies the real
+  poison DoT; teaches Virulent), slimes own gel/ooze/cores, archers
+  own wood/strings. New spider rig (fanned two-segment legs, rear-up
+  bite attack) and helmeted warrior goblin.
+- **2026-07-05 (slice 4)**: knowledge provenance — recipes and affixes
+  drop as named tomes ("Spider Venom Treatise — Teaches: Virulent",
+  "Ancient Goblin Forging Manual"); Forge quality-of-life — hover a
+  recipe to preview the exact crafted item with equipped comparison,
+  cost lines name the enemy that owns each material; secondary stats —
+  armor (flat reduction), block (shields, halves), dodge (avoids),
+  crit (150%), spell power (heals) on gear and enemies, with
+  Dodge!/blocked/crit! floating feedback; Heal reworked to a mana cast
+  (4 mana, 1.4s wind-up, no cooldown, fizzles refund) with slow mana
+  regen (0.4/s).
+- **Deferred**: salvaging, camp buildings & material spending beyond
+  crafting, essences as a distinct material class, multiple dungeons
+  with material identity, difficulty tiers, crafting stations, gear
+  with spell power (stat is wired, no sources yet).

@@ -15,11 +15,8 @@ func _ready():
 
 	# Mutate: dagger to the melee hero's off hand, a bonus skill, a
 	# rename, and some progress, then snapshot to the test path.
-	var dagger = null
-	for gear in roster.gear_stash:
-		if gear.gear_id == "fast_dagger":
-			dagger = gear
-	assert(dagger != null, "dagger seeded in stash")
+	var dagger = LootTable.materialize("fast_dagger", 1, ItemQuality.Tier.COMMON)
+	roster.gear_stash.append(dagger)
 	assert(roster.equip_gear(0, dagger, Equip.Position.OFF_HAND), "dagger equipped")
 	roster.equip_bonus_skill(0, load("res://resources/skills/charge.tres"), 1)
 	roster.rename_hero(0, "Aragorn")
@@ -71,7 +68,7 @@ func _ready():
 	# Unknown ids in a save drop gracefully instead of crashing.
 	var file = FileAccess.open(TEST_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify({
-		"version": 3, "heroes": [{"template": "default_delver",
+		"version": 5, "heroes": [{"template": "default_delver",
 		"name": "X",
 		"equipped": {"14": {"id": "future_relic", "level": 3, "quality": 0}},
 		"bonus_skills": []}],

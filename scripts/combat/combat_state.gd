@@ -87,12 +87,22 @@ func _set_target(entity, new_target_id: int):
 		)
 
 ## Applies a timed status and logs BUFF_APPLIED for the theater.
-func apply_status(target, kind, duration: float, magnitude: float, status_id: String):
+## Re-applying the same status id refreshes it instead of stacking
+## (on-hit effects would otherwise pile up every swing).
+func apply_status(target, kind, duration: float, magnitude: float, status_id: String, source_id := -1):
+	for existing in target.statuses:
+		if existing.id == status_id:
+			existing.remaining = maxf(existing.remaining, duration)
+			existing.magnitude = maxf(existing.magnitude, magnitude)
+			existing.source_id = source_id
+			return
+
 	var status = StatusEffect.new()
 	status.kind = kind
 	status.remaining = duration
 	status.magnitude = magnitude
 	status.id = status_id
+	status.source_id = source_id
 	target.statuses.append(status)
 
 	var event = CombatEvent.new()
@@ -103,6 +113,58 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	event.target_name = target.entity_name
 	event.status_id = status_id
 	combat_log.add_event(event)
+
+## Weapon affixes bite on every landed hit: poison ticks damage over
+## time, frost chills movement.
+func apply_on_hit(attacker, weapon, target):
+	if weapon == null or weapon.affix_id == "" or not target.alive:
+		return
+	var path = RosterSave.AFFIX_PATHS.get(weapon.affix_id)
+	if path == null:
+		return
+	var affix = load(path)
+	match affix.on_hit_status:
+		"poison":
+			apply_status(
+				target, StatusEffect.Kind.POISON,
+				affix.on_hit_duration, affix.on_hit_magnitude,
+				"poison_" + affix.affix_id, attacker.entity_id
+			)
+		"slow":
+			apply_status(
+				target, StatusEffect.Kind.SLOW,
+				affix.on_hit_duration, affix.on_hit_magnitude,
+				"slow_" + affix.affix_id, attacker.entity_id
+			)
+
+## A poison tick dealt damage: log it (flagged as a dot so the theater
+## shows the number without swinging anyone's arm) and feed threat.
+func log_dot(victim, status, amount: int, died: bool):
+	var source = entity_by_id(status.source_id)
+	var event = CombatEvent.new()
+	event.time = combat_time
+	event.type = CombatEvent.EventType.DAMAGE
+	event.dot = true
+	event.source_id = status.source_id
+	event.source_name = source.entity_name if source else "Poison"
+	event.target_id = victim.entity_id
+	event.target_name = victim.entity_name
+	event.remaining_health = victim.current_health
+	event.max_health = victim.max_health
+	event.skill_name = "Poison"
+	event.amount = amount
+	add_event(event)
+
+	if source and victim.team == CombatEntity.Team.ENEMY:
+		Threat.add_damage(victim.threat_table, status.source_id, float(amount))
+
+	if died:
+		var death = CombatEvent.new()
+		death.time = combat_time
+		death.type = CombatEvent.EventType.DEATH
+		death.target_id = victim.entity_id
+		death.target_name = victim.entity_name
+		add_event(death)
 
 func log_buff_expired(entity, status):
 	var event = CombatEvent.new()
@@ -126,6 +188,8 @@ func log_heal(source, target, skill, amount: int):
 	event.amount = amount
 	event.remaining_health = target.current_health
 	event.max_health = target.max_health
+	event.current_mana = source.current_mana
+	event.max_mana = source.max_mana
 	combat_log.add_event(event)
 
 ## Displacement skills (charge) teleport in the sim; the theater tweens
@@ -379,6 +443,15 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			hero_health.get(heroes.size(), hero.max_health), 1, hero.max_health
 		)
 		hero.current_mana = hero_template.base_mana
+		hero.max_mana = hero_template.base_mana
+
+		# Secondary stats come off the whole loadout.
+		for item in loadout:
+			hero.armor += item.armor
+			hero.block_chance += item.block_rating
+			hero.dodge_chance += item.dodge_rating
+			hero.crit_chance += item.crit_rating
+			hero.spell_power += item.spell_power
 
 		# Main-hand weapon speed sets the interval; unarmed falls back.
 		hero.attack_interval = (
@@ -434,6 +507,11 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		enemy.current_health = enemy.max_health
 		enemy.current_mana = enemy_template.base_mana
+		enemy.max_mana = enemy_template.base_mana
+		enemy.armor = enemy_template.armor
+		enemy.block_chance = enemy_template.block_rating
+		enemy.dodge_chance = enemy_template.dodge_rating
+		enemy.crit_chance = enemy_template.crit_rating
 
 		enemy.attack_interval = enemy_template.base_attack_interval
 		enemy.attack_timer = enemy.attack_interval

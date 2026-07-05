@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LoreDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/lore_definition.gd" id="1_lore"]
+
+[resource]
+script = ExtResource("1_lore")
+lore_id = "expedition_log_4"
+title = "Expedition Log, Final Fragment"
+body = "Unsigned. The crown was no trinket. It ruled. We buried the ledger by the fire and scattered. If any guild finds this - finish what the Black Hollow started."
+order = 4

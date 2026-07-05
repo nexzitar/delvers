@@ -15,7 +15,17 @@ var level := 1
 var current_health: int
 var max_health: int
 var current_mana: int
+var max_mana: int = 0
+## Fractional mana regeneration carry-over.
+var mana_accum: float = 0.0
 var attack_power: int
+## Secondary stats: armor shaves flat damage, block halves, dodge
+## avoids, crit multiplies outgoing hits, spell power boosts heals.
+var armor: int = 0
+var block_chance: float = 0.0
+var dodge_chance: float = 0.0
+var crit_chance: float = 0.0
+var spell_power: int = 0
 var gear := []
 var equipped := {}
 
@@ -36,6 +46,8 @@ var statuses: Array = []
 var is_casting: bool = false
 var cast_remaining: float = 0.0
 var casting_skill: SkillDefinition = null
+## Behavior-script casts (heal etc.): resolved via finish() on the script.
+var casting_behavior: Script = null
 var weapon_reach: float = 48.0
 
 var team: Team
@@ -75,6 +87,13 @@ func is_stunned() -> bool:
 func tick_statuses(delta, combat_state):
 	for s in statuses:
 		s.remaining -= delta
+		if s.kind == StatusEffect.Kind.POISON and alive:
+			s.accum += s.magnitude * delta
+			if s.accum >= 1.0:
+				var dmg = int(s.accum)
+				s.accum -= dmg
+				var died = take_damage(dmg)
+				combat_state.log_dot(self, s, dmg, died)
 		if s.remaining <= 0.0:
 			combat_state.log_buff_expired(self, s)
 	statuses = statuses.filter(func(s): return s.remaining > 0.0)
@@ -88,8 +107,15 @@ func move_speed_multiplier() -> float:
 
 ## Per-tick loop: statuses, target, close distance, then attack when
 ## in range. Stun skips everything; root skips only movement.
+const MANA_REGEN := 0.4
+
 func update(delta, combat_state):
 	tick_statuses(delta, combat_state)
+	if max_mana > 0 and current_mana < max_mana:
+		mana_accum += MANA_REGEN * delta
+		if mana_accum >= 1.0:
+			current_mana = mini(max_mana, current_mana + int(mana_accum))
+			mana_accum -= int(mana_accum)
 	if is_stunned():
 		return
 
@@ -167,12 +193,29 @@ func _start_cast(combat_state, skill):
 		entity_id, target_id, combat_state.combat_time, skill
 	))
 
+## A behavior skill (heal etc.) winds up in place, then resolves
+## through its script's finish().
+func start_behavior_cast(combat_state, skill, duration: float):
+	is_casting = true
+	casting_skill = skill
+	casting_behavior = skill.behavior_script
+	cast_remaining = duration
+	combat_state.stop_movement(self)
+	combat_state.combat_log.add_event(CombatEvent.create_cast_start(
+		entity_id, target_id, combat_state.combat_time, skill
+	))
+
 func _finish_cast(combat_state):
 	var skill = casting_skill
 	casting_skill = null
 	combat_state.combat_log.add_event(CombatEvent.create_cast_finish(
 		entity_id, combat_state.combat_time, skill
 	))
+	if casting_behavior:
+		var behavior = casting_behavior
+		casting_behavior = null
+		behavior.finish(combat_state, self, skill)
+		return
 	var target = combat_state.entity_by_id(target_id)
 	if target == null or not target.alive:
 		return
@@ -202,8 +245,29 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 	if target == null:
 		return
 
-	var died = target.take_damage(damage)
-	combat_state.register_damage(self, target, skill, damage)
+	# Combat rolls: crit multiplies the swing, dodge slips it entirely,
+	# block halves it, armor shaves what's left (1 always gets through).
+	var crit := randf() < crit_chance
+	if crit:
+		damage = roundi(damage * 1.5)
+	var dodged: bool = randf() < target.dodge_chance
+	var blocked := false
+	if not dodged:
+		blocked = (randf() < target.block_chance)
+		if blocked:
+			damage = maxi(1, ceili(damage * 0.5))
+		damage = maxi(1, damage - target.armor)
+	else:
+		damage = 0
+
+	var died := false
+	if not dodged:
+		died = target.take_damage(damage)
+		combat_state.register_damage(self, target, skill, damage)
+		# Weapon affixes (poison, chill) bite on the landed hit.
+		combat_state.apply_on_hit(
+			self, off_weapon if off_hand else main_weapon, target
+		)
 
 	var event = CombatEvent.new()
 	event.time = combat_state.combat_time
@@ -218,6 +282,9 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 	event.skill = skill
 	event.amount = damage
 	event.off_hand = off_hand
+	event.crit = crit
+	event.dodged = dodged
+	event.blocked = blocked
 	combat_state.add_event(event)
 
 	if died:

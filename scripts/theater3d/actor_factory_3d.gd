@@ -6,11 +6,18 @@ class_name ActorFactory3D
 
 const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
+const SpiderRig = preload("res://scripts/theater3d/spider_rig.gd")
 
 const GOBLIN_OPTS := {
 	"bow": true, "ears": true, "hair": null,
 	"skin": Color("7aa54e"), "tunic": Color("8a4b3a"),
 	"sleeve": Color("6f3d30"), "pants": Color("4a4a3a"),
+	"eyes": Color("b03030"),
+}
+const GOBLIN_WARRIOR_OPTS := {
+	"sword": true, "shield": true, "helmet": true, "ears": true, "hair": null,
+	"skin": Color("6e9a46"), "tunic": Color("5a4632"),
+	"sleeve": Color("46362a"), "pants": Color("3c3c30"),
 	"eyes": Color("b03030"),
 }
 const GOBLIN_SCALE := 0.85
@@ -53,4 +60,12 @@ static func build_enemy(template) -> Node3D:
 			var rig = DelverRig.new(GOBLIN_OPTS)
 			rig.scale = Vector3.ONE * GOBLIN_SCALE
 			return rig
+		"goblin_warrior":
+			var warrior = DelverRig.new(GOBLIN_WARRIOR_OPTS)
+			warrior.scale = Vector3.ONE * 0.95
+			return warrior
+		"venomous_spider":
+			var spider = SpiderRig.new()
+			spider.scale = Vector3.ONE * 0.9
+			return spider
 	return DelverRig.new({})

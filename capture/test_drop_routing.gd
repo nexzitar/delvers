@@ -18,11 +18,8 @@ func _ready():
 	loadout.open(0)
 	await get_tree().process_frame
 
-	var bow = null
-	for g in PlayerRoster.gear_stash:
-		if g.weapon_type == GearDefinition.WeaponType.BOW:
-			bow = g
-			break
+	var bow = LootTable.materialize("starter_bow", 1, ItemQuality.Tier.COMMON)
+	PlayerRoster.gear_stash.append(bow)
 	var bdata = {"kind": "gear", "res": bow, "origin": "stash"}
 	_ok("auto accepts bow", loadout.can_accept("auto", bdata))
 	loadout.accept_drop("auto", bdata)

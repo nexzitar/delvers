@@ -53,6 +53,13 @@ var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
+var _library_box: VBoxContainer
+var _right_tabs: TabContainer
+## Clicked recipe: its crafted-item preview stays pinned in the
+## tooltip panels (no hovering needed).
+var _forge_selected: String = ""
+## recipe_id -> chosen affix_id ("" = plain craft), kept across refreshes.
+var _forge_affix_choice := {}
 var _preview_holder: Control
 var _preview_rig: Node3D
 var _preview_time := 0.0
@@ -256,6 +263,8 @@ func _build_equip_slot(position: int) -> Control:
 
 func _build_right_tabs():
 	var tabs = TabContainer.new()
+	_right_tabs = tabs
+	tabs.tab_changed.connect(func(_i): _refresh_forge_tooltip())
 	tabs.add_theme_font_override("font", FONT)
 	_place(tabs, -580, 50, -40, -40, 1, 0, 1, 1)
 
@@ -314,8 +323,115 @@ func _build_right_tabs():
 	_forge_box.add_theme_constant_override("separation", 10)
 	forge_tab.add_child(_forge_box)
 
+	# Library tab: the guild's memory. Every recovered tome and every
+	# expedition log, shelved. No gameplay — archaeology.
+	var library_tab = ScrollContainer.new()
+	library_tab.name = "Library"
+	library_tab.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(library_tab)
+	_library_box = VBoxContainer.new()
+	_library_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_library_box.custom_minimum_size = Vector2(500, 0)
+	_library_box.add_theme_constant_override("separation", 10)
+	library_tab.add_child(_library_box)
+
+func _fill_library():
+	_clear(_library_box)
+
+	_library_box.add_child(_title("Recovered Tomes"))
+	var tomes := []
+	for recipe_id in PlayerRoster.known_recipes:
+		if RosterSave.RECIPE_PATHS.has(recipe_id):
+			var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+			tomes.append({
+				"icon": preload("res://art/tomes/tome_recipe.png"),
+				"name": recipe.tome_name, "teaches": recipe.recipe_name,
+				"lore": recipe.tome_lore,
+				"color": ItemQuality.color(ItemQuality.Tier.RARE),
+			})
+	for affix_id in PlayerRoster.known_affixes:
+		if RosterSave.AFFIX_PATHS.has(affix_id):
+			var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+			tomes.append({
+				"icon": preload("res://art/tomes/tome_affix.png"),
+				"name": affix.tome_name, "teaches": affix.affix_name,
+				"lore": affix.tome_lore,
+				"color": ItemQuality.color(ItemQuality.Tier.EPIC),
+			})
+	if tomes.is_empty():
+		var bare = Label.new()
+		bare.text = "The shelves stand empty. What the guild recovers will be remembered here."
+		bare.add_theme_color_override("font_color", DIM)
+		bare.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_library_box.add_child(bare)
+	for tome in tomes:
+		_library_box.add_child(_make_tome_row(tome))
+
+	var logs := []
+	for lore_id in RosterSave.LORE_PATHS:
+		if PlayerRoster.known_lore.has(lore_id):
+			logs.append(load(RosterSave.LORE_PATHS[lore_id]))
+	if not logs.is_empty():
+		_library_box.add_child(_title("Expedition Logs"))
+		logs.sort_custom(func(a, b): return a.order < b.order)
+		for log in logs:
+			var entry = VBoxContainer.new()
+			entry.add_theme_constant_override("separation", 2)
+			var title_label = Label.new()
+			title_label.text = log.title
+			title_label.add_theme_font_override("font", FONT)
+			title_label.add_theme_font_size_override("font_size", 19)
+			title_label.add_theme_color_override("font_color", Color("d8c684"))
+			entry.add_child(title_label)
+			var body_label = Label.new()
+			body_label.text = "\"%s\"" % log.body
+			body_label.add_theme_font_size_override("font_size", 14)
+			body_label.add_theme_color_override("font_color", PARCHMENT)
+			body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			entry.add_child(body_label)
+			_library_box.add_child(entry)
+
+func _make_tome_row(tome: Dictionary) -> Control:
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	panel.add_child(row)
+	var icon = TextureRect.new()
+	icon.texture = tome.icon
+	icon.custom_minimum_size = Vector2(40, 40)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+	var info = VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 1)
+	row.add_child(info)
+	var name_label = Label.new()
+	name_label.text = tome.name
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.add_theme_color_override("font_color", tome.color)
+	info.add_child(name_label)
+	var teaches = Label.new()
+	teaches.text = "Teaches: %s" % tome.teaches
+	teaches.add_theme_font_size_override("font_size", 13)
+	teaches.add_theme_color_override("font_color", DIM)
+	info.add_child(teaches)
+	if tome.lore != "":
+		var lore_label = Label.new()
+		lore_label.text = "\"%s\"" % tome.lore
+		lore_label.add_theme_font_size_override("font_size", 13)
+		lore_label.add_theme_color_override("font_color", PARCHMENT)
+		lore_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		info.add_child(lore_label)
+	return panel
+
 func _fill_forge():
 	_clear(_forge_box)
+
+	if _forge_selected == "" and not PlayerRoster.known_recipes.is_empty():
+		_forge_selected = PlayerRoster.known_recipes[0]
 
 	_forge_box.add_child(_title("Recipes"))
 	if PlayerRoster.known_recipes.is_empty():
@@ -326,6 +442,36 @@ func _fill_forge():
 	for recipe_id in PlayerRoster.known_recipes:
 		if RosterSave.RECIPE_PATHS.has(recipe_id):
 			_forge_box.add_child(_make_recipe_row(load(RosterSave.RECIPE_PATHS[recipe_id])))
+
+	if not PlayerRoster.known_affixes.is_empty():
+		_forge_box.add_child(_title("Affixes"))
+		var affix_row = HBoxContainer.new()
+		affix_row.add_theme_constant_override("separation", 14)
+		_forge_box.add_child(affix_row)
+		for affix_id in PlayerRoster.known_affixes:
+			if not RosterSave.AFFIX_PATHS.has(affix_id):
+				continue
+			var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+			var chip = HBoxContainer.new()
+			chip.add_theme_constant_override("separation", 6)
+			chip.mouse_filter = Control.MOUSE_FILTER_STOP
+			chip.mouse_entered.connect(func(): show_tooltip("affix", affix))
+			chip.mouse_exited.connect(_refresh_forge_tooltip)
+			var affix_icon = TextureRect.new()
+			affix_icon.texture = affix.icon
+			affix_icon.custom_minimum_size = Vector2(30, 30)
+			affix_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			affix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			chip.add_child(affix_icon)
+			var affix_label = Label.new()
+			affix_label.text = affix.affix_name
+			affix_label.add_theme_font_override("font", FONT)
+			affix_label.add_theme_font_size_override("font_size", 16)
+			affix_label.add_theme_color_override(
+				"font_color", ItemQuality.color(ItemQuality.Tier.EPIC)
+			)
+			chip.add_child(affix_label)
+			affix_row.add_child(chip)
 
 	_forge_box.add_child(_title("Materials"))
 	var grid = GridContainer.new()
@@ -346,6 +492,34 @@ func _fill_forge():
 		empty.add_theme_color_override("font_color", DIM)
 		_forge_box.add_child(empty)
 
+	_refresh_forge_tooltip()
+
+## The selected recipe's crafted item stays pinned in the tooltip
+## while the Forge tab is open.
+func _refresh_forge_tooltip():
+	if _right_tabs == null or _tooltip_panel == null:
+		return
+	var current = _right_tabs.get_current_tab_control()
+	if current == null or current.name != "Forge":
+		hide_tooltip()
+		return
+	if _forge_selected == "" or not RosterSave.RECIPE_PATHS.has(_forge_selected):
+		hide_tooltip()
+		return
+	var recipe = load(RosterSave.RECIPE_PATHS[_forge_selected])
+	var chosen: String = _forge_affix_choice.get(_forge_selected, "")
+	if chosen != "" and not PlayerRoster.compatible_affixes(recipe).has(chosen):
+		chosen = ""
+	var preview = LootTable.materialize(
+		recipe.result_gear_id, recipe.result_item_level,
+		recipe.result_quality, chosen
+	)
+	var prefix := ""
+	if chosen != "":
+		prefix = load(RosterSave.AFFIX_PATHS[chosen]).affix_name + " "
+	preview.gear_name = prefix + recipe.recipe_name
+	show_tooltip("gear", preview)
+
 func _material_chip(material_id: String, count: int) -> Control:
 	var material = load(RosterSave.MATERIAL_PATHS[material_id])
 	var row = HBoxContainer.new()
@@ -365,6 +539,11 @@ func _material_chip(material_id: String, count: int) -> Control:
 	return row
 
 func _make_recipe_row(recipe: RecipeDefinition) -> Control:
+	var affixes = PlayerRoster.compatible_affixes(recipe)
+	var chosen: String = _forge_affix_choice.get(recipe.recipe_id, "")
+	if chosen != "" and not affixes.has(chosen):
+		chosen = ""
+
 	var panel = PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _slot_style())
 
@@ -383,40 +562,76 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	var info = VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
+	var display_name = recipe.recipe_name
+	if chosen != "":
+		display_name = "%s %s" % [
+			load(RosterSave.AFFIX_PATHS[chosen]).affix_name, recipe.recipe_name
+		]
 	var name_label = Label.new()
-	name_label.text = recipe.recipe_name
+	name_label.text = display_name
 	name_label.add_theme_font_override("font", FONT)
 	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.add_theme_color_override(
 		"font_color", ItemQuality.color(recipe.result_quality)
 	)
 	info.add_child(name_label)
-	var costs := []
-	for material_id in recipe.costs:
+	var bill = PlayerRoster.craft_costs(recipe, chosen)
+	for material_id in bill:
 		var material = load(RosterSave.MATERIAL_PATHS[material_id])
 		var have = PlayerRoster.material_stash.get(material_id, 0)
-		costs.append("%s %d/%d" % [
-			material.material_name, have, recipe.costs[material_id]
-		])
-	var cost_label = Label.new()
-	cost_label.text = ", ".join(costs)
-	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cost_label.add_theme_font_size_override("font_size", 13)
-	cost_label.add_theme_color_override(
-		"font_color",
-		PARCHMENT if PlayerRoster.can_craft(recipe) else Color(0.75, 0.4, 0.35)
-	)
-	info.add_child(cost_label)
+		var owner = LootTable.material_owner(material_id)
+		var cost_label = Label.new()
+		cost_label.text = "%s %d/%d" % [
+			material.material_name, have, bill[material_id]
+		]
+		if owner != "":
+			cost_label.text += "  -  %s" % owner
+		cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cost_label.add_theme_font_size_override("font_size", 13)
+		cost_label.add_theme_color_override(
+			"font_color",
+			PARCHMENT if have >= bill[material_id] else Color(0.75, 0.4, 0.35)
+		)
+		info.add_child(cost_label)
+
+	# Clicking the row selects it: the exact item this craft would
+	# forge stays pinned in the tooltip, compared against equipped gear.
+	if recipe.recipe_id == _forge_selected:
+		var highlight = _slot_style()
+		highlight.border_color = Color(0.85, 0.72, 0.42)
+		panel.add_theme_stylebox_override("panel", highlight)
+	panel.gui_input.connect(func(input_event):
+		if input_event is InputEventMouseButton and input_event.pressed \
+				and input_event.button_index == MOUSE_BUTTON_LEFT:
+			_forge_selected = recipe.recipe_id
+			_fill_forge())
+
+	# Known compatible affixes: pick one to enchant the craft.
+	if not affixes.is_empty():
+		var picker = OptionButton.new()
+		picker.add_theme_font_override("font", FONT)
+		picker.add_theme_font_size_override("font_size", 14)
+		picker.add_item("No affix")
+		picker.set_item_metadata(0, "")
+		for i in affixes.size():
+			var affix = load(RosterSave.AFFIX_PATHS[affixes[i]])
+			picker.add_item(affix.affix_name)
+			picker.set_item_metadata(i + 1, affixes[i])
+			if affixes[i] == chosen:
+				picker.select(i + 1)
+		picker.item_selected.connect(func(index):
+			_forge_affix_choice[recipe.recipe_id] = picker.get_item_metadata(index)
+			_fill_forge())
+		row.add_child(picker)
 
 	var craft = Button.new()
 	craft.text = "Craft"
 	craft.add_theme_font_override("font", FONT)
 	craft.add_theme_font_size_override("font_size", 18)
-	craft.disabled = not PlayerRoster.can_craft(recipe)
+	craft.disabled = not PlayerRoster.can_craft(recipe, chosen)
 	craft.custom_minimum_size = Vector2(92, 40)
 	craft.pressed.connect(func():
-		if PlayerRoster.craft(recipe) != null:
+		if PlayerRoster.craft(recipe, chosen) != null:
 			UiSounds.click()
 			refresh())
 	row.add_child(craft)
@@ -500,6 +715,7 @@ func refresh():
 	_fill_skill_slots()
 	_fill_gear_grid()
 	_fill_forge()
+	_fill_library()
 	_update_preview()
 
 func _role_text() -> String:
@@ -606,7 +822,7 @@ func _update_preview():
 	camera.environment = env
 	vp.add_child(camera)
 	camera.position = Vector3(0, 0.72, 2.7)
-	camera.look_at(Vector3(0, 0.62, 0))
+	camera.look_at_from_position(camera.position, Vector3(0, 0.62, 0))
 
 	_preview_rig = ActorFactory3D.build_hero(hero.equipped)
 	vp.add_child(_preview_rig)
@@ -670,6 +886,8 @@ func show_tooltip(kind, res):
 
 	if kind == "gear":
 		_tooltip_gear(res)
+	elif kind == "affix":
+		_tooltip_affix(res)
 	elif kind == "skill":
 		_tooltip_skill(res)
 	elif kind == "twohand":
@@ -731,10 +949,38 @@ func _tooltip_gear(gear: GearDefinition):
 
 	if gear.health_bonus != 0:
 		_tip_line("+%d Health" % gear.health_bonus, PARCHMENT, 18, 1)
+	if gear.armor != 0:
+		_tip_line("+%d Armor" % gear.armor, PARCHMENT, 18, 1)
+	if gear.block_rating > 0.0:
+		_tip_line("%d%% Block" % roundi(gear.block_rating * 100), PARCHMENT, 18, 1)
+	if gear.dodge_rating > 0.0:
+		_tip_line("%d%% Dodge" % roundi(gear.dodge_rating * 100), PARCHMENT, 18, 1)
+	if gear.crit_rating > 0.0:
+		_tip_line("%d%% Crit" % roundi(gear.crit_rating * 100), PARCHMENT, 18, 1)
+	if gear.spell_power != 0:
+		_tip_line("+%d Spell Power" % gear.spell_power, PARCHMENT, 18, 1)
+
+	if gear.affix_id != "" and RosterSave.AFFIX_PATHS.has(gear.affix_id):
+		var affix = load(RosterSave.AFFIX_PATHS[gear.affix_id])
+		_tip_line(affix.affix_name, ItemQuality.color(ItemQuality.Tier.EPIC), 18, 1)
+		for line in affix.effect_lines():
+			_tip_line(line, Color(0.55, 0.85, 0.5), 16, 1)
 
 	_tip_line("Item level %d" % gear.item_level, DIM, 16, 1)
 
 	_fill_gear_compare(gear)
+
+func _tooltip_affix(affix):
+	_tip_line(affix.affix_name, ItemQuality.color(ItemQuality.Tier.EPIC), 26, 0)
+	_tip_line("Affix — craft it onto compatible %s" % (
+		"weapons" if affix.applies_to_weapons else "armor"
+	), DIM, 15, 0)
+	for line in affix.effect_lines():
+		_tip_line(line, Color(0.55, 0.85, 0.5), 18, 0)
+	if affix.tome_name != "":
+		_tip_line(affix.tome_name, DIM, 15, 1)
+	if affix.tome_lore != "":
+		_tip_line("\"%s\"" % affix.tome_lore, PARCHMENT, 15, 1)
 
 func _fill_gear_compare(gear: GearDefinition):
 	if gear.slot == GearDefinition.Slot.MAIN_HAND \

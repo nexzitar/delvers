@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/venom_bite.gd" id="2_behavior"]
+
+[resource]
+script = ExtResource("1_skill")
+skill_id = "venom_bite"
+skill_name = "Venom Bite"
+behavior_script = ExtResource("2_behavior")
+range = 48.0
+cooldown = 6.0
+base_min_damage = 1
+base_max_damage = 2

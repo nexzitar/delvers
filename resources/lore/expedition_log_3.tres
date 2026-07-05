@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LoreDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/lore_definition.gd" id="1_lore"]
+
+[resource]
+script = ExtResource("1_lore")
+lore_id = "expedition_log_3"
+title = "Expedition Log, Third Fragment"
+body = "Day 31. Food ran out three days ago. We can hear something moving below."
+order = 3

@@ -14,6 +14,8 @@ const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
 const GREEN_SLIME = preload("res://resources/enemies/green_slime.tres")
 const GOBLIN_ARCHER = preload("res://resources/enemies/goblin_archer.tres")
 const SLIME_KING = preload("res://resources/enemies/slime_king.tres")
+const GOBLIN_WARRIOR = preload("res://resources/enemies/goblin_warrior.tres")
+const VENOMOUS_SPIDER = preload("res://resources/enemies/venomous_spider.tres")
 const MELEE_HIT_SOUND = preload("res://audio/melee_hit.wav")
 const ARROW_HIT_SOUND = preload("res://audio/arrow_hit.wav")
 const FONT = preload("res://art/fonts/Herculanum.ttf")
@@ -35,6 +37,9 @@ const STATUS_TEXT := {
 	"frost_nova_root": "Rooted!",
 	"hamstring_slow": "Slowed!",
 	"charge_stun": "Stunned!",
+	"poison_virulent": "Poisoned!",
+	"slow_frostforged": "Chilled!",
+	"venom_bite_poison": "Poisoned!",
 }
 
 var actors := {}
@@ -110,7 +115,10 @@ func _ready():
 func roll_encounter(room: int) -> Array:
 	if room >= PlayerRoster.DELVE_LENGTH:
 		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
-	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER]
+	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER, GOBLIN_WARRIOR]
+	if room >= 3:
+		pool.append(VENOMOUS_SPIDER)
+		pool.append(VENOMOUS_SPIDER)
 	var low = clampi(2 + (room - 1) / 4, 2, 4)
 	var high = clampi(3 + (room - 1) / 2, 3, 6)
 	var encounter = []
@@ -151,7 +159,7 @@ func _build_timeline(log):
 	for event in log.events:
 		if event.type == CombatEvent.EventType.SPAWN \
 				and event.team == CombatEntity.Team.ENEMY:
-			is_slime[event.entity_id] = event.template.enemy_id == "green_slime"
+			is_slime[event.entity_id] = event.template.enemy_id in ["green_slime", "slime_king", "venomous_spider"]
 
 	var events: Array = log.events
 	for i in events.size():
@@ -159,6 +167,8 @@ func _build_timeline(log):
 		_timeline.append({"time": event.time, "kind": "event", "event": event})
 		match event.type:
 			CombatEvent.EventType.DAMAGE:
+				if event.dot:
+					continue
 				if event.skill == null or event.skill.delivery_type == SkillDefinition.DeliveryType.MELEE:
 					var lead = SLIME_LEAD if is_slime.get(event.source_id, false) else SWING_LEAD
 					_timeline.append({
@@ -228,7 +238,7 @@ func _play_spawn(event):
 
 	actors[event.entity_id] = {
 		"rig": rig,
-		"is_slime": rig is SlimeRig,
+		"is_slime": rig.has_method("pose_attack"),
 		"team": event.team,
 		"mode": "idle",
 		"anim_t": 0.0,
@@ -288,6 +298,18 @@ func _play_damage(event):
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
+	if event.dot:
+		# Poison ticks: a quiet purple number, no impact sound or swing.
+		_spawn_floating_text(
+			target.rig.position, str(event.amount), Color(0.7, 0.35, 0.85)
+		)
+		return
+	if event.dodged:
+		# The swing whiffs: no impact sound, a pale sidestep note.
+		_spawn_floating_text(
+			target.rig.position, "Dodge!", Color(0.85, 0.85, 0.8)
+		)
+		return
 	var ranged = (
 		event.skill != null
 		and event.skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
@@ -296,9 +318,20 @@ func _play_damage(event):
 		ARROW_HIT_SOUND if ranged else MELEE_HIT_SOUND,
 		"SFX", -4.0, randf_range(0.9, 1.1)
 	)
-	_spawn_floating_text(
-		target.rig.position, str(event.amount), Color(0.9, 0.2, 0.15)
-	)
+	if event.blocked:
+		_spawn_floating_text(
+			target.rig.position, "%d (blocked)" % event.amount,
+			Color(0.5, 0.7, 0.95)
+		)
+	elif event.crit:
+		_spawn_floating_text(
+			target.rig.position, "%d!" % event.amount,
+			Color(1.0, 0.62, 0.1), 1.45
+		)
+	else:
+		_spawn_floating_text(
+			target.rig.position, str(event.amount), Color(0.9, 0.2, 0.15)
+		)
 
 func _play_heal(event):
 	var target = actors.get(event.target_id)
@@ -307,6 +340,9 @@ func _play_heal(event):
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
+	var caster_bar = sidebars_by_entity.get(event.source_id)
+	if caster_bar and event.max_mana > 0:
+		caster_bar.set_mana(event.source_id, event.current_mana, event.max_mana)
 	_spawn_floating_text(
 		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3)
 	)
@@ -367,6 +403,9 @@ func _update_actors(delta):
 					if state.anim_t >= DelverRig.SWING_T:
 						state.mode = "idle"
 			"shoot":
+				if not rig.has_method("pose_shoot"):
+					state.mode = "idle"
+					continue
 				state.anim_t += delta * state.anim_speed
 				rig.pose_shoot(state.anim_t, state.shoot_dist)
 				if state.anim_t >= DelverRig.SHOOT_T:
@@ -435,11 +474,11 @@ func _update_camera(delta):
 func _yaw_of(facing: Vector2) -> float:
 	return atan2(facing.x, facing.y)
 
-func _spawn_floating_text(at: Vector3, text: String, color: Color):
+func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0):
 	var label := Label3D.new()
 	label.text = text
 	label.font = FONT
-	label.font_size = 96
+	label.font_size = int(96 * size_mult)
 	label.pixel_size = 0.006
 	label.modulate = color
 	label.outline_size = 18
@@ -501,7 +540,10 @@ func _finish_battle():
 	# Monsters drop resources and knowledge: pouch it all.
 	var slain = combat_result.enemies.map(func(e): return e.template)
 	var found = LootTable.roll_enemy_drops(
-		slain, room, PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+		slain, room,
+		PlayerRoster.known_recipes + PlayerRoster.delve_recipes,
+		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
+		PlayerRoster.known_lore + PlayerRoster.delve_lore
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -510,6 +552,8 @@ func _finish_battle():
 			+ found.materials[material_id]
 		)
 	PlayerRoster.delve_recipes.append_array(found.recipes)
+	PlayerRoster.delve_affixes.append_array(found.affixes)
+	PlayerRoster.delve_lore.append_array(found.lore)
 
 	if room >= PlayerRoster.DELVE_LENGTH:
 		PlayerRoster.adventures_completed += 1
@@ -523,21 +567,34 @@ func _finish_battle():
 		return
 
 	RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
-## crown jewels — newly learned recipes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array) -> Array:
+## crown jewels — newly learned recipes and affixes.
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = []) -> Array:
 	var entries := []
+	for lore_id in lore:
+		var fragment = load(RosterSave.LORE_PATHS[lore_id])
+		entries.append({
+			"texture": preload("res://art/tomes/tome_journal.png"),
+			"text": fragment.title,
+			"color": Color("d8c684"),
+		})
+	for affix_id in affixes:
+		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+		entries.append({
+			"texture": preload("res://art/tomes/tome_affix.png"),
+			"text": "%s\nTeaches: %s" % [affix.tome_name, affix.affix_name],
+			"color": ItemQuality.color(ItemQuality.Tier.EPIC),
+		})
 	for recipe_id in recipes:
 		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
-		var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
 		entries.append({
-			"texture": result.icon if result.icon else result.texture,
-			"text": "Recipe:\n%s" % recipe.recipe_name,
+			"texture": preload("res://art/tomes/tome_recipe.png"),
+			"text": "%s\nTeaches: %s" % [recipe.tome_name, recipe.recipe_name],
 			"color": ItemQuality.color(ItemQuality.Tier.RARE),
 		})
 	for item in gear:
@@ -574,8 +631,8 @@ func _show_room_toast(room: int, entries: Array):
 	panel.anchor_bottom = 1.0
 	panel.offset_left = -340
 	panel.offset_right = 340
-	panel.offset_top = -190
-	panel.offset_bottom = -40
+	panel.offset_top = -235
+	panel.offset_bottom = -30
 	layer.add_child(panel)
 
 	var box := VBoxContainer.new()
@@ -611,7 +668,9 @@ func _show_summary(title: String, subtitle: String):
 	var entries = _drop_entries(
 		PlayerRoster.delve_loot,
 		PlayerRoster.delve_materials,
-		PlayerRoster.delve_recipes
+		PlayerRoster.delve_recipes,
+		PlayerRoster.delve_affixes,
+		PlayerRoster.delve_lore
 	)
 	panel.setup(title, subtitle, entries, "Return to Camp")
 	panel.primary_pressed.connect(_bank_and_return)

@@ -41,6 +41,8 @@ enum HeadStyle {
 ## Drop level: stats scale from the authored (level 1) values via
 ## LootTable.materialize. Higher item level = stronger item.
 @export var item_level: int = 1
+## Applied enchantment (AffixDefinition id), baked in at craft time.
+@export var affix_id: String = ""
 
 @export_group("Visuals")
 ## Sprite drawn on the character (paper-doll layer).
@@ -65,6 +67,16 @@ enum HeadStyle {
 @export var attack_speed: float = 0.0
 ## Attack reach in world pixels. 0 derives a default from weapon_type.
 @export var reach: float = 0.0
+## Flat damage shaved off every physical hit taken (min 1 gets through).
+@export var armor: int = 0
+## Chance (0-1) to block a hit for half damage. Shields carry this.
+@export var block_rating: float = 0.0
+## Chance (0-1) to avoid a hit entirely. Light gear carries this.
+@export var dodge_rating: float = 0.0
+## Chance (0-1) to strike for 150% damage. Weapon identity for DPS.
+@export var crit_rating: float = 0.0
+## Boosts heals (and future spells). Healer identity.
+@export var spell_power: int = 0
 
 func effective_reach() -> float:
 	if reach > 0.0:
@@ -128,4 +140,6 @@ func power_score() -> int:
 	else:
 		score += attack_bonus * 2
 	score += health_bonus
+	score += armor * 3 + spell_power * 2
+	score += int(round((block_rating + dodge_rating + crit_rating) * 40.0))
 	return maxi(1, score)

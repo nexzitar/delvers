@@ -18,3 +18,4 @@ rotation_degrees = 90.0
 damage_min = 4
 damage_max = 9
 attack_speed = 3.4
+crit_rating = 0.06

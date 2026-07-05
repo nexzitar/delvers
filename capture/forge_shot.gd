@@ -13,6 +13,9 @@ func _ready():
 		"poison_sac": 2, "royal_jelly": 1,
 	}
 	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield"]
+	PlayerRoster.known_affixes = ["virulent", "frostforged", "guarding"]
+	PlayerRoster.known_lore = ["expedition_log_1", "expedition_log_2"]
+	PlayerRoster.material_stash["corrosion_core"] = 2
 
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
 	add_child(camp)
@@ -25,7 +28,21 @@ func _ready():
 		tabs.current_tab = 2
 	await get_tree().create_timer(0.4).timeout
 
+	# Select the sword with Virulent chosen: pinned preview + effects.
+	loadout._forge_affix_choice["iron_sword"] = "virulent"
+	loadout._forge_selected = "iron_sword"
+	loadout._fill_forge()
+	await get_tree().create_timer(0.2).timeout
+
 	await RenderingServer.frame_post_draw
 	var img = get_viewport().get_texture().get_image()
 	img.save_png("%s/forge_tab.png" % out_dir)
+
+	loadout.hide_tooltip()
+	for tabs in loadout.find_children("*", "TabContainer", true, false):
+		tabs.current_tab = 3
+	await get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	img = get_viewport().get_texture().get_image()
+	img.save_png("%s/library_tab.png" % out_dir)
 	get_tree().quit()

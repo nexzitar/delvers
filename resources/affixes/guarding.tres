@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AffixDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/affix_definition.gd" id="1_affix"]
+[ext_resource type="Texture2D" path="res://art/affixes/affix_guarding.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_affix")
+affix_id = "guarding"
+tome_name = "Phalanx Doctrine of the Warband"
+tome_lore = "The warband held the line for six days. The doctrine survived them."
+affix_name = "Guarding"
+icon = ExtResource("2_icon")
+applies_to_weapons = false
+applies_to_armor = true
+health_bonus_add = 12
+costs = {"iron_scrap": 2, "gel": 2}

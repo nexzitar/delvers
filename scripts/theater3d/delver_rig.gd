@@ -272,6 +272,10 @@ func pose_death(t: float):
 ## Raise, nock, draw to the cheek, loose, lower. t in [0, SHOOT_T].
 ## target_dist: rig-local forward distance the arrow flies before sticking.
 func pose_shoot(t: float, target_dist := 2.2):
+	# No bow (a sword hero casting Heal): wind up a spell instead.
+	if bow == null:
+		pose_spellcast(t)
+		return
 	_reset_pose()
 	var p := clampf(t / SHOOT_T, 0.0, 1.0)
 
@@ -322,3 +326,25 @@ func pose_shoot(t: float, target_dist := 2.2):
 		arrow.position = Vector3(0.24, 0.62, lerpf(0.1, target_dist, f))
 	else:
 		arrow.visible = false
+
+## Bow-less cast: both hands raised before the chest, a held focus,
+## then a release push. Driven on the same clock as pose_shoot so the
+## theater's cast timing needs no special case.
+func pose_spellcast(t: float):
+	_reset_pose()
+	var p := clampf(t / SHOOT_T, 0.0, 1.0)
+	var lift: float
+	var push := 0.0
+	if p < 0.3:
+		lift = smoothstep(0.0, 1.0, p / 0.3)
+	elif p < 0.72:
+		lift = 1.0
+		push = 0.15 * sin((p - 0.3) / 0.42 * PI)
+	else:
+		lift = 1.0 - smoothstep(0.0, 1.0, (p - 0.72) / 0.28)
+	arm_l.rotation.x = lerpf(0.0, -1.5, lift) - push
+	arm_r.rotation.x = lerpf(0.0, -1.5, lift) - push
+	arm_l.rotation.z = lerpf(0.0, 0.35, lift)
+	arm_r.rotation.z = lerpf(0.0, -0.35, lift)
+	spine.rotation.x = lerpf(0.0, 0.08, lift) - push * 0.5
+	head.rotation.x = lerpf(0.0, -0.12, lift)

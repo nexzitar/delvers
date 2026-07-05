@@ -72,7 +72,13 @@ func _ready():
 	for enemy in combat.enemies:
 		enemy.in_combat = true
 		enemy.threat_table.erase(buddy.entity_id)
+	buddy.current_mana = 10
 	assert(Heal.try_use(combat, buddy, heal), "self-party heal fires")
+	assert(buddy.is_casting, "heal winds up as a cast")
+	# Resolve the cast directly so no other actions muddy the threat math.
+	buddy.is_casting = false
+	buddy.casting_behavior = null
+	Heal.finish(combat, buddy, heal)
 	var healed = combat.combat_log.events.filter(
 		func(e): return e.type == CombatEvent.EventType.HEAL
 	)

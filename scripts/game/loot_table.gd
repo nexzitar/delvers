@@ -31,9 +31,10 @@ static func roll_quality(depth: int, boss := false) -> int:
 	return ItemQuality.Tier.COMMON
 
 ## Builds a concrete item: authored base stats scaled by item level,
-## with a smaller premium for rarity. Deterministic, so saved items
-## rebuild identically from (id, level, quality).
-static func materialize(gear_id: String, item_level: int, quality: int) -> GearDefinition:
+## with a smaller premium for rarity, optionally enchanted by an affix.
+## Deterministic, so saved items rebuild identically from
+## (id, level, quality, affix).
+static func materialize(gear_id: String, item_level: int, quality: int, affix_id := "") -> GearDefinition:
 	var path = RosterSave.GEAR_PATHS.get(gear_id)
 	if path == null:
 		return null
@@ -46,16 +47,40 @@ static func materialize(gear_id: String, item_level: int, quality: int) -> GearD
 		gear.damage_max = maxi(gear.damage_min, roundi(gear.damage_max * mult))
 	gear.attack_bonus = roundi(gear.attack_bonus * mult)
 	gear.health_bonus = roundi(gear.health_bonus * mult)
+	gear.armor = roundi(gear.armor * mult)
+	gear.spell_power = roundi(gear.spell_power * mult)
+	# Ratings (block/dodge/crit) stay flat: percentages don't inflate.
+
+	if affix_id != "" and RosterSave.AFFIX_PATHS.has(affix_id):
+		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
+		gear.affix_id = affix_id
+		gear.gear_name = "%s %s" % [affix.affix_name, gear.gear_name]
+		if gear.damage_min > 0 or gear.damage_max > 0:
+			gear.damage_min = maxi(1, roundi(gear.damage_min * affix.damage_mult))
+			gear.damage_max = maxi(
+				gear.damage_min, roundi(gear.damage_max * affix.damage_mult)
+			)
+		if gear.attack_speed > 0.0:
+			gear.attack_speed = snappedf(
+				gear.attack_speed * affix.attack_speed_mult, 0.1
+			)
+		gear.health_bonus += affix.health_bonus_add
 	return gear
 
 ## Rolls drops for a defeated pack: monsters drop resources and
-## knowledge, not equipment. Returns
-## {"materials": {id: count}, "recipes": [recipe_id], "gear": [GearDefinition]}.
-## known_recipes suppresses already-learned knowledge (nothing wasted:
-## a known recipe simply doesn't drop).
-static func roll_enemy_drops(enemy_templates: Array, room: int, known_recipes := []) -> Dictionary:
-	var drops := {"materials": {}, "recipes": [], "gear": []}
+## knowledge, not equipment. Returns {"materials": {id: count},
+## "recipes": [recipe_id], "affixes": [affix_id], "gear": [...]}.
+## known_recipes / known_affixes suppress already-learned knowledge
+## (nothing wasted: known knowledge simply doesn't drop).
+const LORE_DROP_CHANCE := 0.03
+
+static func roll_enemy_drops(
+		enemy_templates: Array, room: int,
+		known_recipes := [], known_affixes := [], known_lore := [],
+) -> Dictionary:
+	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [], "lore": []}
 	var seen: Array = known_recipes.duplicate()
+	var seen_affixes: Array = known_affixes.duplicate()
 
 	for template in enemy_templates:
 		# Materials: the common reward, in this enemy's identity.
@@ -76,6 +101,24 @@ static func roll_enemy_drops(enemy_templates: Array, room: int, known_recipes :=
 				drops.recipes.append(recipe_id)
 				seen.append(recipe_id)
 
+		# Affixes: the rarest knowledge of all.
+		if randf() <= template.affix_drop_chance:
+			var unknown_affixes = template.affix_loot.filter(
+				func(id): return not seen_affixes.has(id)
+			)
+			if not unknown_affixes.is_empty():
+				var affix_id = unknown_affixes.pick_random()
+				drops.affixes.append(affix_id)
+				seen_affixes.append(affix_id)
+
+		# History: the next unrecovered fragment, in order — evidence
+		# assembles the way a trail would.
+		if randf() <= LORE_DROP_CHANCE:
+			for lore_id in RosterSave.LORE_PATHS:
+				if not known_lore.has(lore_id) and not drops.lore.has(lore_id):
+					drops.lore.append(lore_id)
+					break
+
 		# Finished equipment: a memorable fluke, or a boss trophy.
 		if not template.loot_ids.is_empty() and randf() <= template.drop_chance:
 			var gear = materialize(
@@ -86,3 +129,37 @@ static func roll_enemy_drops(enemy_templates: Array, room: int, known_recipes :=
 			if gear:
 				drops.gear.append(gear)
 	return drops
+
+## Who to hunt for a material: the non-boss enemy with the most copies
+## of it in their table (bosses only as a last resort).
+const ENEMY_PATHS := [
+	"res://resources/enemies/green_slime.tres",
+	"res://resources/enemies/goblin_archer.tres",
+	"res://resources/enemies/goblin_warrior.tres",
+	"res://resources/enemies/venomous_spider.tres",
+	"res://resources/enemies/slime_king.tres",
+]
+static var _owner_cache := {}
+
+static func material_owner(material_id: String) -> String:
+	if _owner_cache.has(material_id):
+		return _owner_cache[material_id]
+	var best := ""
+	var best_count := 0
+	var boss_fallback := ""
+	for path in ENEMY_PATHS:
+		var template = load(path)
+		var count = template.material_loot.count(material_id)
+		if count == 0:
+			continue
+		if template.is_boss:
+			if boss_fallback == "":
+				boss_fallback = template.enemy_name
+			continue
+		if count > best_count:
+			best_count = count
+			best = template.enemy_name
+	if best == "":
+		best = boss_fallback
+	_owner_cache[material_id] = best
+	return best

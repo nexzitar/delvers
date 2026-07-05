@@ -6,6 +6,12 @@ class_name RecipeDefinition
 
 @export var recipe_id: String
 @export var recipe_name: String
+## Provenance: the artifact this knowledge was recovered as
+## ("Spider Venom Treatise"). Worldbuilding for the drop screen.
+@export var tome_name: String = ""
+## A fragment of the world recovered along with the technique — shown
+## in the library, never narrated.
+@export_multiline var tome_lore: String = ""
 ## What the recipe produces, built through LootTable.materialize.
 @export var result_gear_id: String
 @export var result_item_level: int = 4

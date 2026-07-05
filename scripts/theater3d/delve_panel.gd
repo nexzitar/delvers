@@ -97,7 +97,8 @@ static func loot_entry(entry: Dictionary) -> Control:
 	caption.add_theme_color_override("font_outline_color", Color.BLACK)
 	caption.add_theme_constant_override("outline_size", 4)
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.custom_minimum_size = Vector2(84, 0)
+	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	caption.custom_minimum_size = Vector2(116, 0)
 	box.add_child(caption)
 	return box
 

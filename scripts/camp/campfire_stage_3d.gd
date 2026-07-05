@@ -42,6 +42,7 @@ var _was_pressed := false
 func _ready():
 	_intensity = PlayerRoster.fire_intensity()
 	_setup_world()
+	_build_history()
 	_build_campfire()
 	_build_seats()
 	_seat_heroes()
@@ -380,6 +381,110 @@ func _animate_fire():
 			r * cos(ember.angle + k * 4.0)
 		)
 		ember.node.scale = Vector3.ONE * (1.0 - k)
+
+## Environmental storytelling: the clearing carries the previous
+## guild's ruin, and rebuilds itself as this one earns it. Nothing is
+## narrated — the player just sees it.
+func _build_history():
+	# The wreck of the Black Hollow: a broken cart, always.
+	var cart := Node3D.new()
+	cart.position = Vector3(-3.7, 0, -1.9)
+	cart.rotation.y = 0.7
+	add_child(cart)
+	var bed := _prop(cart, BoxMesh.new(), Color("4a3524"), Vector3(0, 0.28, 0))
+	bed.mesh.size = Vector3(1.3, 0.1, 0.75)
+	bed.rotation.z = 0.32
+	for side in [-1, 1]:
+		var rail := _prop(cart, BoxMesh.new(), Color("3c2b1e"),
+			Vector3(0.1, 0.42, side * 0.36))
+		rail.mesh.size = Vector3(1.2, 0.16, 0.05)
+		rail.rotation.z = 0.32
+	var wheel := CylinderMesh.new()
+	wheel.top_radius = 0.3
+	wheel.bottom_radius = 0.3
+	wheel.height = 0.07
+	wheel.radial_segments = 9
+	var up_wheel := _prop(cart, wheel, Color("332419"), Vector3(-0.55, 0.3, 0.42))
+	up_wheel.rotation.x = PI / 2
+	var flat_wheel := _prop(cart, wheel.duplicate(), Color("332419"),
+		Vector3(0.75, 0.04, -0.5))
+	flat_wheel.rotation.z = 0.15
+
+	# The guild banner: fallen among the tents — until the Slime King
+	# falls, and it flies again.
+	var banner := Node3D.new()
+	banner.position = Vector3(3.5, 0, -2.5)
+	add_child(banner)
+	var pole := CylinderMesh.new()
+	pole.top_radius = 0.035
+	pole.bottom_radius = 0.045
+	pole.height = 2.2
+	var restored: bool = PlayerRoster.adventures_completed >= 1
+	if restored:
+		var standing := _prop(banner, pole, Color("4a3524"), Vector3(0, 1.1, 0))
+		standing.rotation.z = 0.03
+		var cloth := _prop(banner, BoxMesh.new(), Color("7a2f2a"),
+			Vector3(0.3, 1.75, 0))
+		cloth.mesh.size = Vector3(0.55, 0.5, 0.03)
+		var trim := _prop(banner, BoxMesh.new(), Color("d8c684"),
+			Vector3(0.3, 1.52, 0))
+		trim.mesh.size = Vector3(0.55, 0.05, 0.035)
+	else:
+		var leaning := _prop(banner, pole, Color("3c2b1e"), Vector3(0.5, 0.5, 0))
+		leaning.rotation.z = 1.25
+		var rag := _prop(banner, BoxMesh.new(), Color("4d3430"),
+			Vector3(1.15, 0.09, 0))
+		rag.mesh.size = Vector3(0.6, 0.14, 0.03)
+		rag.rotation.z = 0.9
+
+	# The forge's anvil returns once the guild has knowledge worth
+	# hammering into shape.
+	if PlayerRoster.known_recipes.size() >= 3:
+		var forge := Node3D.new()
+		forge.position = Vector3(4.1, 0, -0.4)
+		forge.rotation.y = -0.5
+		add_child(forge)
+		var stump := CylinderMesh.new()
+		stump.top_radius = 0.24
+		stump.bottom_radius = 0.28
+		stump.height = 0.42
+		stump.radial_segments = 8
+		_prop(forge, stump, Color("4a3524"), Vector3(0, 0.21, 0))
+		var anvil := _prop(forge, BoxMesh.new(), Color("3a3d44"), Vector3(0, 0.5, 0))
+		anvil.mesh.size = Vector3(0.5, 0.16, 0.2)
+		var horn := _prop(forge, BoxMesh.new(), Color("32353b"), Vector3(0.3, 0.5, 0))
+		horn.mesh.size = Vector3(0.16, 0.1, 0.12)
+
+	# A training dummy, once the guild has seen real fighting.
+	if PlayerRoster.battles_fought >= 15:
+		var dummy := Node3D.new()
+		dummy.position = Vector3(-4.1, 0, 0.9)
+		dummy.rotation.y = 0.9
+		add_child(dummy)
+		var post := CylinderMesh.new()
+		post.top_radius = 0.05
+		post.bottom_radius = 0.06
+		post.height = 1.3
+		_prop(dummy, post, Color("4a3524"), Vector3(0, 0.65, 0))
+		var arms := _prop(dummy, BoxMesh.new(), Color("4a3524"), Vector3(0, 1.0, 0))
+		arms.mesh.size = Vector3(0.9, 0.07, 0.07)
+		var head := SphereMesh.new()
+		head.radius = 0.13
+		head.height = 0.26
+		head.radial_segments = 8
+		head.rings = 4
+		_prop(dummy, head, Color("b9a05e"), Vector3(0, 1.4, 0))
+
+func _prop(parent: Node3D, mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:
+	var instance := MeshInstance3D.new()
+	instance.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = 1.0
+	instance.material_override = mat
+	instance.position = pos
+	parent.add_child(instance)
+	return instance
 
 func _setup_world():
 	var env := Environment.new()

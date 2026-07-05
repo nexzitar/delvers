@@ -5,6 +5,8 @@
 [resource]
 script = ExtResource("1_recipe")
 recipe_id = "iron_sword"
+tome_name = "Ancient Goblin Forging Manual"
+tome_lore = "The margins are corrected in a human hand. Someone traded steel lessons with the goblins, once."
 recipe_name = "Iron Sword"
 result_gear_id = "starter_sword"
 result_item_level = 4

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AffixDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/affix_definition.gd" id="1_affix"]
+[ext_resource type="Texture2D" path="res://art/affixes/affix_virulent.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_affix")
+affix_id = "virulent"
+tome_name = "Spider Venom Treatise"
+tome_lore = "Recovered from the remains of the Black Hollow expedition."
+affix_name = "Virulent"
+icon = ExtResource("2_icon")
+applies_to_weapons = true
+applies_to_armor = false
+on_hit_status = "poison"
+on_hit_duration = 6.0
+on_hit_magnitude = 1.5
+costs = {"poison_sac": 2}

@@ -32,6 +32,14 @@ func _run():
 	), "cast_goblin_archer", 1.2)
 
 	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/goblin_warrior.tres")
+	), "cast_goblin_warrior", 1.25)
+
+	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/venomous_spider.tres")
+	), "cast_venomous_spider", 0.7)
+
+	await _shoot(ActorFactory3D.build_enemy(
 		load("res://resources/enemies/green_slime.tres")
 	), "cast_green_slime", 0.85)
 
