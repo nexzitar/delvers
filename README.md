@@ -54,7 +54,7 @@ Delvers is a party-based dungeon crawler where you send heroes — your *delvers
 4. **Theater** — Results play back as a staged battle scene.
 5. **Rewards** — Collect loot, experience, and progress deeper.
 
-The loop is playable: you start with a single delver (one bonus skill slot — more through future meta progression), embark on a **delve of ten escalating rooms** ending at the **Slime King's lair**, and health carries between rooms. Slain enemies rarely (10%) drop gear from their own loot tables — item level scales with the room, rarity rolls separately and skews common (the boss guarantees a rare) — and the pouch banks into the stash when the delve ends in triumph or death. Everything persists to disk.
+The loop is playable: you start with a single delver (one bonus skill slot — more through future meta progression) and embark on a **delve of ten escalating rooms** ending at the **Slime King's lair**, health carrying between rooms, each room flowing into the next automatically. **Monsters drop resources and knowledge, not equipment**: every enemy has a material identity (goblins carry ash wood and bow strings, slimes ooze gel and acid), recipes drop rarely as permanent unlocks, and finished gear is a memorable fluke — or a boss trophy. Back at camp, the **Forge** turns materials plus known recipes into intentional equipment (item level and quality set by the recipe). Materials are consumed; knowledge is permanent. Everything persists to disk.
 
 ### Combat Design
 
