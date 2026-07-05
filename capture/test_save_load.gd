@@ -23,6 +23,8 @@ func _ready():
 	roster.battles_fought = 7
 	roster.adventures_completed = 3
 	roster.last_battle_won = true
+	# A stored victory means the milestone companion exists pre-save.
+	roster.check_milestones()
 	# A leveled uncommon drop must survive the round trip with its
 	# scaled stats intact.
 	var fancy_bow = LootTable.materialize(
@@ -32,6 +34,7 @@ func _ready():
 	RosterSave.save(roster, TEST_PATH)
 
 	var restored = load("res://scripts/game/player_roster.gd").new()
+	restored.autosave = false
 	assert(RosterSave.load_into(restored, TEST_PATH), "save loads")
 
 	assert(restored.heroes.size() == roster.heroes.size(), "hero count")
@@ -79,6 +82,7 @@ func _ready():
 	}))
 	file = null
 	var sparse = load("res://scripts/game/player_roster.gd").new()
+	sparse.autosave = false
 	assert(RosterSave.load_into(sparse, TEST_PATH), "sparse save loads")
 	assert(sparse.gear_stash.size() == 1, "unknown gear dropped")
 	assert(sparse.heroes[0].equipped.is_empty(), "unknown equip dropped")

@@ -50,6 +50,11 @@ var known_affixes: Array = []
 ## Recovered history (expedition logs etc.) — pure memory, shelved in
 ## the camp library.
 var known_lore: Array = []
+## Guild restoration purchases (see GuildUnlocks). The "restoration"
+## marker records the free first-victory companion.
+var purchased_unlocks: Array = []
+## One-shot camp line for arrivals ("You're not alone anymore.").
+var arrival_message := ""
 
 var battles_fought := 0
 var adventures_completed := 0
@@ -104,8 +109,36 @@ func bank_delve_loot():
 	delve_lore = []
 	delve_room = 0
 	sort_gear_stash()
+	check_milestones()
 	if autosave:
 		RosterSave.save(self)
+
+## First victory raises the banner — and someone sees it. The first
+## companion arrives free: the Restoration of the Guild.
+func check_milestones():
+	if adventures_completed >= 1 \
+			and not purchased_unlocks.has(GuildUnlocks.RESTORATION):
+		purchased_unlocks.append(GuildUnlocks.RESTORATION)
+		recruit_hero(["starter_bow", "starter_helmet"])
+		arrival_message = "You're not alone anymore."
+		if autosave:
+			RosterSave.save(self)
+
+## A new delver answers the fire, wearing their own worn basics.
+func recruit_hero(kit_ids: Array):
+	var hero = DEFAULT_DELVER.duplicate(true)
+	var used = heroes.map(func(h): return h.hero_name)
+	for candidate in GuildUnlocks.COMPANION_NAMES:
+		if not used.has(candidate):
+			hero.hero_name = candidate
+			break
+	hero.bonus_skills = [null, null, null, null, null]
+	var kit := []
+	for gear_id in kit_ids:
+		kit.append(LootTable.materialize(gear_id, 1, ItemQuality.Tier.COMMON))
+	_seed_loadout(hero, kit)
+	heroes.append(hero)
+	_sync_role(hero)
 
 # --- Crafting ---------------------------------------------------------
 

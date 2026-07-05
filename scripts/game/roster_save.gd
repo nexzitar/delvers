@@ -6,7 +6,7 @@ class_name RosterSave
 ## the "each item is one physical object" model.
 
 const SAVE_PATH := "user://delvers_save.json"
-const VERSION := 5
+const VERSION := 6
 
 const MATERIAL_PATHS := {
 	"gel": "res://resources/materials/gel.tres",
@@ -106,6 +106,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"known_recipes": roster.known_recipes,
 		"known_affixes": roster.known_affixes,
 		"known_lore": roster.known_lore,
+		"purchased_unlocks": roster.purchased_unlocks,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -120,7 +121,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	if not FileAccess.file_exists(path):
 		return false
 	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if data == null or int(data.get("version", 0)) != VERSION:
+	if data == null:
+		return false
+	# v5 saves load forward: they simply predate guild purchases.
+	var version = int(data.get("version", 0))
+	if version < 5 or version > VERSION:
 		return false
 
 	var heroes := []
@@ -167,6 +172,15 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	for lore_id in data.get("known_lore", []):
 		if LORE_PATHS.has(lore_id) and not roster.known_lore.has(lore_id):
 			roster.known_lore.append(lore_id)
+
+	roster.purchased_unlocks = []
+	for unlock_id in data.get("purchased_unlocks", []):
+		if not roster.purchased_unlocks.has(unlock_id):
+			roster.purchased_unlocks.append(unlock_id)
+
+	# A pre-update save may already hold the first victory: the
+	# companion arrives the moment the camp loads.
+	roster.check_milestones()
 	return true
 
 static func _restore_hero(entry):
