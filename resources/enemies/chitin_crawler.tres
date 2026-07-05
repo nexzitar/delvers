@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "chitin_crawler"
+enemy_name = "Chitin Crawler"
+base_health = 44
+base_attack = 5
+base_attack_interval = 3.0
+move_speed = 70.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
+material_loot = Array[String](["chitin_plate", "chitin_plate", "silk_thread"])
+material_drop_chance = 1.0
+recipe_loot = Array[String](["chitin_shield", "chitin_armor"])
+affix_loot = Array[String](["guarding"])
+loot_ids = Array[String](["starter_shield", "starter_armor"])
+preferred_row = 0
+armor = 3

@@ -6,7 +6,7 @@ class_name RosterSave
 ## the "each item is one physical object" model.
 
 const SAVE_PATH := "user://delvers_save.json"
-const VERSION := 6
+const VERSION := 7
 
 const MATERIAL_PATHS := {
 	"gel": "res://resources/materials/gel.tres",
@@ -18,6 +18,9 @@ const MATERIAL_PATHS := {
 	"poison_sac": "res://resources/materials/poison_sac.tres",
 	"royal_jelly": "res://resources/materials/royal_jelly.tres",
 	"leather": "res://resources/materials/leather.tres",
+	"silk_thread": "res://resources/materials/silk_thread.tres",
+	"chitin_plate": "res://resources/materials/chitin_plate.tres",
+	"brood_silk": "res://resources/materials/brood_silk.tres",
 }
 
 const RECIPE_PATHS := {
@@ -26,6 +29,9 @@ const RECIPE_PATHS := {
 	"reinforced_shield": "res://resources/recipes/reinforced_shield.tres",
 	"iron_helm": "res://resources/recipes/iron_helm.tres",
 	"leather_hood": "res://resources/recipes/leather_hood.tres",
+	"silk_hood": "res://resources/recipes/silk_hood.tres",
+	"chitin_shield": "res://resources/recipes/chitin_shield.tres",
+	"chitin_armor": "res://resources/recipes/chitin_armor.tres",
 }
 
 const AFFIX_PATHS := {
@@ -43,6 +49,15 @@ const LORE_PATHS := {
 	"expedition_log_2": "res://resources/lore/expedition_log_2.tres",
 	"expedition_log_3": "res://resources/lore/expedition_log_3.tres",
 	"expedition_log_4": "res://resources/lore/expedition_log_4.tres",
+	"expedition_nest_1": "res://resources/lore/expedition_nest_1.tres",
+	"expedition_nest_2": "res://resources/lore/expedition_nest_2.tres",
+	"expedition_nest_3": "res://resources/lore/expedition_nest_3.tres",
+	"expedition_nest_4": "res://resources/lore/expedition_nest_4.tres",
+}
+
+const DUNGEON_PATHS := {
+	"darkwood": "res://resources/dungeons/darkwood.tres",
+	"spider_nest": "res://resources/dungeons/spider_nest.tres",
 }
 
 const HERO_PATHS := {
@@ -107,6 +122,8 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"known_affixes": roster.known_affixes,
 		"known_lore": roster.known_lore,
 		"purchased_unlocks": roster.purchased_unlocks,
+		"unlocked_dungeons": roster.unlocked_dungeons,
+		"current_dungeon": roster.current_dungeon,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -177,6 +194,14 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	for unlock_id in data.get("purchased_unlocks", []):
 		if not roster.purchased_unlocks.has(unlock_id):
 			roster.purchased_unlocks.append(unlock_id)
+
+	roster.unlocked_dungeons = ["darkwood"]
+	for dungeon_id in data.get("unlocked_dungeons", []):
+		if DUNGEON_PATHS.has(dungeon_id) and not roster.unlocked_dungeons.has(dungeon_id):
+			roster.unlocked_dungeons.append(dungeon_id)
+	roster.current_dungeon = data.get("current_dungeon", "darkwood")
+	if not roster.unlocked_dungeons.has(roster.current_dungeon):
+		roster.current_dungeon = "darkwood"
 
 	# A pre-update save may already hold the first victory: the
 	# companion arrives the moment the camp loads.

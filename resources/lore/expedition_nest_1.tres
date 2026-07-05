@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LoreDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/lore_definition.gd" id="1_lore"]
+
+[resource]
+script = ExtResource("1_lore")
+lore_id = "expedition_nest_1"
+title = "Nest Expedition, First Fragment"
+body = "We followed the silk south. The tunnels are warm, and the walls... breathe."
+order = 1

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LoreDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/lore_definition.gd" id="1_lore"]
+
+[resource]
+script = ExtResource("1_lore")
+lore_id = "expedition_nest_4"
+title = "Nest Expedition, Final Fragment"
+body = "She is under everything. The Darkwood was only her doorstep."
+order = 4

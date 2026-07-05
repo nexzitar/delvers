@@ -54,7 +54,18 @@ func _on_hero_selected(hero_index):
 	loadout.open(hero_index)
 
 func _on_embark_pressed():
-	PlayerRoster.start_delve()
+	# One dungeon: just go. More: choose the delve.
+	if PlayerRoster.unlocked_dungeons.size() <= 1:
+		_embark(PlayerRoster.unlocked_dungeons[0])
+		return
+	stage.set_picking(false)
+	var panel := DungeonPicker.new()
+	add_child(panel)
+	panel.closed.connect(func(): stage.set_picking(true))
+	panel.chosen.connect(_embark)
+
+func _embark(dungeon_id: String):
+	PlayerRoster.start_delve(dungeon_id)
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 func _add_guild_button():

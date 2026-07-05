@@ -131,7 +131,17 @@ beat "another random rare sword".
   at the Fire (third delver — costs Royal Jelly, one boss kill each).
   Starter stash emptied: a new guild owns only what it wears. Save v6,
   loads v5 forward (a stored victory greets you with the companion).
+- **2026-07-06 (slice 6)**: the Spider Nest — dungeons become data
+  (DungeonDefinition: pools, guaranteed enemy, boss pack, loot band,
+  theme, lore series). The Slime King guards a Weathered Map Fragment
+  that unlocks the Nest once, ever (lore and progression in one
+  mechanic); the camp Embark button becomes a dungeon picker. Nest
+  identity: silk thread / chitin plate / brood silk, Nest Spiderling /
+  Web Weaver (roots with silk) / armored Chitin Crawler / the
+  Broodmother; item levels +10, rare unlocked from normals (4%), boss
+  epic 6%; three nest recipes; a second expedition-log series
+  continuing the Black Hollow trail; webbed-cavern theater theming.
+  Save v7 (v5/v6 load forward).
 - **Deferred**: salvaging, camp buildings beyond the Guild panel,
-  essences as a distinct material class, multiple dungeons with
-  material identity, difficulty tiers, crafting stations, gear with
-  spell power (stat is wired, no sources yet).
+  essences as a distinct material class, difficulty tiers, crafting
+  stations, gear with spell power (stat is wired, no sources yet).

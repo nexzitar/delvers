@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "nest_spiderling"
+enemy_name = "Nest Spiderling"
+base_health = 16
+base_attack = 3
+base_attack_interval = 1.5
+move_speed = 130.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
+material_loot = Array[String](["silk_thread", "silk_thread", "poison_sac"])
+recipe_loot = Array[String](["silk_hood"])
+affix_loot = Array[String](["quick"])
+loot_ids = Array[String](["fast_dagger"])
+preferred_row = 0
+dodge_rating = 0.2

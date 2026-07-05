@@ -53,6 +53,9 @@ var known_lore: Array = []
 ## Guild restoration purchases (see GuildUnlocks). The "restoration"
 ## marker records the free first-victory companion.
 var purchased_unlocks: Array = []
+## Dungeons the guild holds maps for; delves target current_dungeon.
+var unlocked_dungeons: Array = ["darkwood"]
+var current_dungeon := "darkwood"
 ## One-shot camp line for arrivals ("You're not alone anymore.").
 var arrival_message := ""
 
@@ -76,15 +79,19 @@ var delve_materials := {}
 var delve_recipes: Array = []
 var delve_affixes: Array = []
 var delve_lore: Array = []
+var delve_maps: Array = []
 var delve_health := {}
 
-func start_delve():
+func start_delve(dungeon_id := ""):
+	if dungeon_id != "" and unlocked_dungeons.has(dungeon_id):
+		current_dungeon = dungeon_id
 	delve_room = 1
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
 	delve_affixes = []
 	delve_lore = []
+	delve_maps = []
 	delve_health = {}
 
 func bank_delve_loot():
@@ -102,11 +109,18 @@ func bank_delve_loot():
 	for lore_id in delve_lore:
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
+	for dungeon_id in delve_maps:
+		if RosterSave.DUNGEON_PATHS.has(dungeon_id) \
+				and not unlocked_dungeons.has(dungeon_id):
+			unlocked_dungeons.append(dungeon_id)
+			var found = load(RosterSave.DUNGEON_PATHS[dungeon_id])
+			arrival_message = "A weathered map. %s is marked." % found.dungeon_name
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
 	delve_affixes = []
 	delve_lore = []
+	delve_maps = []
 	delve_room = 0
 	sort_gear_stash()
 	check_milestones()

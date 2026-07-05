@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "chitin_shield"
+recipe_name = "Chitin Shield"
+tome_name = "Sketches of a Carapace"
+tome_lore = "Nothing pierced it. We checked."
+result_gear_id = "starter_shield"
+result_item_level = 14
+result_quality = 1
+costs = {"chitin_plate": 3, "silk_thread": 1}

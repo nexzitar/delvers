@@ -18,15 +18,17 @@ const QUALITY_MULT := {
 ## Stat growth per item level above 1.
 const LEVEL_STEP := 0.12
 
-static func roll_quality(depth: int, boss := false) -> int:
+## Depth unlocks rarity: deeper dungeons raise rare_chance and the
+## boss's epic sliver rather than multiplying drop counts.
+static func roll_quality(depth: int, boss := false, rare_chance := 0.01, epic_chance := 0.03) -> int:
 	if boss:
-		if randf() < 0.03:
+		if randf() < epic_chance:
 			return ItemQuality.Tier.EPIC
 		return ItemQuality.Tier.RARE
 	var roll = randf()
-	if roll < 0.01:
+	if roll < rare_chance:
 		return ItemQuality.Tier.RARE
-	if roll < 0.01 + 0.12 + 0.02 * depth:
+	if roll < rare_chance + 0.12 + 0.02 * depth:
 		return ItemQuality.Tier.UNCOMMON
 	return ItemQuality.Tier.COMMON
 
@@ -77,8 +79,14 @@ const LORE_DROP_CHANCE := 0.03
 static func roll_enemy_drops(
 		enemy_templates: Array, room: int,
 		known_recipes := [], known_affixes := [], known_lore := [],
+		dungeon: DungeonDefinition = null, unlocked_dungeons := [],
 ) -> Dictionary:
-	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [], "lore": []}
+	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [],
+		"lore": [], "maps": []}
+	var item_level = room + (dungeon.level_offset if dungeon else 0)
+	var rare_chance = dungeon.rare_chance if dungeon else 0.01
+	var epic_chance = dungeon.boss_epic_chance if dungeon else 0.03
+	var lore_series = dungeon.lore_ids if dungeon else RosterSave.LORE_PATHS.keys()
 	var seen: Array = known_recipes.duplicate()
 	var seen_affixes: Array = known_affixes.duplicate()
 
@@ -111,20 +119,26 @@ static func roll_enemy_drops(
 				drops.affixes.append(affix_id)
 				seen_affixes.append(affix_id)
 
-		# History: the next unrecovered fragment, in order — evidence
-		# assembles the way a trail would.
+		# History: the next unrecovered fragment of THIS dungeon's
+		# expedition, in order — evidence assembles the way a trail would.
 		if randf() <= LORE_DROP_CHANCE:
-			for lore_id in RosterSave.LORE_PATHS:
+			for lore_id in lore_series:
 				if not known_lore.has(lore_id) and not drops.lore.has(lore_id):
 					drops.lore.append(lore_id)
 					break
+
+		# Maps: bosses guard the way deeper. Dropped once, ever.
+		if template.map_loot != "" \
+				and not unlocked_dungeons.has(template.map_loot) \
+				and not drops.maps.has(template.map_loot):
+			drops.maps.append(template.map_loot)
 
 		# Finished equipment: a memorable fluke, or a boss trophy.
 		if not template.loot_ids.is_empty() and randf() <= template.drop_chance:
 			var gear = materialize(
 				template.loot_ids.pick_random(),
-				room,
-				roll_quality(room, template.is_boss)
+				item_level,
+				roll_quality(room, template.is_boss, rare_chance, epic_chance)
 			)
 			if gear:
 				drops.gear.append(gear)
@@ -137,7 +151,11 @@ const ENEMY_PATHS := [
 	"res://resources/enemies/goblin_archer.tres",
 	"res://resources/enemies/goblin_warrior.tres",
 	"res://resources/enemies/venomous_spider.tres",
+	"res://resources/enemies/nest_spiderling.tres",
+	"res://resources/enemies/web_weaver.tres",
+	"res://resources/enemies/chitin_crawler.tres",
 	"res://resources/enemies/slime_king.tres",
+	"res://resources/enemies/broodmother.tres",
 ]
 static var _owner_cache := {}
 

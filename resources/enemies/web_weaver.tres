@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/web_shot.tres" id="4_web"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "web_weaver"
+enemy_name = "Web Weaver"
+base_health = 26
+base_attack = 4
+base_attack_interval = 2.8
+move_speed = 95.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_web")])
+material_loot = Array[String](["silk_thread", "silk_thread", "poison_sac"])
+recipe_loot = Array[String](["silk_hood", "chitin_shield"])
+affix_loot = Array[String](["frostforged"])
+loot_ids = Array[String](["starter_bow"])
+preferred_row = 1

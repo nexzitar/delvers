@@ -40,6 +40,7 @@ const STATUS_TEXT := {
 	"poison_virulent": "Poisoned!",
 	"slow_frostforged": "Chilled!",
 	"venom_bite_poison": "Poisoned!",
+	"web_root": "Webbed!",
 }
 
 var actors := {}
@@ -69,6 +70,17 @@ const ARENA_POOL := [
 
 ## Harness hook: force a specific arena (set before adding to the tree).
 var forced_arena_path := ""
+
+## The dungeon being delved (drives encounters, loot band, and theme).
+var _dungeon_def: DungeonDefinition = null
+
+func dungeon() -> DungeonDefinition:
+	if _dungeon_def == null:
+		_dungeon_def = load(RosterSave.DUNGEON_PATHS.get(
+			PlayerRoster.current_dungeon,
+			"res://resources/dungeons/darkwood.tres"
+		))
+	return _dungeon_def
 
 ## Roster indices of the heroes fielded this room (attrition can
 ## bench the fallen for the rest of the delve).
@@ -110,22 +122,20 @@ func _ready():
 	_build_timeline(combat_result.combat_log)
 	_playing = true
 
-## A random pack of enemies, growing with the delve's depth. The final
-## room is the boss lair: the Slime King and his retinue.
+## A random pack from the dungeon's pools, growing with depth. One
+## guaranteed enemy anchors every room (the farmable identity), and
+## the final room is the boss lair.
 func roll_encounter(room: int) -> Array:
-	if room >= PlayerRoster.DELVE_LENGTH:
-		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
-	# The warband holds the Darkwood: every room fields at least one
-	# warrior, so iron scales with rooms cleared instead of pool luck.
-	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER,
-		GOBLIN_WARRIOR, GOBLIN_WARRIOR]
-	if room >= 3:
-		pool.append(VENOMOUS_SPIDER)
-		pool.append(VENOMOUS_SPIDER)
+	var d = dungeon()
+	if room >= d.length:
+		return Array(d.boss_pack)
+	var pool = Array(d.pool_core)
+	if room >= d.deep_from:
+		pool.append_array(d.pool_deep)
 	var low = clampi(2 + (room - 1) / 4, 2, 4)
 	var high = clampi(3 + (room - 1) / 2, 3, 6)
-	var encounter = [GOBLIN_WARRIOR]
-	for i in range(randi_range(low, high) - 1):
+	var encounter = [d.guaranteed] if d.guaranteed else []
+	for i in range(randi_range(low, high) - encounter.size()):
 		encounter.append(pool.pick_random())
 	return encounter
 
@@ -134,7 +144,7 @@ func roll_encounter(room: int) -> Array:
 func _pick_arena(room: int) -> BattleArena:
 	if forced_arena_path != "":
 		return load(forced_arena_path)
-	if room <= 1 or room >= PlayerRoster.DELVE_LENGTH:
+	if room <= 1 or room >= dungeon().length:
 		return load(ARENA_POOL[0])
 	return load(ARENA_POOL.pick_random())
 
@@ -502,7 +512,7 @@ func _show_room_banner(room: int):
 	layer.layer = 11
 	add_child(layer)
 	var label := Label.new()
-	label.text = "The Darkwood  -  Room %d of %d" % [room, PlayerRoster.DELVE_LENGTH]
+	label.text = "%s  -  Room %d of %d" % [dungeon().dungeon_name, room, dungeon().length]
 	label.anchor_left = 0.0
 	label.anchor_right = 1.0
 	label.offset_top = 40
@@ -547,7 +557,9 @@ func _finish_battle():
 		slain, room,
 		PlayerRoster.known_recipes + PlayerRoster.delve_recipes,
 		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
-		PlayerRoster.known_lore + PlayerRoster.delve_lore
+		PlayerRoster.known_lore + PlayerRoster.delve_lore,
+		dungeon(),
+		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -558,8 +570,9 @@ func _finish_battle():
 	PlayerRoster.delve_recipes.append_array(found.recipes)
 	PlayerRoster.delve_affixes.append_array(found.affixes)
 	PlayerRoster.delve_lore.append_array(found.lore)
+	PlayerRoster.delve_maps.append_array(found.maps)
 
-	if room >= PlayerRoster.DELVE_LENGTH:
+	if room >= dungeon().length:
 		PlayerRoster.adventures_completed += 1
 		if PlayerRoster.autosave:
 			RosterSave.save(PlayerRoster)
@@ -567,21 +580,30 @@ func _finish_battle():
 		await get_tree().create_timer(1.2).timeout
 		_show_summary(
 			"Delve Complete!",
-			"The Slime King is slain. All %d rooms conquered." % PlayerRoster.DELVE_LENGTH
+			"%s is conquered, all %d rooms of it." % [
+				dungeon().dungeon_name, dungeon().length
+			]
 		)
 		return
 
 	if PlayerRoster.autosave:
 		RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
 ## crown jewels — newly learned recipes and affixes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = []) -> Array:
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = []) -> Array:
 	var entries := []
+	for dungeon_id in maps:
+		var mapped = load(RosterSave.DUNGEON_PATHS[dungeon_id])
+		entries.append({
+			"texture": preload("res://art/tomes/tome_journal.png"),
+			"text": "Weathered Map:\n%s" % mapped.dungeon_name,
+			"color": Color(0.95, 0.8, 0.35),
+		})
 	for lore_id in lore:
 		var fragment = load(RosterSave.LORE_PATHS[lore_id])
 		entries.append({
@@ -676,7 +698,8 @@ func _show_summary(title: String, subtitle: String):
 		PlayerRoster.delve_materials,
 		PlayerRoster.delve_recipes,
 		PlayerRoster.delve_affixes,
-		PlayerRoster.delve_lore
+		PlayerRoster.delve_lore,
+		PlayerRoster.delve_maps
 	)
 	panel.setup(title, subtitle, entries, "Return to Camp")
 	panel.primary_pressed.connect(_bank_and_return)
@@ -714,33 +737,34 @@ func _show_battle_result(victory):
 # --- World & UI ---------------------------------------------------------
 
 func _setup_world(arena):
-	# The Darkwood: moonlight through a forest clearing, a thin ground
-	# haze, and treelines closing in around the field.
+	# Each dungeon dresses its own stage: the Darkwood is a moonlit
+	# forest clearing; the Nest a warm webbed cavern.
+	var nest: bool = dungeon().theme == "nest"
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("0d1118")
+	env.background_color = Color("140e14") if nest else Color("0d1118")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("66748e")
+	env.ambient_light_color = Color("7a5e6e") if nest else Color("66748e")
 	env.ambient_light_energy = 0.6
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.fog_enabled = true
-	env.fog_light_color = Color("131a22")
-	env.fog_density = 0.011
+	env.fog_light_color = Color("1c1218") if nest else Color("131a22")
+	env.fog_density = 0.014 if nest else 0.011
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
 
 	var moon := DirectionalLight3D.new()
 	moon.rotation_degrees = Vector3(-52, -30, 0)
-	moon.light_energy = 1.0
-	moon.light_color = Color(0.82, 0.88, 1.0)
+	moon.light_energy = 0.9 if nest else 1.0
+	moon.light_color = Color(1.0, 0.86, 0.72) if nest else Color(0.82, 0.88, 1.0)
 	moon.shadow_enabled = true
 	add_child(moon)
 
 	var fill := DirectionalLight3D.new()
 	fill.rotation_degrees = Vector3(-18, 140, 0)
 	fill.light_energy = 0.22
-	fill.light_color = Color(0.55, 0.7, 0.55)
+	fill.light_color = Color(0.6, 0.45, 0.6) if nest else Color(0.55, 0.7, 0.55)
 	add_child(fill)
 
 	var center = to_world(Vector2(
@@ -753,7 +777,7 @@ func _setup_world(arena):
 	plane.size = Vector2(arena.width + 40, arena.height + 40)
 	ground.mesh = plane
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("2c3626")
+	mat.albedo_color = Color("332631") if nest else Color("2c3626")
 	mat.roughness = 1.0
 	ground.material_override = mat
 	ground.position = center
@@ -763,8 +787,8 @@ func _setup_world(arena):
 	var trunk_mat := StandardMaterial3D.new()
 	trunk_mat.albedo_color = Color("32251a")
 	trunk_mat.roughness = 1.0
-	# Trees hug the visible clearing, but only behind and beside the
-	# fight — the camera's foreground stays clear.
+	# The backdrop ring hugs the visible clearing, but only behind and
+	# beside the fight — the camera's foreground stays clear.
 	var cam_dir = Vector3(CAMERA_OFFSET.x, 0, CAMERA_OFFSET.z).normalized()
 	for i in 30:
 		var a = TAU * i / 30.0 + 0.35 * sin(i * 3.1)
@@ -780,6 +804,49 @@ func _setup_world(arena):
 		var height = 1.0 + 0.5 * ((i * 5) % 4) / 3.0
 		tree.scale = Vector3.ONE * height
 		add_child(tree)
+		if nest:
+			# Stalagmite columns wrapped in pale silk, egg sacs at the base.
+			var spire := CylinderMesh.new()
+			spire.top_radius = 0.05
+			spire.bottom_radius = 0.5
+			spire.height = 2.6
+			spire.radial_segments = 7
+			var spire_mesh := MeshInstance3D.new()
+			spire_mesh.mesh = spire
+			var spire_mat := StandardMaterial3D.new()
+			spire_mat.albedo_color = Color("453242") * (0.85 + 0.3 * ((i * 11) % 3) / 2.0)
+			spire_mat.roughness = 1.0
+			spire_mesh.material_override = spire_mat
+			spire_mesh.position.y = 1.3
+			tree.add_child(spire_mesh)
+			var wrap := CylinderMesh.new()
+			wrap.top_radius = 0.16
+			wrap.bottom_radius = 0.3
+			wrap.height = 0.8
+			wrap.radial_segments = 7
+			var wrap_mesh := MeshInstance3D.new()
+			wrap_mesh.mesh = wrap
+			var wrap_mat := StandardMaterial3D.new()
+			wrap_mat.albedo_color = Color("cfc8b8")
+			wrap_mat.roughness = 0.9
+			wrap_mesh.material_override = wrap_mat
+			wrap_mesh.position.y = 0.9 + 0.5 * ((i * 7) % 3) / 2.0
+			tree.add_child(wrap_mesh)
+			if i % 3 == 0:
+				var sac := SphereMesh.new()
+				sac.radius = 0.22
+				sac.height = 0.4
+				sac.radial_segments = 7
+				sac.rings = 4
+				var sac_mesh := MeshInstance3D.new()
+				sac_mesh.mesh = sac
+				var sac_mat := StandardMaterial3D.new()
+				sac_mat.albedo_color = Color("ded6c2")
+				sac_mat.roughness = 0.85
+				sac_mesh.material_override = sac_mat
+				sac_mesh.position = Vector3(0.5, 0.2, 0.2)
+				tree.add_child(sac_mesh)
+			continue
 		var trunk := CylinderMesh.new()
 		trunk.top_radius = 0.09
 		trunk.bottom_radius = 0.13

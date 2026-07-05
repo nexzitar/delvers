@@ -19,6 +19,9 @@ func _init():
 	_save(_tome(Color("2a3a5e"), Color("18233c"), Color("7fa4d8")), "res://art/tomes/tome_recipe.png")
 	_save(_tome(Color("42285e"), Color("2a173c"), Color("a06fd0")), "res://art/tomes/tome_affix.png")
 	_save(_tome(Color("4a3a22"), Color("2e2412"), Color("d8c684")), "res://art/tomes/tome_journal.png")
+	_save(_silk(Color("e8e4d8")), "res://art/materials/mat_silk_thread.png")
+	_save(_chitin(), "res://art/materials/mat_chitin_plate.png")
+	_save(_silk(Color("cdb8e0")), "res://art/materials/mat_brood_silk.png")
 	print("material icons written")
 	quit()
 
@@ -142,4 +145,28 @@ func _tome(bg: Color, bg2: Color, trim: Color) -> Image:
 	_paint(img, func(p):
 		return p.x >= 28.0 and p.x <= 40.0 and absf(p.y - 32.0) < 5.0 \
 			and int(p.y) % 4 < 2, trim.lightened(0.45))
+	return img
+
+## A wound spool of thread.
+func _silk(thread: Color) -> Image:
+	var img = _tile(Color("3a3040"), Color("241c2a"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 12.0 and absf(p.y - C) < 14.0, Color("6b5a3c"))
+	_paint(img, func(p):
+		if absf(p.x - C) > 11.0 or absf(p.y - C) > 12.0:
+			return false
+		return int(p.y) % 4 < 2, thread)
+	return img
+
+## An overlapping shell plate.
+func _chitin() -> Image:
+	var img = _tile(Color("2e2418"), Color("1c160e"))
+	for row in 3:
+		_paint(img, func(p):
+			var cy = 20.0 + row * 10.0
+			if p.y < cy or p.y > cy + 11.0:
+				return false
+			var half = 16.0 - row * 1.5
+			return absf(p.x - C) < half * (1.0 - (p.y - cy) / 22.0 * 0.4),
+			Color("6e4f2e").lightened(0.12 * row))
 	return img

@@ -35,6 +35,9 @@ class_name EnemyDefinition
 @export var loot_ids: Array[String] = []
 @export var drop_chance: float = 0.02
 @export var is_boss: bool = false
+## Dungeon id this enemy's map fragment unlocks (bosses guard the way
+## deeper). Dropped once, ever.
+@export var map_loot: String = ""
 
 ## Defensive/offensive secondary stats (see GearDefinition for the
 ## hero-side equivalents).
