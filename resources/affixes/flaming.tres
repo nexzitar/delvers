@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_affix")
 affix_id = "flaming"
+tome_name = "Royal Slime Alchemy Notes"
 affix_name = "Flaming"
 icon = ExtResource("2_icon")
 applies_to_weapons = true

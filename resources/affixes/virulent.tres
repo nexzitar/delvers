@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_affix")
 affix_id = "virulent"
+tome_name = "Spider Venom Treatise"
 affix_name = "Virulent"
 icon = ExtResource("2_icon")
 applies_to_weapons = true

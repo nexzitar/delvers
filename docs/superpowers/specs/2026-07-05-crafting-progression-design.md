@@ -113,6 +113,17 @@ beat "another random rare sword".
   poison DoT; teaches Virulent), slimes own gel/ooze/cores, archers
   own wood/strings. New spider rig (fanned two-segment legs, rear-up
   bite attack) and helmeted warrior goblin.
+- **2026-07-05 (slice 4)**: knowledge provenance — recipes and affixes
+  drop as named tomes ("Spider Venom Treatise — Teaches: Virulent",
+  "Ancient Goblin Forging Manual"); Forge quality-of-life — hover a
+  recipe to preview the exact crafted item with equipped comparison,
+  cost lines name the enemy that owns each material; secondary stats —
+  armor (flat reduction), block (shields, halves), dodge (avoids),
+  crit (150%), spell power (heals) on gear and enemies, with
+  Dodge!/blocked/crit! floating feedback; Heal reworked to a mana cast
+  (4 mana, 1.4s wind-up, no cooldown, fizzles refund) with slow mana
+  regen (0.4/s).
 - **Deferred**: salvaging, camp buildings & material spending beyond
   crafting, essences as a distinct material class, multiple dungeons
-  with material identity, difficulty tiers, crafting stations.
+  with material identity, difficulty tiers, crafting stations, gear
+  with spell power (stat is wired, no sources yet).

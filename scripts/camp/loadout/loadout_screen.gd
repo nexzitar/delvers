@@ -431,23 +431,33 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	)
 	info.add_child(name_label)
 	var bill = PlayerRoster.craft_costs(recipe, chosen)
-	var costs := []
 	for material_id in bill:
 		var material = load(RosterSave.MATERIAL_PATHS[material_id])
 		var have = PlayerRoster.material_stash.get(material_id, 0)
-		costs.append("%s %d/%d" % [
+		var owner = LootTable.material_owner(material_id)
+		var cost_label = Label.new()
+		cost_label.text = "%s %d/%d" % [
 			material.material_name, have, bill[material_id]
-		])
-	var cost_label = Label.new()
-	cost_label.text = ", ".join(costs)
-	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cost_label.add_theme_font_size_override("font_size", 13)
-	cost_label.add_theme_color_override(
-		"font_color",
-		PARCHMENT if PlayerRoster.can_craft(recipe, chosen) else Color(0.75, 0.4, 0.35)
+		]
+		if owner != "":
+			cost_label.text += "  -  %s" % owner
+		cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cost_label.add_theme_font_size_override("font_size", 13)
+		cost_label.add_theme_color_override(
+			"font_color",
+			PARCHMENT if have >= bill[material_id] else Color(0.75, 0.4, 0.35)
+		)
+		info.add_child(cost_label)
+
+	# Hovering the row previews the exact item this craft would forge,
+	# with the usual equipped-gear comparison.
+	var preview = LootTable.materialize(
+		recipe.result_gear_id, recipe.result_item_level,
+		recipe.result_quality, chosen
 	)
-	info.add_child(cost_label)
+	preview.gear_name = display_name
+	panel.mouse_entered.connect(func(): show_tooltip("gear", preview))
+	panel.mouse_exited.connect(hide_tooltip)
 
 	# Known compatible affixes: pick one to enchant the craft.
 	if not affixes.is_empty():
@@ -789,6 +799,16 @@ func _tooltip_gear(gear: GearDefinition):
 
 	if gear.health_bonus != 0:
 		_tip_line("+%d Health" % gear.health_bonus, PARCHMENT, 18, 1)
+	if gear.armor != 0:
+		_tip_line("+%d Armor" % gear.armor, PARCHMENT, 18, 1)
+	if gear.block_rating > 0.0:
+		_tip_line("%d%% Block" % roundi(gear.block_rating * 100), PARCHMENT, 18, 1)
+	if gear.dodge_rating > 0.0:
+		_tip_line("%d%% Dodge" % roundi(gear.dodge_rating * 100), PARCHMENT, 18, 1)
+	if gear.crit_rating > 0.0:
+		_tip_line("%d%% Crit" % roundi(gear.crit_rating * 100), PARCHMENT, 18, 1)
+	if gear.spell_power != 0:
+		_tip_line("+%d Spell Power" % gear.spell_power, PARCHMENT, 18, 1)
 
 	_tip_line("Item level %d" % gear.item_level, DIM, 16, 1)
 

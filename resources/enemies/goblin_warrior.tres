@@ -18,3 +18,5 @@ recipe_loot = Array[String](["reinforced_shield", "iron_helm"])
 affix_loot = Array[String](["guarding"])
 loot_ids = Array[String](["starter_sword", "starter_shield", "starter_armor"])
 preferred_row = 0
+armor = 1
+block_rating = 0.12

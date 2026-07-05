@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_affix")
 affix_id = "guarding"
+tome_name = "Phalanx Doctrine of the Warband"
 affix_name = "Guarding"
 icon = ExtResource("2_icon")
 applies_to_weapons = false

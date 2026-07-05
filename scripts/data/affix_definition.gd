@@ -9,6 +9,9 @@ class_name AffixDefinition
 @export var affix_id: String
 ## Name prefix: "Virulent" makes a "Virulent Hunter Bow".
 @export var affix_name: String
+## Provenance: the artifact this knowledge was recovered as
+## ("Spider Venom Treatise"). Worldbuilding for the drop screen.
+@export var tome_name: String = ""
 @export var icon: Texture2D
 
 ## Compatibility: weapons (anything that swings or shoots) and/or

@@ -47,6 +47,9 @@ static func materialize(gear_id: String, item_level: int, quality: int, affix_id
 		gear.damage_max = maxi(gear.damage_min, roundi(gear.damage_max * mult))
 	gear.attack_bonus = roundi(gear.attack_bonus * mult)
 	gear.health_bonus = roundi(gear.health_bonus * mult)
+	gear.armor = roundi(gear.armor * mult)
+	gear.spell_power = roundi(gear.spell_power * mult)
+	# Ratings (block/dodge/crit) stay flat: percentages don't inflate.
 
 	if affix_id != "" and RosterSave.AFFIX_PATHS.has(affix_id):
 		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
@@ -116,3 +119,37 @@ static func roll_enemy_drops(
 			if gear:
 				drops.gear.append(gear)
 	return drops
+
+## Who to hunt for a material: the non-boss enemy with the most copies
+## of it in their table (bosses only as a last resort).
+const ENEMY_PATHS := [
+	"res://resources/enemies/green_slime.tres",
+	"res://resources/enemies/goblin_archer.tres",
+	"res://resources/enemies/goblin_warrior.tres",
+	"res://resources/enemies/venomous_spider.tres",
+	"res://resources/enemies/slime_king.tres",
+]
+static var _owner_cache := {}
+
+static func material_owner(material_id: String) -> String:
+	if _owner_cache.has(material_id):
+		return _owner_cache[material_id]
+	var best := ""
+	var best_count := 0
+	var boss_fallback := ""
+	for path in ENEMY_PATHS:
+		var template = load(path)
+		var count = template.material_loot.count(material_id)
+		if count == 0:
+			continue
+		if template.is_boss:
+			if boss_fallback == "":
+				boss_fallback = template.enemy_name
+			continue
+		if count > best_count:
+			best_count = count
+			best = template.enemy_name
+	if best == "":
+		best = boss_fallback
+	_owner_cache[material_id] = best
+	return best

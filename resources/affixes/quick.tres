@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_affix")
 affix_id = "quick"
+tome_name = "Goblin Skirmisher's Drill Book"
 affix_name = "Quick"
 icon = ExtResource("2_icon")
 applies_to_weapons = true

@@ -33,3 +33,10 @@ class_name EnemyDefinition
 @export var loot_ids: Array[String] = []
 @export var drop_chance: float = 0.02
 @export var is_boss: bool = false
+
+## Defensive/offensive secondary stats (see GearDefinition for the
+## hero-side equivalents).
+@export var armor: int = 0
+@export var block_rating: float = 0.0
+@export var dodge_rating: float = 0.0
+@export var crit_rating: float = 0.0

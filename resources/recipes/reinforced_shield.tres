@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_recipe")
 recipe_id = "reinforced_shield"
+tome_name = "Shieldwright's Salvaged Diagrams"
 recipe_name = "Reinforced Shield"
 result_gear_id = "starter_shield"
 result_item_level = 4

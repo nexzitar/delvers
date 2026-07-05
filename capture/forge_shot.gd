@@ -27,6 +27,13 @@ func _ready():
 		tabs.current_tab = 2
 	await get_tree().create_timer(0.4).timeout
 
+	# Simulate hovering the first recipe row for the preview tooltip.
+	for panel in loadout.find_children("*", "PanelContainer", true, false):
+		if panel.mouse_entered.get_connections().size() > 0:
+			panel.mouse_entered.emit()
+			break
+	await get_tree().create_timer(0.2).timeout
+
 	await RenderingServer.frame_post_draw
 	var img = get_viewport().get_texture().get_image()
 	img.save_png("%s/forge_tab.png" % out_dir)

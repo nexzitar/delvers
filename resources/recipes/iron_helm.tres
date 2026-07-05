@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_recipe")
 recipe_id = "iron_helm"
+tome_name = "Rusted Pattern Book of the Armorer"
 recipe_name = "Iron Helm"
 result_gear_id = "starter_helmet"
 result_item_level = 4

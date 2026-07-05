@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_recipe")
 recipe_id = "iron_sword"
+tome_name = "Ancient Goblin Forging Manual"
 recipe_name = "Iron Sword"
 result_gear_id = "starter_sword"
 result_item_level = 4

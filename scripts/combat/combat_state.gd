@@ -188,6 +188,8 @@ func log_heal(source, target, skill, amount: int):
 	event.amount = amount
 	event.remaining_health = target.current_health
 	event.max_health = target.max_health
+	event.current_mana = source.current_mana
+	event.max_mana = source.max_mana
 	combat_log.add_event(event)
 
 ## Displacement skills (charge) teleport in the sim; the theater tweens
@@ -441,6 +443,15 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			hero_health.get(heroes.size(), hero.max_health), 1, hero.max_health
 		)
 		hero.current_mana = hero_template.base_mana
+		hero.max_mana = hero_template.base_mana
+
+		# Secondary stats come off the whole loadout.
+		for item in loadout:
+			hero.armor += item.armor
+			hero.block_chance += item.block_rating
+			hero.dodge_chance += item.dodge_rating
+			hero.crit_chance += item.crit_rating
+			hero.spell_power += item.spell_power
 
 		# Main-hand weapon speed sets the interval; unarmed falls back.
 		hero.attack_interval = (
@@ -496,6 +507,11 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		enemy.current_health = enemy.max_health
 		enemy.current_mana = enemy_template.base_mana
+		enemy.max_mana = enemy_template.base_mana
+		enemy.armor = enemy_template.armor
+		enemy.block_chance = enemy_template.block_rating
+		enemy.dodge_chance = enemy_template.dodge_rating
+		enemy.crit_chance = enemy_template.crit_rating
 
 		enemy.attack_interval = enemy_template.base_attack_interval
 		enemy.attack_timer = enemy.attack_interval

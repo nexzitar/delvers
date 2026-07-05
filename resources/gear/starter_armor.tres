@@ -14,3 +14,4 @@ icon = ExtResource("2_tex")
 offset = Vector2(5, -95)
 scale = 0.27
 health_bonus = 15
+armor = 2

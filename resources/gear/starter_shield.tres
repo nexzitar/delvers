@@ -15,3 +15,5 @@ icon = ExtResource("3_icon")
 offset = Vector2(115, -50)
 scale = 0.3
 health_bonus = 10
+armor = 2
+block_rating = 0.15

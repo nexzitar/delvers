@@ -304,6 +304,12 @@ func _play_damage(event):
 			target.rig.position, str(event.amount), Color(0.7, 0.35, 0.85)
 		)
 		return
+	if event.dodged:
+		# The swing whiffs: no impact sound, a pale sidestep note.
+		_spawn_floating_text(
+			target.rig.position, "Dodge!", Color(0.85, 0.85, 0.8)
+		)
+		return
 	var ranged = (
 		event.skill != null
 		and event.skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
@@ -312,9 +318,20 @@ func _play_damage(event):
 		ARROW_HIT_SOUND if ranged else MELEE_HIT_SOUND,
 		"SFX", -4.0, randf_range(0.9, 1.1)
 	)
-	_spawn_floating_text(
-		target.rig.position, str(event.amount), Color(0.9, 0.2, 0.15)
-	)
+	if event.blocked:
+		_spawn_floating_text(
+			target.rig.position, "%d (blocked)" % event.amount,
+			Color(0.5, 0.7, 0.95)
+		)
+	elif event.crit:
+		_spawn_floating_text(
+			target.rig.position, "%d!" % event.amount,
+			Color(1.0, 0.62, 0.1), 1.45
+		)
+	else:
+		_spawn_floating_text(
+			target.rig.position, str(event.amount), Color(0.9, 0.2, 0.15)
+		)
 
 func _play_heal(event):
 	var target = actors.get(event.target_id)
@@ -323,6 +340,9 @@ func _play_heal(event):
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
+	var caster_bar = sidebars_by_entity.get(event.source_id)
+	if caster_bar and event.max_mana > 0:
+		caster_bar.set_mana(event.source_id, event.current_mana, event.max_mana)
 	_spawn_floating_text(
 		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3)
 	)
@@ -451,11 +471,11 @@ func _update_camera(delta):
 func _yaw_of(facing: Vector2) -> float:
 	return atan2(facing.x, facing.y)
 
-func _spawn_floating_text(at: Vector3, text: String, color: Color):
+func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0):
 	var label := Label3D.new()
 	label.text = text
 	label.font = FONT
-	label.font_size = 96
+	label.font_size = int(96 * size_mult)
 	label.pixel_size = 0.006
 	label.modulate = color
 	label.outline_size = 18
@@ -554,16 +574,15 @@ func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: 
 	for affix_id in affixes:
 		var affix = load(RosterSave.AFFIX_PATHS[affix_id])
 		entries.append({
-			"texture": affix.icon,
-			"text": "Affix:\n%s" % affix.affix_name,
+			"texture": preload("res://art/tomes/tome_affix.png"),
+			"text": "%s\nTeaches: %s" % [affix.tome_name, affix.affix_name],
 			"color": ItemQuality.color(ItemQuality.Tier.EPIC),
 		})
 	for recipe_id in recipes:
 		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
-		var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
 		entries.append({
-			"texture": result.icon if result.icon else result.texture,
-			"text": "Recipe:\n%s" % recipe.recipe_name,
+			"texture": preload("res://art/tomes/tome_recipe.png"),
+			"text": "%s\nTeaches: %s" % [recipe.tome_name, recipe.recipe_name],
 			"color": ItemQuality.color(ItemQuality.Tier.RARE),
 		})
 	for item in gear:
@@ -600,8 +619,8 @@ func _show_room_toast(room: int, entries: Array):
 	panel.anchor_bottom = 1.0
 	panel.offset_left = -340
 	panel.offset_right = 340
-	panel.offset_top = -190
-	panel.offset_bottom = -40
+	panel.offset_top = -235
+	panel.offset_bottom = -30
 	layer.add_child(panel)
 
 	var box := VBoxContainer.new()
