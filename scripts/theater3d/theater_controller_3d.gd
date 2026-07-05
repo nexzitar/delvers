@@ -498,10 +498,18 @@ func _finish_battle():
 		)
 		return
 
-	# Each slain enemy rolls its own loot table; most drop nothing.
+	# Monsters drop resources and knowledge: pouch it all.
 	var slain = combat_result.enemies.map(func(e): return e.template)
-	var found = LootTable.roll_enemy_drops(slain, room)
-	PlayerRoster.delve_loot.append_array(found)
+	var found = LootTable.roll_enemy_drops(
+		slain, room, PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+	)
+	PlayerRoster.delve_loot.append_array(found.gear)
+	for material_id in found.materials:
+		PlayerRoster.delve_materials[material_id] = (
+			PlayerRoster.delve_materials.get(material_id, 0)
+			+ found.materials[material_id]
+		)
+	PlayerRoster.delve_recipes.append_array(found.recipes)
 
 	if room >= PlayerRoster.DELVE_LENGTH:
 		PlayerRoster.adventures_completed += 1
@@ -515,31 +523,97 @@ func _finish_battle():
 		return
 
 	RosterSave.save(PlayerRoster)
-	await _show_battle_result(true)
-	await get_tree().create_timer(1.2).timeout
-	_show_room_cleared(room, found)
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes))
+	await get_tree().create_timer(2.6).timeout
+	PlayerRoster.delve_room += 1
+	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
-func _show_room_cleared(room: int, found: Array):
-	var panel := DelvePanel.new()
-	add_child(panel)
-	var subtitle: String
-	if found.is_empty():
-		subtitle = "Nothing worth carrying. The way deeper stands open."
-	else:
-		subtitle = "The pouch holds %d item%s." % [
-			PlayerRoster.delve_loot.size(),
-			"" if PlayerRoster.delve_loot.size() == 1 else "s",
-		]
-	panel.setup("Room %d Cleared!" % room, subtitle, found, "Delve Deeper")
-	panel.primary_pressed.connect(func():
-		PlayerRoster.delve_room += 1
-		SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn"))
+## Display entries for spoils: gear, materials with counts, and the
+## crown jewels — newly learned recipes.
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array) -> Array:
+	var entries := []
+	for recipe_id in recipes:
+		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+		var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
+		entries.append({
+			"texture": result.icon if result.icon else result.texture,
+			"text": "Recipe:\n%s" % recipe.recipe_name,
+			"color": ItemQuality.color(ItemQuality.Tier.RARE),
+		})
+	for item in gear:
+		entries.append({
+			"texture": item.icon if item.icon else item.texture,
+			"text": item.gear_name,
+			"color": ItemQuality.color(item.quality),
+		})
+	for material_id in materials:
+		var material = load(RosterSave.MATERIAL_PATHS[material_id])
+		entries.append({
+			"texture": material.icon,
+			"text": "%s x%d" % [material.material_name, materials[material_id]],
+			"color": ItemQuality.color(material.tier),
+		})
+	return entries
+
+## Brief bottom-center spoils toast; the delve marches on by itself.
+func _show_room_toast(room: int, entries: Array):
+	var layer := CanvasLayer.new()
+	layer.layer = 12
+	add_child(layer)
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.045, 0.06, 0.92)
+	style.border_color = Color(0.35, 0.28, 0.16, 0.9)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(16)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -340
+	panel.offset_right = 340
+	panel.offset_top = -190
+	panel.offset_bottom = -40
+	layer.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	var title := Label.new()
+	title.text = (
+		"Room %d cleared — pressing on..." % room
+		if not entries.is_empty()
+		else "Room %d cleared — nothing worth carrying. Pressing on..." % room
+	)
+	title.add_theme_font_override("font", FONT)
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(0.85, 0.72, 0.42))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	if not entries.is_empty():
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 14)
+		box.add_child(row)
+		for entry in entries:
+			row.add_child(DelvePanel.loot_entry(entry))
+
+	panel.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(panel, "modulate:a", 1.0, 0.35)
 
 ## Final spoils screen: everything gathered this delve, then camp.
 func _show_summary(title: String, subtitle: String):
 	var panel := DelvePanel.new()
 	add_child(panel)
-	panel.setup(title, subtitle, PlayerRoster.delve_loot, "Return to Camp")
+	var entries = _drop_entries(
+		PlayerRoster.delve_loot,
+		PlayerRoster.delve_materials,
+		PlayerRoster.delve_recipes
+	)
+	panel.setup(title, subtitle, entries, "Return to Camp")
 	panel.primary_pressed.connect(_bank_and_return)
 
 func _bank_and_return():

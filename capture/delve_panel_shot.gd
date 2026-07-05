@@ -25,10 +25,18 @@ func _run(theater):
 
 	PlayerRoster.delve_loot = [
 		LootTable.materialize("starter_bow", 4, ItemQuality.Tier.UNCOMMON),
-		LootTable.materialize("starter_helmet", 3, ItemQuality.Tier.COMMON),
 	]
-	theater._show_room_cleared(4, PlayerRoster.delve_loot.slice(0, 2))
-	await get_tree().create_timer(0.5).timeout
+	PlayerRoster.delve_materials = {"gel": 3, "ash_wood": 2, "poison_sac": 1}
+	PlayerRoster.delve_recipes = ["hunter_bow"]
+
+	theater._show_room_toast(4, theater._drop_entries(
+		[], {"gel": 2, "iron_scrap": 1}, ["hunter_bow"]
+	))
+	await get_tree().create_timer(0.6).timeout
 	await _snap("delve_room_cleared")
+
+	theater._show_summary("Delve Complete!", "The Slime King is slain.")
+	await get_tree().create_timer(0.5).timeout
+	await _snap("delve_summary")
 
 	get_tree().quit()

@@ -17,5 +17,6 @@ base_attack_interval = 4.0
 move_speed = 80.0
 portrait = ExtResource("4_icon")
 skills = Array[ExtResource("2_sh440")]([ExtResource("3_sh440")])
+material_loot = Array[String](["gel", "gel", "acidic_ooze", "iron_scrap", "corrosion_core"])
+recipe_loot = Array[String](["reinforced_shield", "iron_sword"])
 loot_ids = Array[String](["starter_sword", "starter_shield", "starter_helmet", "starter_armor"])
-drop_chance = 0.1

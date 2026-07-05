@@ -12,22 +12,41 @@ const ARENAS := [
 
 func _ready():
 	# Per-enemy loot: an always-dropping goblin only ever drops from its
-	# own table (bows and daggers, never battle swords).
+	# own tables (bows and wood, never battle swords or slime gel).
 	var goblin = load("res://resources/enemies/goblin_archer.tres").duplicate()
 	goblin.drop_chance = 1.0
+	goblin.material_drop_chance = 1.0
 	for i in 12:
 		var drops = LootTable.roll_enemy_drops([goblin], 3)
-		assert(drops.size() == 1, "guaranteed drop lands")
-		assert(goblin.loot_ids.has(drops[0].gear_id), "drop from own table")
-		assert(drops[0].item_level == 3, "item level = room")
+		assert(drops.gear.size() == 1, "guaranteed gear lands")
+		assert(goblin.loot_ids.has(drops.gear[0].gear_id), "gear from own table")
+		assert(drops.gear[0].item_level == 3, "item level = room")
+		for material_id in drops.materials:
+			assert(goblin.material_loot.has(material_id), "materials from own table")
 
-	# Normal enemies mostly drop nothing (10% chance): 40 slain slimes
-	# essentially never yield 40 items.
+	# Finished equipment is a fluke (2%): 40 slain slimes essentially
+	# never yield gear, though materials flow steadily.
 	var slime = load("res://resources/enemies/green_slime.tres")
-	var total := 0
+	var gear_total := 0
+	var material_total := 0
 	for i in 40:
-		total += LootTable.roll_enemy_drops([slime], 2).size()
-	assert(total < 20, "drops are scarce")
+		var d = LootTable.roll_enemy_drops([slime], 2)
+		gear_total += d.gear.size()
+		for material_id in d.materials:
+			material_total += d.materials[material_id]
+	assert(gear_total < 8, "finished gear is a fluke")
+	assert(material_total >= 10, "materials flow")
+
+	# Recipes: known knowledge never re-drops.
+	var teacher = load("res://resources/enemies/goblin_archer.tres").duplicate()
+	teacher.recipe_drop_chance = 1.0
+	var learned = LootTable.roll_enemy_drops([teacher], 3)
+	assert(learned.recipes.size() == 1, "recipe drops")
+	assert(teacher.recipe_loot.has(learned.recipes[0]), "recipe from own pool")
+	var all_known = LootTable.roll_enemy_drops(
+		[teacher], 3, teacher.recipe_loot.duplicate()
+	)
+	assert(all_known.recipes.is_empty(), "known recipes don't re-drop")
 
 	# Rarity: normal rolls stay at rare or below and skew common;
 	# bosses roll rare or better.
@@ -55,10 +74,15 @@ func _ready():
 		"materialize is deterministic"
 	)
 
-	# The boss exists, always drops, and is flagged for the rare table.
+	# The boss always drops a trophy, teaches something new, and oozes
+	# royal materials.
 	var king = load("res://resources/enemies/slime_king.tres")
 	assert(king.is_boss and king.drop_chance >= 1.0, "boss config")
-	assert(LootTable.roll_enemy_drops([king], 10).size() == 1, "boss drops")
+	var bounty = LootTable.roll_enemy_drops([king], 10)
+	assert(bounty.gear.size() == 1, "boss drops a trophy")
+	assert(bounty.gear[0].quality >= ItemQuality.Tier.RARE, "trophy is rare+")
+	assert(bounty.recipes.size() == 1, "boss teaches a recipe")
+	assert(not bounty.materials.is_empty(), "boss drops materials")
 
 	# Banking: pouch empties into the stash, delve state resets.
 	var roster = load("res://scripts/game/player_roster.gd").new()

@@ -42,6 +42,11 @@ var skill_catalog: Array = [
 	HEAL,
 ]
 
+## Materials are consumed; knowledge is permanent. The camp grows more
+## knowledgeable with every recipe brought home.
+var material_stash := {}
+var known_recipes: Array = ["iron_sword"]
+
 var battles_fought := 0
 var adventures_completed := 0
 var last_battle_won := false
@@ -58,20 +63,60 @@ var bonus_skill_slots := 1
 const DELVE_LENGTH := 10
 var delve_room := 0
 var delve_loot: Array = []
+var delve_materials := {}
+var delve_recipes: Array = []
 var delve_health := {}
 
 func start_delve():
 	delve_room = 1
 	delve_loot = []
+	delve_materials = {}
+	delve_recipes = []
 	delve_health = {}
 
 func bank_delve_loot():
 	gear_stash.append_array(delve_loot)
+	for material_id in delve_materials:
+		material_stash[material_id] = (
+			material_stash.get(material_id, 0) + delve_materials[material_id]
+		)
+	for recipe_id in delve_recipes:
+		if not known_recipes.has(recipe_id):
+			known_recipes.append(recipe_id)
 	delve_loot = []
+	delve_materials = {}
+	delve_recipes = []
 	delve_room = 0
 	sort_gear_stash()
 	if autosave:
 		RosterSave.save(self)
+
+# --- Crafting ---------------------------------------------------------
+
+func can_craft(recipe: RecipeDefinition) -> bool:
+	if not known_recipes.has(recipe.recipe_id):
+		return false
+	for material_id in recipe.costs:
+		if material_stash.get(material_id, 0) < recipe.costs[material_id]:
+			return false
+	return true
+
+## Consumes materials and forges the recipe's item into the stash.
+func craft(recipe: RecipeDefinition) -> GearDefinition:
+	if not can_craft(recipe):
+		return null
+	for material_id in recipe.costs:
+		material_stash[material_id] -= recipe.costs[material_id]
+		if material_stash[material_id] <= 0:
+			material_stash.erase(material_id)
+	var gear = LootTable.materialize(
+		recipe.result_gear_id, recipe.result_item_level, recipe.result_quality
+	)
+	gear_stash.append(gear)
+	sort_gear_stash()
+	if autosave:
+		RosterSave.save(self)
+	return gear
 
 ## Seat assignments (seat node name -> hero index) from the last
 ## campfire stage. When keep_seating is set, the next stage reuses

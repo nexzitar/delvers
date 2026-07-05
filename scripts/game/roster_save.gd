@@ -6,7 +6,25 @@ class_name RosterSave
 ## the "each item is one physical object" model.
 
 const SAVE_PATH := "user://delvers_save.json"
-const VERSION := 2
+const VERSION := 3
+
+const MATERIAL_PATHS := {
+	"gel": "res://resources/materials/gel.tres",
+	"acidic_ooze": "res://resources/materials/acidic_ooze.tres",
+	"corrosion_core": "res://resources/materials/corrosion_core.tres",
+	"iron_scrap": "res://resources/materials/iron_scrap.tres",
+	"ash_wood": "res://resources/materials/ash_wood.tres",
+	"bow_string": "res://resources/materials/bow_string.tres",
+	"poison_sac": "res://resources/materials/poison_sac.tres",
+	"royal_jelly": "res://resources/materials/royal_jelly.tres",
+}
+
+const RECIPE_PATHS := {
+	"iron_sword": "res://resources/recipes/iron_sword.tres",
+	"hunter_bow": "res://resources/recipes/hunter_bow.tres",
+	"reinforced_shield": "res://resources/recipes/reinforced_shield.tres",
+	"iron_helm": "res://resources/recipes/iron_helm.tres",
+}
 
 const HERO_PATHS := {
 	"default_delver": "res://resources/heroes/default_delver.tres",
@@ -63,6 +81,8 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"bonus_skill_slots": roster.bonus_skill_slots,
 		"heroes": heroes,
 		"stash": roster.gear_stash.map(_gear_entry),
+		"materials": roster.material_stash,
+		"known_recipes": roster.known_recipes,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -103,6 +123,17 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	roster.adventures_completed = int(data.get("adventures_completed", 0))
 	roster.last_battle_won = bool(data.get("last_battle_won", false))
 	roster.bonus_skill_slots = int(data.get("bonus_skill_slots", 1))
+
+	roster.material_stash = {}
+	var materials = data.get("materials", {})
+	for material_id in materials:
+		if MATERIAL_PATHS.has(material_id):
+			roster.material_stash[material_id] = int(materials[material_id])
+
+	roster.known_recipes = []
+	for recipe_id in data.get("known_recipes", []):
+		if RECIPE_PATHS.has(recipe_id) and not roster.known_recipes.has(recipe_id):
+			roster.known_recipes.append(recipe_id)
 	return true
 
 static func _restore_hero(entry):

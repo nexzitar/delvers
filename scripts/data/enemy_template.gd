@@ -19,9 +19,14 @@ class_name EnemyDefinition
 @export var skills: Array[SkillDefinition]
 @export var preferred_row: Formation.Row = Formation.Row.FRONT
 
-## What this enemy can drop (gear ids from the save registry) and how
-## often it drops anything at all. Bosses always drop, and roll from
-## the rare end of the quality table.
+## Monsters drop resources and knowledge, not equipment. Materials are
+## this enemy's identity (goblins carry wood and strings, slimes ooze);
+## recipes are rare permanent unlocks; finished gear is a memorable
+## fluke outside of bosses.
+@export var material_loot: Array[String] = []
+@export var material_drop_chance: float = 0.65
+@export var recipe_loot: Array[String] = []
+@export var recipe_drop_chance: float = 0.05
 @export var loot_ids: Array[String] = []
-@export var drop_chance: float = 0.1
+@export var drop_chance: float = 0.02
 @export var is_boss: bool = false

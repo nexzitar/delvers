@@ -52,6 +52,7 @@ var _role_label: Label
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
+var _forge_box: VBoxContainer
 var _preview_holder: Control
 var _preview_rig: Node3D
 var _preview_time := 0.0
@@ -299,6 +300,128 @@ func _build_right_tabs():
 	for skill in PlayerRoster.skill_catalog:
 		grid.add_child(_make_icon("skill", skill, "catalog"))
 
+	# Forge tab: known recipes and the material stash. Materials are
+	# consumed; recipes are the camp's permanent knowledge.
+	var forge_tab = ScrollContainer.new()
+	forge_tab.name = "Forge"
+	forge_tab.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(forge_tab)
+	_forge_box = VBoxContainer.new()
+	_forge_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Hard width cap so recipe rows never push the craft buttons out of
+	# the panel (the tab strip is ~520px inside its margins).
+	_forge_box.custom_minimum_size = Vector2(500, 0)
+	_forge_box.add_theme_constant_override("separation", 10)
+	forge_tab.add_child(_forge_box)
+
+func _fill_forge():
+	_clear(_forge_box)
+
+	_forge_box.add_child(_title("Recipes"))
+	if PlayerRoster.known_recipes.is_empty():
+		var none = Label.new()
+		none.text = "No recipes known yet. Monsters guard that knowledge."
+		none.add_theme_color_override("font_color", DIM)
+		_forge_box.add_child(none)
+	for recipe_id in PlayerRoster.known_recipes:
+		if RosterSave.RECIPE_PATHS.has(recipe_id):
+			_forge_box.add_child(_make_recipe_row(load(RosterSave.RECIPE_PATHS[recipe_id])))
+
+	_forge_box.add_child(_title("Materials"))
+	var grid = GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 8)
+	_forge_box.add_child(grid)
+	var any := false
+	for material_id in RosterSave.MATERIAL_PATHS:
+		var count = PlayerRoster.material_stash.get(material_id, 0)
+		if count <= 0:
+			continue
+		any = true
+		grid.add_child(_material_chip(material_id, count))
+	if not any:
+		var empty = Label.new()
+		empty.text = "The material shelves are bare."
+		empty.add_theme_color_override("font_color", DIM)
+		_forge_box.add_child(empty)
+
+func _material_chip(material_id: String, count: int) -> Control:
+	var material = load(RosterSave.MATERIAL_PATHS[material_id])
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var icon = TextureRect.new()
+	icon.texture = material.icon
+	icon.custom_minimum_size = Vector2(34, 34)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+	var label = Label.new()
+	label.text = "%s x%d" % [material.material_name, count]
+	label.add_theme_font_override("font", FONT)
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", ItemQuality.color(material.tier))
+	row.add_child(label)
+	return row
+
+func _make_recipe_row(recipe: RecipeDefinition) -> Control:
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	panel.add_child(row)
+
+	var result = load(RosterSave.GEAR_PATHS[recipe.result_gear_id])
+	var icon = TextureRect.new()
+	icon.texture = result.icon if result.icon else result.texture
+	icon.custom_minimum_size = Vector2(44, 44)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+
+	var info = VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(info)
+	var name_label = Label.new()
+	name_label.text = recipe.recipe_name
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.add_theme_color_override(
+		"font_color", ItemQuality.color(recipe.result_quality)
+	)
+	info.add_child(name_label)
+	var costs := []
+	for material_id in recipe.costs:
+		var material = load(RosterSave.MATERIAL_PATHS[material_id])
+		var have = PlayerRoster.material_stash.get(material_id, 0)
+		costs.append("%s %d/%d" % [
+			material.material_name, have, recipe.costs[material_id]
+		])
+	var cost_label = Label.new()
+	cost_label.text = ", ".join(costs)
+	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cost_label.add_theme_font_size_override("font_size", 13)
+	cost_label.add_theme_color_override(
+		"font_color",
+		PARCHMENT if PlayerRoster.can_craft(recipe) else Color(0.75, 0.4, 0.35)
+	)
+	info.add_child(cost_label)
+
+	var craft = Button.new()
+	craft.text = "Craft"
+	craft.add_theme_font_override("font", FONT)
+	craft.add_theme_font_size_override("font_size", 18)
+	craft.disabled = not PlayerRoster.can_craft(recipe)
+	craft.custom_minimum_size = Vector2(92, 40)
+	craft.pressed.connect(func():
+		if PlayerRoster.craft(recipe) != null:
+			UiSounds.click()
+			refresh())
+	row.add_child(craft)
+	return panel
+
 func _build_tooltip():
 	_tooltip_compare_panel = _panel(660, -270, -520, -40, 0, 1, 1, 1)
 	_tooltip_compare_panel.visible = false
@@ -376,6 +499,7 @@ func refresh():
 		_fill_equip_slot(pos)
 	_fill_skill_slots()
 	_fill_gear_grid()
+	_fill_forge()
 	_update_preview()
 
 func _role_text() -> String:

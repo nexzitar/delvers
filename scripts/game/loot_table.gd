@@ -48,19 +48,41 @@ static func materialize(gear_id: String, item_level: int, quality: int) -> GearD
 	gear.health_bonus = roundi(gear.health_bonus * mult)
 	return gear
 
-## Rolls drops for a defeated pack. Most enemies drop nothing.
-static func roll_enemy_drops(enemy_templates: Array, room: int) -> Array:
-	var drops := []
+## Rolls drops for a defeated pack: monsters drop resources and
+## knowledge, not equipment. Returns
+## {"materials": {id: count}, "recipes": [recipe_id], "gear": [GearDefinition]}.
+## known_recipes suppresses already-learned knowledge (nothing wasted:
+## a known recipe simply doesn't drop).
+static func roll_enemy_drops(enemy_templates: Array, room: int, known_recipes := []) -> Dictionary:
+	var drops := {"materials": {}, "recipes": [], "gear": []}
+	var seen: Array = known_recipes.duplicate()
+
 	for template in enemy_templates:
-		if template.loot_ids.is_empty():
-			continue
-		if randf() > template.drop_chance:
-			continue
-		var gear = materialize(
-			template.loot_ids.pick_random(),
-			room,
-			roll_quality(room, template.is_boss)
-		)
-		if gear:
-			drops.append(gear)
+		# Materials: the common reward, in this enemy's identity.
+		if not template.material_loot.is_empty() \
+				and randf() <= template.material_drop_chance:
+			var material_id = template.material_loot.pick_random()
+			var count = 1 + (1 if randf() < 0.25 else 0)
+			drops.materials[material_id] = drops.materials.get(material_id, 0) + count
+
+		# Recipes: rare permanent knowledge (bosses teach something new
+		# whenever anything remains unlearned).
+		if randf() <= template.recipe_drop_chance:
+			var unknown = template.recipe_loot.filter(
+				func(id): return not seen.has(id)
+			)
+			if not unknown.is_empty():
+				var recipe_id = unknown.pick_random()
+				drops.recipes.append(recipe_id)
+				seen.append(recipe_id)
+
+		# Finished equipment: a memorable fluke, or a boss trophy.
+		if not template.loot_ids.is_empty() and randf() <= template.drop_chance:
+			var gear = materialize(
+				template.loot_ids.pick_random(),
+				room,
+				roll_quality(room, template.is_boss)
+			)
+			if gear:
+				drops.gear.append(gear)
 	return drops
