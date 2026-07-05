@@ -15,7 +15,7 @@
 resource_name = "HeroTemplate"
 script = ExtResource("1_ok26h")
 hero_id = "Default Delver"
-hero_name = "Default Delver"
+hero_name = "Garrick"
 template_id = null
 actor_scene = ExtResource("1_iac65")
 base_health = 100

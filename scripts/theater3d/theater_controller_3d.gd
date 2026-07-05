@@ -115,7 +115,9 @@ func _ready():
 func roll_encounter(room: int) -> Array:
 	if room >= PlayerRoster.DELVE_LENGTH:
 		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
-	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER, GOBLIN_WARRIOR]
+	# Warriors show up in force: iron is what everyone is hunting.
+	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER,
+		GOBLIN_WARRIOR, GOBLIN_WARRIOR]
 	if room >= 3:
 		pool.append(VENOMOUS_SPIDER)
 		pool.append(VENOMOUS_SPIDER)
@@ -499,7 +501,7 @@ func _show_room_banner(room: int):
 	layer.layer = 11
 	add_child(layer)
 	var label := Label.new()
-	label.text = "Room %d of %d" % [room, PlayerRoster.DELVE_LENGTH]
+	label.text = "The Darkwood  -  Room %d of %d" % [room, PlayerRoster.DELVE_LENGTH]
 	label.anchor_left = 0.0
 	label.anchor_right = 1.0
 	label.offset_top = 40
@@ -708,26 +710,33 @@ func _show_battle_result(victory):
 # --- World & UI ---------------------------------------------------------
 
 func _setup_world(arena):
+	# The Darkwood: moonlight through a forest clearing, a thin ground
+	# haze, and treelines closing in around the field.
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("23242c")
+	env.background_color = Color("0d1118")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("b8c0d6")
-	env.ambient_light_energy = 0.7
+	env.ambient_light_color = Color("66748e")
+	env.ambient_light_energy = 0.6
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.fog_enabled = true
+	env.fog_light_color = Color("131a22")
+	env.fog_density = 0.011
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
 
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48, -32, 0)
-	sun.light_energy = 1.3
-	sun.shadow_enabled = true
-	add_child(sun)
+	var moon := DirectionalLight3D.new()
+	moon.rotation_degrees = Vector3(-52, -30, 0)
+	moon.light_energy = 1.0
+	moon.light_color = Color(0.82, 0.88, 1.0)
+	moon.shadow_enabled = true
+	add_child(moon)
 
 	var fill := DirectionalLight3D.new()
-	fill.rotation_degrees = Vector3(-20, 140, 0)
-	fill.light_energy = 0.35
+	fill.rotation_degrees = Vector3(-18, 140, 0)
+	fill.light_energy = 0.22
+	fill.light_color = Color(0.55, 0.7, 0.55)
 	add_child(fill)
 
 	var center = to_world(Vector2(
@@ -740,16 +749,63 @@ func _setup_world(arena):
 	plane.size = Vector2(arena.width + 40, arena.height + 40)
 	ground.mesh = plane
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("55584a")
+	mat.albedo_color = Color("2c3626")
 	mat.roughness = 1.0
 	ground.material_override = mat
 	ground.position = center
 	add_child(ground)
 
+	# The treeline: rings of low-poly firs just beyond the field.
+	var trunk_mat := StandardMaterial3D.new()
+	trunk_mat.albedo_color = Color("32251a")
+	trunk_mat.roughness = 1.0
+	# Trees hug the visible clearing, but only behind and beside the
+	# fight — the camera's foreground stays clear.
+	var cam_dir = Vector3(CAMERA_OFFSET.x, 0, CAMERA_OFFSET.z).normalized()
+	for i in 30:
+		var a = TAU * i / 30.0 + 0.35 * sin(i * 3.1)
+		var ring = 0.35 * ((i * 7) % 4)
+		var offset = Vector3(
+			(8.6 + 1.4 * ring) * cos(a), 0,
+			(6.0 + 1.1 * ring) * sin(a)
+		)
+		if offset.normalized().dot(cam_dir) > 0.25:
+			continue
+		var tree := Node3D.new()
+		tree.position = center + offset
+		var height = 1.0 + 0.5 * ((i * 5) % 4) / 3.0
+		tree.scale = Vector3.ONE * height
+		add_child(tree)
+		var trunk := CylinderMesh.new()
+		trunk.top_radius = 0.09
+		trunk.bottom_radius = 0.13
+		trunk.height = 0.9
+		trunk.radial_segments = 6
+		var trunk_mesh := MeshInstance3D.new()
+		trunk_mesh.mesh = trunk
+		trunk_mesh.material_override = trunk_mat
+		trunk_mesh.position.y = 0.45
+		tree.add_child(trunk_mesh)
+		var shade = 0.85 + 0.3 * ((i * 11) % 3) / 2.0
+		var leaf_mat := StandardMaterial3D.new()
+		leaf_mat.albedo_color = Color("1c2e1f") * shade
+		leaf_mat.roughness = 1.0
+		for layer in 2:
+			var cone := CylinderMesh.new()
+			cone.top_radius = 0.0
+			cone.bottom_radius = 0.85 - 0.3 * layer
+			cone.height = 1.15 - 0.2 * layer
+			cone.radial_segments = 7
+			var cone_mesh := MeshInstance3D.new()
+			cone_mesh.mesh = cone
+			cone_mesh.material_override = leaf_mat
+			cone_mesh.position.y = 1.0 + 0.72 * layer
+			tree.add_child(cone_mesh)
+
 	# Blocked tiles rise as stone pillars: the same cells the sim's
 	# pathfinding and line of sight respect.
 	var pillar_mat := StandardMaterial3D.new()
-	pillar_mat.albedo_color = Color("5b5e57")
+	pillar_mat.albedo_color = Color("42463e")
 	pillar_mat.roughness = 1.0
 	for tile in arena.blocked_tiles:
 		var pillar := BoxMesh.new()
@@ -778,13 +834,13 @@ func _setup_world(arena):
 			rock.radial_segments = 7
 			rock.rings = 4
 			mesh.mesh = rock
-			prop_mat.albedo_color = Color("6e7266")
+			prop_mat.albedo_color = Color("4a4f45")
 		else:
 			var tuft := BoxMesh.new()
 			tuft.size = Vector3(0.05, 0.14, 0.05)
 			mesh.mesh = tuft
 			mesh.position.y = 0.07
-			prop_mat.albedo_color = Color("5e7a4a")
+			prop_mat.albedo_color = Color("3f5a33")
 		mesh.material_override = prop_mat
 		mesh.position += center + Vector3(7.5 * cos(a), 0, 4.6 * sin(a))
 		add_child(mesh)
