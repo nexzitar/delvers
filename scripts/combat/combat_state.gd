@@ -613,6 +613,22 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			if extra is SkillDefinition:
 				hero.skills.append(extra)
 
+		# Mastery: practiced disciplines bring their core techniques
+		# (no slot cost) and their passives.
+		var mastery_kit = Mastery.kit(hero_template)
+		var slotted = hero.skills.map(
+			func(s): return s.skill_id if s is SkillDefinition else ""
+		)
+		for skill_id in mastery_kit.skills:
+			if not slotted.has(skill_id):
+				hero.skills.append(load(RosterSave.SKILL_PATHS[skill_id]))
+				slotted.append(skill_id)
+		hero.crit_chance += mastery_kit.passives.crit_add
+		hero.block_chance += mastery_kit.passives.block_add
+		hero.armor += mastery_kit.passives.armor_add
+		hero.spell_power += mastery_kit.passives.spell_power_add
+		hero.attack_interval *= mastery_kit.passives.attack_speed_mult
+
 		hero.position = _spawn_position(
 			arena.hero_spawn_center, heroes.size(),
 			hero_template.preferred_row, 1

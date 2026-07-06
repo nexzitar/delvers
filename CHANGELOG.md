@@ -2,6 +2,27 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #10 — Mastery: identity through practice *(open)*
+
+### Added
+- **Discipline Mastery** (design: docs/superpowers/specs/
+  2026-07-06-mastery-identity-training.md): no classes — the worn
+  loadout decides what trains (Sword, Shield, Bow; slotted healing
+  trains Restoration). Every cleared room is practice; the boss room
+  counts fourfold.
+- **Stars unlock techniques, not numbers**: Sword ★★ Cleave, ★★★
+  Weapon Familiarity, ★★★★ Hamstring, ★★★★★ Whirlwind (each
+  discipline has its track). Core techniques join combat
+  automatically — no slot cost; the Guild's Technique Slots remain
+  free customization on top.
+- **Rusty, not forgotten**: unpracticed disciplines fade a little per
+  delve, but the highest mastery ever earned never moves — and
+  relearning below your best is three times faster. The loadout shows
+  each delver's history: filled stars current, hollow gold dormant,
+  dim empty.
+- Star-ups announce themselves in the spoils toast ("Garrick: Sword
+  ★★ — Cleave!"). Veteran saves seed their current kit at two stars.
+
 ## PR #9 — The Spider Nest, Tactics, and a sharper Forge *(open)*
 
 ### Added

@@ -113,6 +113,8 @@ var delve_recipes: Array = []
 var delve_affixes: Array = []
 var delve_lore: Array = []
 var delve_maps: Array = []
+## Disciplines practiced this delve (rust skips them at banking).
+var delve_trained := {}
 var delve_health := {}
 
 func start_delve(dungeon_id := "", tier := 1):
@@ -126,6 +128,7 @@ func start_delve(dungeon_id := "", tier := 1):
 	delve_affixes = []
 	delve_lore = []
 	delve_maps = []
+	delve_trained = {}
 	delve_health = {}
 
 func bank_delve_loot():
@@ -143,6 +146,10 @@ func bank_delve_loot():
 	for lore_id in delve_lore:
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
+	# Rust: what this delve didn't practice, fades a little. The best
+	# mark never moves.
+	for hero in heroes:
+		Mastery.rust(hero, delve_trained.keys())
 	for dungeon_id in delve_maps:
 		if RosterSave.DUNGEON_PATHS.has(dungeon_id) \
 				and not unlocked_dungeons.has(dungeon_id):
@@ -368,6 +375,21 @@ func first_empty_bonus_skill_slot(hero_index: int) -> int:
 		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
 			return i + 1
 	return -1
+
+## Practice: every cleared room trains each fielded hero's active
+## disciplines. Returns star-up announcements for the spoils toast.
+func train_party(hero_indices: Array, amount: int) -> Array:
+	var unlocked := []
+	for i in hero_indices:
+		var hero = heroes[i]
+		for discipline in Mastery.active_disciplines(hero):
+			delve_trained[discipline] = true
+			for gain in Mastery.train(hero, discipline, amount):
+				gain["hero"] = hero.hero_name
+				unlocked.append(gain)
+	if autosave:
+		RosterSave.save(self)
+	return unlocked
 
 ## Called when a battle begins: whatever walks out of the dark is
 ## seen, win or lose.

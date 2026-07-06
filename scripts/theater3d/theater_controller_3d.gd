@@ -792,6 +792,15 @@ func _finish_battle():
 	PlayerRoster.delve_lore.append_array(found.lore)
 	PlayerRoster.delve_maps.append_array(found.maps)
 
+	# Practice: the fielded party trains its disciplines room by room.
+	var alive_indices := []
+	for k in combat_result.heroes.size():
+		if combat_result.heroes[k].alive:
+			alive_indices.append(_party_indices[k])
+	var star_ups = PlayerRoster.train_party(
+		alive_indices, 4 if room >= dungeon().length else 1
+	)
+
 	# Knowledge pity: three dry rooms guarantee a recipe from the slain
 	# enemies' pools. Short failed runs still make progress.
 	var learned_something = not (found.recipes.is_empty() and found.affixes.is_empty()
@@ -835,15 +844,24 @@ func _finish_battle():
 
 	if PlayerRoster.autosave:
 		RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps, star_ups))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
 ## crown jewels — newly learned recipes and affixes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = []) -> Array:
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = [], star_ups: Array = []) -> Array:
 	var entries := []
+	for gain in star_ups:
+		entries.append({
+			"texture": preload("res://art/status/status_stun.png"),
+			"text": "%s: %s %s\n%s" % [
+				gain.hero, Mastery.DISCIPLINES[gain.discipline].name,
+				"★".repeat(gain.star), gain.label,
+			],
+			"color": Color(0.95, 0.8, 0.35),
+		})
 	for dungeon_id in maps:
 		var mapped = load(RosterSave.DUNGEON_PATHS[dungeon_id])
 		entries.append({

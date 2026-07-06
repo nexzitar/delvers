@@ -18,6 +18,9 @@ class_name HeroTemplate
 ## Targeting directive: "nearest", "lowest", "priority" (the party's
 ## focus order), or "spread" (move poison to uncovered targets).
 @export var tactic := "nearest"
+## Discipline mastery: discipline_id -> {"xp": int, "best_xp": int}.
+## Personal knowledge, earned by practice, rusted but never lost.
+@export var mastery: Dictionary = {}
 @export var starting_gear: Array[GearDefinition]
 @export var preferred_row: Formation.Row = Formation.Row.FRONT
 

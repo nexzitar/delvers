@@ -25,6 +25,9 @@ func _init():
 	_save(_badge_chill(), "res://art/status/status_chill.png")
 	_save(_badge_renew(), "res://art/status/status_renew.png")
 	_save(_badge_fortify(), "res://art/status/status_fortify.png")
+	_save(_star(Color("f0c542"), true), "res://art/status/star_full.png")
+	_save(_star(Color("b0973a"), false), "res://art/status/star_dormant.png")
+	_save(_star(Color("4a463c"), true), "res://art/status/star_empty.png")
 	print("icons written")
 	quit()
 
@@ -277,3 +280,22 @@ func _piercing_shot() -> Image:
 	_paint(img, func(p):
 		return p.distance_to(Vector2(52, 18)) < 4.0, Color("ffe27a"))
 	return img
+
+## A five-point star; hollow variants keep only the outline.
+func _star(tint: Color, filled: bool) -> Image:
+	return _badge(func(p):
+		var c := Vector2(16, 17)
+		var d = p - c
+		var r = d.length()
+		if r < 0.5:
+			return tint if filled else null
+		var a = atan2(d.y, d.x) + PI / 2
+		var spikes = 5.0
+		var t = fposmod(a, TAU / spikes) / (TAU / spikes)
+		var edge = lerpf(13.0, 5.5, absf(t - 0.5) * 2.0)
+		edge = 13.0 - absf(t - 0.5) * 2.0 * 7.5
+		if filled:
+			return tint if r <= edge else null
+		if absf(r - edge) < 1.6:
+			return tint
+		return null)

@@ -103,6 +103,8 @@ const SKILL_PATHS := {
 	"renew": "res://resources/skills/renew.tres",
 	"shield_wall": "res://resources/skills/shield_wall.tres",
 	"thunderclap": "res://resources/skills/thunderclap.tres",
+	"multishot": "res://resources/skills/multishot.tres",
+	"piercing_shot": "res://resources/skills/piercing_shot.tres",
 }
 
 ## Items serialize as {id, level, quality} and rebuild deterministically
@@ -130,6 +132,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 				func(s): return s.skill_id if s is SkillDefinition else null
 			),
 			"tactic": hero.tactic,
+			"mastery": hero.mastery,
 		})
 
 	var data := {
@@ -253,6 +256,15 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 			roster.seen_enemies = ["green_slime", "goblin_archer",
 				"goblin_warrior"]
 
+	# Veterans predate mastery: seasoned delvers start two stars deep
+	# in whatever they are carrying right now.
+	if roster.battles_fought > 0:
+		for hero in roster.heroes:
+			if not hero.mastery.is_empty():
+				continue
+			for discipline in Mastery.active_disciplines(hero):
+				hero.mastery[discipline] = {"xp": 24, "best_xp": 24}
+
 	# A pre-update save may already hold the first victory: the
 	# companion arrives the moment the camp loads.
 	roster.check_milestones()
@@ -276,6 +288,13 @@ static func _restore_hero(entry):
 	for skill_id in entry.get("bonus_skills", []):
 		hero.bonus_skills.append(_skill_from_id(skill_id))
 	hero.tactic = entry.get("tactic", "nearest")
+	hero.mastery = {}
+	var mastery = entry.get("mastery", {})
+	for discipline in mastery:
+		hero.mastery[discipline] = {
+			"xp": int(mastery[discipline].get("xp", 0)),
+			"best_xp": int(mastery[discipline].get("best_xp", 0)),
+		}
 	return hero
 
 ## Unknown ids (e.g. content removed in an update) drop the item.

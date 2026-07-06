@@ -49,6 +49,7 @@ var hero_index := -1
 # Rebuilt containers kept around for refresh().
 var _name_edit: LineEdit
 var _role_label: Label
+var _mastery_box: VBoxContainer
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
@@ -224,6 +225,13 @@ func _build_left_panel():
 	_role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_role_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_role_label)
+
+	# Mastery: the delver's history in stars — filled current, hollow
+	# gold dormant, dim empty.
+	_mastery_box = VBoxContainer.new()
+	_mastery_box.add_theme_constant_override("separation", 2)
+	_mastery_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(_mastery_box)
 
 	# Weapon row.
 	var weapons = HBoxContainer.new()
@@ -885,11 +893,47 @@ func refresh():
 	for pos in _equip_slots.keys():
 		_fill_equip_slot(pos)
 	_fill_skill_slots()
+	_fill_mastery()
 	_fill_gear_grid()
 	_fill_forge()
 	_fill_library()
 	_fill_tactics()
 	_update_preview()
+
+func _fill_mastery():
+	_clear(_mastery_box)
+	var hero = PlayerRoster.heroes[hero_index]
+	var active = Mastery.active_disciplines(hero)
+	for discipline in Mastery.DISCIPLINES:
+		var current = Mastery.stars(hero, discipline)
+		var best = Mastery.best_stars(hero, discipline)
+		if best == 0 and not active.has(discipline):
+			continue
+		var row = HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 2)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var name_label = Label.new()
+		name_label.text = Mastery.DISCIPLINES[discipline].name
+		name_label.add_theme_font_override("font", FONT)
+		name_label.add_theme_font_size_override("font_size", 15)
+		name_label.add_theme_color_override("font_color",
+			GOLD if active.has(discipline) else DIM)
+		name_label.custom_minimum_size = Vector2(105, 0)
+		row.add_child(name_label)
+		for star in range(1, Mastery.MAX_STARS + 1):
+			var icon = TextureRect.new()
+			if star <= current:
+				icon.texture = preload("res://art/status/star_full.png")
+			elif star <= best:
+				icon.texture = preload("res://art/status/star_dormant.png")
+			else:
+				icon.texture = preload("res://art/status/star_empty.png")
+			icon.custom_minimum_size = Vector2(18, 18)
+			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(icon)
+		_mastery_box.add_child(row)
 
 func _role_text() -> String:
 	var ranged = PlayerRoster.is_ranged(hero_index)
