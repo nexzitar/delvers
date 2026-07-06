@@ -123,8 +123,8 @@ func _ready():
 
 	var combat = CombatState.new()
 	combat.enemy_priority = PlayerRoster.enemy_priority.duplicate()
-	# Rooms deepen: bigger packs, higher enemy levels.
-	combat.enemy_level_bonus = (room - 1) / 4
+	# Rooms deepen and tiers bite: higher enemy levels on both axes.
+	combat.enemy_level_bonus = (room - 1) / 4 + (PlayerRoster.current_tier - 1) * 2
 	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
 	while not combat.combat_over:
 		combat.update(0.1)
@@ -676,7 +676,11 @@ func _show_room_banner(room: int):
 	layer.layer = 11
 	add_child(layer)
 	var label := Label.new()
-	label.text = "%s  -  Room %d of %d" % [dungeon().dungeon_name, room, dungeon().length]
+	var tier_tag = ""
+	if PlayerRoster.current_tier > 1:
+		tier_tag = " " + ["", "", "II", "III", "IV", "V"][PlayerRoster.current_tier]
+	label.text = "%s%s  -  Room %d of %d" % [
+		dungeon().dungeon_name, tier_tag, room, dungeon().length]
 	label.anchor_left = 0.0
 	label.anchor_right = 1.0
 	label.offset_top = 40
@@ -723,7 +727,8 @@ func _finish_battle():
 		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
 		PlayerRoster.known_lore + PlayerRoster.delve_lore,
 		dungeon(),
-		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps
+		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps,
+		PlayerRoster.current_tier
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -759,6 +764,7 @@ func _finish_battle():
 
 	if room >= dungeon().length:
 		PlayerRoster.adventures_completed += 1
+		PlayerRoster.record_clear(dungeon().dungeon_id, PlayerRoster.current_tier)
 		if PlayerRoster.autosave:
 			RosterSave.save(PlayerRoster)
 		await _show_battle_result(true)

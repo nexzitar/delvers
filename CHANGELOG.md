@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## PR #9 — The Spider Nest, Tactics, and a sharper Forge *(open)*
 
 ### Added
+- **The Brood Tender** — the Nest's lesson made flesh: a swollen
+  spider that births spiderlings into the fight (real mid-combat
+  SPAWN events, capped brood), anchored in every nest room and beside
+  the Broodmother. Kill the spawner first or drown: focus order and
+  AoE are the curriculum.
+- **Difficulty tiers** (per dungeon, clearing tier N unlocks N+1, up
+  to V): higher tiers raise enemy levels AND the spoils — loot band
+  +4 item levels per tier, better rarity odds, bigger material hauls.
+  Old dungeons never go stale; the picker chooses the tier, the room
+  banner wears it (The Darkwood III).
 - **The multi-enemy toolkit** (playtest: "5–6 enemies and no way to
   deal with it"): five new skills — **Cleave** (carries into two foes
   beside the target), **Whirlwind** (hits everything around you; holds

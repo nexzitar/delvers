@@ -80,12 +80,15 @@ static func roll_enemy_drops(
 		enemy_templates: Array, room: int,
 		known_recipes := [], known_affixes := [], known_lore := [],
 		dungeon: DungeonDefinition = null, unlocked_dungeons := [],
+		tier := 1,
 ) -> Dictionary:
 	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [],
 		"lore": [], "maps": []}
-	var item_level = room + (dungeon.level_offset if dungeon else 0)
-	var rare_chance = dungeon.rare_chance if dungeon else 0.01
-	var epic_chance = dungeon.boss_epic_chance if dungeon else 0.03
+	# Difficulty pays: deeper tiers raise the loot band, the rarity
+	# odds, and the material haul.
+	var item_level = room + (dungeon.level_offset if dungeon else 0) + (tier - 1) * 4
+	var rare_chance = (dungeon.rare_chance if dungeon else 0.01) + 0.03 * (tier - 1)
+	var epic_chance = (dungeon.boss_epic_chance if dungeon else 0.03) + 0.03 * (tier - 1)
 	var lore_series = dungeon.lore_ids if dungeon else RosterSave.LORE_PATHS.keys()
 	var seen: Array = known_recipes.duplicate()
 	var seen_affixes: Array = known_affixes.duplicate()
@@ -95,7 +98,8 @@ static func roll_enemy_drops(
 		if not template.material_loot.is_empty() \
 				and randf() <= template.material_drop_chance:
 			var material_id = template.material_loot.pick_random()
-			var count = template.material_drop_count + (1 if randf() < 0.25 else 0)
+			var count = template.material_drop_count + (tier - 1) \
+				+ (1 if randf() < 0.25 else 0)
 			drops.materials[material_id] = drops.materials.get(material_id, 0) + count
 
 		# Recipes: rare permanent knowledge (bosses teach something new

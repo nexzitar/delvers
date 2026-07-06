@@ -86,6 +86,8 @@ func validate_target(entity):
 ## The party's focus order (enemy_ids, first = kill first), fed from
 ## the roster at setup. Tactics score against it.
 var enemy_priority: Array = []
+## Monotonic entity ids: setup starts at 1, reinforcements continue.
+var _next_entity_id := 1
 
 func _priority_rank(target) -> int:
 	var idx = enemy_priority.find(target.template.enemy_id)
@@ -438,6 +440,42 @@ func _log_move(entity, force := false):
 			CombatEvent.create_face(entity.entity_id, combat_time, entity.facing)
 		)
 
+## Mid-combat reinforcements (the Brood Tender's spawn): the newcomer
+## enters through a SPAWN event, so the theater builds it a body and a
+## sidebar row like anyone rolled at setup.
+func spawn_reinforcement(template, level: int, near: Vector2, spawned_by := -1):
+	var enemy = CombatEntity.new()
+	enemy.entity_id = _next_entity_id
+	_next_entity_id += 1
+	enemy.team = CombatEntity.Team.ENEMY
+	enemy.level = maxi(1, level)
+	enemy.entity_name = "%s Lv %d" % [template.enemy_name, enemy.level]
+	enemy.template = template
+	var power = level_power(enemy.level)
+	enemy.max_health = maxi(1, roundi(template.base_health * power))
+	enemy.attack_power = maxi(1, roundi(template.base_attack * power))
+	enemy.current_health = enemy.max_health
+	enemy.current_mana = template.base_mana
+	enemy.max_mana = template.base_mana
+	enemy.armor = template.armor
+	enemy.block_chance = template.block_rating
+	enemy.dodge_chance = template.dodge_rating
+	enemy.crit_chance = template.crit_rating
+	enemy.attack_interval = template.base_attack_interval
+	enemy.attack_timer = enemy.attack_interval
+	enemy.move_speed = template.move_speed
+	enemy.skills = template.skills.duplicate()
+	enemy.position = grid.clamp_world(near + Vector2(
+		randf_range(-40.0, 40.0), randf_range(-40.0, 40.0)
+	))
+	enemy.facing = Vector2.LEFT
+	enemy.in_combat = true
+	enemy.spawned_by = spawned_by
+	enemies.append(enemy)
+	entities_by_id[enemy.entity_id] = enemy
+	combat_log.add_event(CombatEvent.create_spawn(enemy))
+	return enemy
+
 func check_victory():
 
 	var heroes_alive = false
@@ -494,15 +532,15 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 	grid = BattleGrid.new(arena)
 	pathfinder = GridPathfinder.new(grid)
 
-	var next_entity_id = 1
+	_next_entity_id = 1
 	var used_names = {}
 
 	for hero_template in hero_templates:
 
 		var hero = CombatEntity.new()
 
-		hero.entity_id = next_entity_id
-		next_entity_id += 1
+		hero.entity_id = _next_entity_id
+		_next_entity_id += 1
 
 
 		hero.team = CombatEntity.Team.HERO
@@ -588,8 +626,8 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		var enemy = CombatEntity.new()
 
-		enemy.entity_id = next_entity_id
-		next_entity_id += 1
+		enemy.entity_id = _next_entity_id
+		_next_entity_id += 1
 
 		enemy.team = CombatEntity.Team.ENEMY
 		enemy.level = roll_enemy_level()

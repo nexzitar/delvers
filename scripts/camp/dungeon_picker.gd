@@ -4,7 +4,7 @@ extends CanvasLayer
 ## Choose the delve: one row per dungeon the guild holds a map for.
 ## Locked rows show what's missing — a map someone below still guards.
 
-signal chosen(dungeon_id: String)
+signal chosen(dungeon_id: String, tier: int)
 signal closed
 
 const FONT = preload("res://art/fonts/Herculanum.ttf")
@@ -104,6 +104,19 @@ func _dungeon_row(dungeon_id: String) -> Control:
 	info.add_child(flavor)
 
 	if unlocked:
+		# Difficulty: clearing a tier opens the next. Higher tiers
+		# scale foes and spoils alike.
+		var tiers = OptionButton.new()
+		tiers.fit_to_longest_item = false
+		tiers.add_theme_font_override("font", FONT)
+		tiers.add_theme_font_size_override("font_size", 16)
+		var top = PlayerRoster.available_tier(dungeon_id)
+		for t in range(1, top + 1):
+			tiers.add_item("Tier %s" % ["", "I", "II", "III", "IV", "V"][t])
+			tiers.set_item_metadata(t - 1, t)
+		tiers.select(top - 1)
+		row.add_child(tiers)
+
 		var go = Button.new()
 		go.text = "Delve"
 		go.add_theme_font_override("font", FONT)
@@ -111,7 +124,7 @@ func _dungeon_row(dungeon_id: String) -> Control:
 		go.custom_minimum_size = Vector2(110, 46)
 		go.pressed.connect(func():
 			UiSounds.click()
-			chosen.emit(dungeon_id)
+			chosen.emit(dungeon_id, tiers.get_item_metadata(tiers.selected))
 			queue_free())
 		row.add_child(go)
 	return panel

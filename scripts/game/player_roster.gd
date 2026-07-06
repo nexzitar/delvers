@@ -61,6 +61,23 @@ var purchased_unlocks: Array = []
 ## Dungeons the guild holds maps for; delves target current_dungeon.
 var unlocked_dungeons: Array = ["darkwood"]
 var current_dungeon := "darkwood"
+## Chosen difficulty for the current delve, and the highest tier
+## cleared per dungeon (clearing tier N unlocks N+1, up to MAX_TIER).
+## Old dungeons never go stale: higher tiers scale foes AND spoils.
+var current_tier := 1
+var dungeon_progress := {}
+
+const MAX_TIER := 5
+
+func highest_cleared(dungeon_id: String) -> int:
+	return int(dungeon_progress.get(dungeon_id, 0))
+
+func available_tier(dungeon_id: String) -> int:
+	return mini(highest_cleared(dungeon_id) + 1, MAX_TIER)
+
+func record_clear(dungeon_id: String, tier: int):
+	if tier > highest_cleared(dungeon_id):
+		dungeon_progress[dungeon_id] = tier
 ## Party focus order (enemy_ids, first = kill first) for the
 ## "priority" and "spread" tactics.
 var enemy_priority: Array = []
@@ -96,9 +113,10 @@ var delve_lore: Array = []
 var delve_maps: Array = []
 var delve_health := {}
 
-func start_delve(dungeon_id := ""):
+func start_delve(dungeon_id := "", tier := 1):
 	if dungeon_id != "" and unlocked_dungeons.has(dungeon_id):
 		current_dungeon = dungeon_id
+	current_tier = clampi(tier, 1, available_tier(current_dungeon))
 	delve_room = 1
 	delve_loot = []
 	delve_materials = {}

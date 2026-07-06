@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DungeonDefinition" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="DungeonDefinition" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/dungeon_definition.gd" id="1_dungeon"]
 [ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="2_enemy"]
@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://resources/enemies/chitin_crawler.tres" id="5_crawler"]
 [ext_resource type="Resource" path="res://resources/enemies/venomous_spider.tres" id="6_spider"]
 [ext_resource type="Resource" path="res://resources/enemies/broodmother.tres" id="7_brood"]
+[ext_resource type="Resource" path="res://resources/enemies/brood_tender.tres" id="8_tender"]
 
 [resource]
 script = ExtResource("1_dungeon")
@@ -17,8 +18,8 @@ length = 10
 pool_core = Array[ExtResource("2_enemy")]([ExtResource("3_spiderling"), ExtResource("3_spiderling"), ExtResource("6_spider"), ExtResource("4_weaver"), ExtResource("5_crawler")])
 pool_deep = Array[ExtResource("2_enemy")]([ExtResource("4_weaver"), ExtResource("5_crawler")])
 deep_from = 3
-guaranteed = Array[ExtResource("2_enemy")]([ExtResource("5_crawler"), ExtResource("3_spiderling")])
-boss_pack = Array[ExtResource("2_enemy")]([ExtResource("7_brood"), ExtResource("3_spiderling"), ExtResource("3_spiderling"), ExtResource("4_weaver")])
+guaranteed = Array[ExtResource("2_enemy")]([ExtResource("5_crawler"), ExtResource("8_tender")])
+boss_pack = Array[ExtResource("2_enemy")]([ExtResource("7_brood"), ExtResource("8_tender"), ExtResource("3_spiderling"), ExtResource("4_weaver")])
 level_offset = 10
 rare_chance = 0.04
 boss_epic_chance = 0.06

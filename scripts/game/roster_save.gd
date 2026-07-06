@@ -137,6 +137,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"unlocked_dungeons": roster.unlocked_dungeons,
 		"current_dungeon": roster.current_dungeon,
 		"enemy_priority": roster.enemy_priority,
+		"dungeon_progress": roster.dungeon_progress,
 		"rooms_since_knowledge": roster.rooms_since_knowledge,
 		"seen_enemies": roster.seen_enemies,
 	}
@@ -222,6 +223,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		if not roster.enemy_priority.has(enemy_id):
 			roster.enemy_priority.append(enemy_id)
 	roster.rooms_since_knowledge = int(data.get("rooms_since_knowledge", 0))
+	roster.dungeon_progress = {}
+	var progress = data.get("dungeon_progress", {})
+	for dungeon_id in progress:
+		if DUNGEON_PATHS.has(dungeon_id):
+			roster.dungeon_progress[dungeon_id] = int(progress[dungeon_id])
 
 	roster.seen_enemies = []
 	for enemy_id in data.get("seen_enemies", []):

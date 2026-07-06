@@ -89,6 +89,14 @@ static func build_enemy(template) -> Node3D:
 			})
 			crawler.scale = Vector3.ONE * 1.2
 			return crawler
+		"brood_tender":
+			var tender = SpiderRig.new({
+				"chitin": Color("6a6a46"), "chitin_dark": Color("4a4a30"),
+				"marking": Color("d8e0a0"), "eyes": Color("d87a3a"),
+				"bulky": true,
+			})
+			tender.scale = Vector3.ONE * 1.15
+			return tender
 		"broodmother":
 			var brood = SpiderRig.new({
 				"chitin": Color("3a2438"), "chitin_dark": Color("281627"),

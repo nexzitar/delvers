@@ -45,6 +45,8 @@ var threat_table: Dictionary = {}
 ## time it re-evaluates its choice.
 var tactic := "nearest"
 var retarget_at: float = 0.0
+## Entity that summoned this one (Brood Tenders cap their brood).
+var spawned_by: int = -1
 var in_combat: bool = false
 var statuses: Array = []
 var is_casting: bool = false
