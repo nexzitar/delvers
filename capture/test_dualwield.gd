@@ -46,7 +46,7 @@ func _ready():
 	# Seed checks must happen before the timer is ticked down by the loop.
 	var sword = preload("res://resources/gear/starter_sword.tres")
 	_ok("off weapon recognised", dual_hero.off_weapon == sword)
-	_ok("off timer seeded", is_equal_approx(dual_hero.off_attack_timer, sword.attack_speed))
+	_ok("off timer seeded half a beat out of phase", is_equal_approx(dual_hero.off_attack_timer, sword.attack_speed * 0.5))
 
 	for i in range(200):
 		dual_state.update(0.05)
@@ -57,5 +57,35 @@ func _ready():
 	# Both hands share the 2.6s sword speed and the enemy never dies, so the
 	# off hand exactly doubles the swing count over the same window.
 	_ok("dual-wield doubles swings", dual_swings == single_swings * 2)
+
+	# Equal-speed dual wield: main and off-hand strikes alternate, never
+	# landing on the same tick (the theater can only animate one arm per
+	# frame, and a flurry reads better anyway).
+	var twin = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	twin.equipped = {
+		Equip.Position.MAIN_HAND: LootTable.materialize("starter_sword", 1, 0),
+		Equip.Position.OFF_HAND: LootTable.materialize("starter_sword", 1, 0),
+	}
+	var combat_twin = CombatState.new()
+	combat_twin.setup_combat([twin], [load("res://resources/enemies/green_slime.tres")])
+	var twin_hero = combat_twin.heroes[0]
+	combat_twin.enemies[0].position = twin_hero.position + Vector2(40, 0)
+	combat_twin.enemies[0].current_health = 999
+	combat_twin.enemies[0].max_health = 999
+	for i in 80:
+		combat_twin.update(0.1)
+	var main_times := []
+	var off_times := []
+	for event in combat_twin.combat_log.events:
+		if event.type == CombatEvent.EventType.DAMAGE \
+				and event.source_id == twin_hero.entity_id:
+			if event.off_hand:
+				off_times.append(event.time)
+			else:
+				main_times.append(event.time)
+	assert(main_times.size() >= 2 and off_times.size() >= 2, "both hands strike")
+	for t in off_times:
+		assert(not main_times.has(t), "hands never land on the same tick")
+	print("PASS dual wield alternates")
 
 	get_tree().quit()

@@ -1,0 +1,129 @@
+# Changelog
+
+Notable changes per pull request. Newest first.
+
+## PR #9 — The Spider Nest, Tactics, and a sharper Forge *(open)*
+
+### Added
+- **The Spider Nest** — second dungeon, unlocked by a Weathered Map
+  Fragment the Slime King guards (dropped once, ever). Dungeons are
+  data now (`DungeonDefinition`): pools, guaranteed enemy, boss pack,
+  loot band, theme, and lore series per dungeon.
+- Nest inhabitants: Nest Spiderling, Web Weaver (its silk roots you —
+  "Webbed!"), armored Chitin Crawler, and **the Broodmother** (boss).
+- Nest materials (Silk Thread, Chitin Plate, Broodmother's Silk),
+  three nest recipes with tomes and lore, and a second expedition-log
+  series continuing the Black Hollow trail.
+- **Tactics v1**: per-hero targeting directives — Nearest Foe, Finish
+  the Wounded, Focus Order, Spread the Venom — plus a party-wide
+  sortable focus order in a new Tactics tab. The focus order lists
+  only enemies the guild has actually faced (no spoilers).
+- **Knowledge pity**: three cleared rooms without a knowledge drop
+  guarantee a recipe from the slain enemies' pools; the counter
+  persists across delves.
+- Dungeon picker on Embark once the guild holds more than one map.
+- Webbed-cavern battle theming (stalagmites, silk wraps, egg sacs).
+- Trailer v2 pipeline: Godot Movie Maker mode — true 30 fps and the
+  procedural soundtrack captured (the first render exposed that the
+  local settings file had master volume saved at 0).
+
+### Changed
+- Forge layout scales to a full recipe book: compact one-line recipe
+  rows with color-coded costs; the full bill with hunting grounds
+  lives in the pinned selection tooltip.
+- Overlapping floating combat texts fan out into side lanes.
+- Nest loot band: item levels +10; rare unlocked from normals (4%);
+  boss epic at 6%.
+
+### Fixed
+- Facing whipsaw while approaching: re-paths no longer walk units
+  backward to stale tile-center waypoints, and facing samples the
+  walked path before separation nudges.
+- Perfectly stacked units burst apart instead of freezing merged:
+  separation now also runs while standing, and dead-center overlaps
+  (zero push vector) resolve along per-entity bearings.
+- Dual wielding with equal-speed weapons animates both arms: the
+  off-hand starts half a beat out of phase, so strikes alternate.
+- Theater victory saves respect `PlayerRoster.autosave` (capture
+  harnesses can no longer clobber a real save).
+
+### Balanced
+- Standing separation spread brawls out (packed warriors all reach
+  the front line); the iron economy sim holds at ~2.2 iron per failed
+  run — still above the shield-within-two-runs bar.
+
+## PR #8 — Affix recipes, the menagerie, and the Restoration *(merged)*
+
+### Added
+- **Affixes as learnable recipes**: Virulent (poison damage-over-time
+  on hit), Frostforged (chill on hit), Flaming (+25% damage), Quick
+  (15% faster swings), Guarding (+health) — themed drops, applied at
+  craft time via a Forge affix picker ("Virulent Iron Sword").
+- **Goblin Warrior** and **Venomous Spider** (its bite poisons):
+  every material gained one clear owner. Leather + Leather Hood.
+- **Secondary stats**: armor, block, dodge, crit, spell power — on
+  gear and enemies, with Dodge!/blocked/crit floating feedback.
+- **Knowledge provenance**: recipes and affixes drop as named tomes
+  ("Spider Venom Treatise — Teaches: Virulent") with lore fragments;
+  the **Library** tab shelves everything recovered; the Black Hollow
+  **Expedition Logs** drop in order across delves.
+- **The Restoration of the Guild**: first victory raises the banner
+  and the first companion (Wren) sits down at the fire, free. The
+  camp Guild panel sells Training Grounds (second skill slot) and
+  Another Voice at the Fire (third delver — costs Royal Jelly).
+- **The Darkwood**: moonlit-forest battle theming, the room banner
+  names the dungeon, and the first delver has a name: **Garrick**.
+- Empty starter stash: a new guild owns only what it wears.
+- Forge UX: click-to-select recipes with a pinned crafted-item
+  preview and equipped comparison; affix effects spelled out; affix
+  chips show descriptions with provenance on hover.
+- Chapter One vertical-slice trailer (56s), rendered entirely from
+  the live game by a staged capture harness.
+
+### Fixed
+- Sword heroes casting Heal froze the session (the theater played the
+  archer pose on a rig with no bow); bow-less rigs now cast properly.
+- Heal reworked: 4 mana + 1.4s cast instead of a cooldown; fizzles
+  refund; mana regenerates slowly.
+
+### Balanced
+- Iron economy, measured end-to-end (simulation test): warriors
+  always drop materials, haul 2–3 pieces, table tilted 3:1 iron over
+  leather, and every room fields a warrior.
+- Knowledge redistributed: spiders teach Virulent, archers Quick,
+  warriors Guarding, slimes Frostforged, the King keeps Flaming.
+
+## PR #7 — README refresh *(merged)*
+
+- 3D cast gallery rendered from the actual rigs, gameplay GIFs
+  (menu→camp, a delve room), and design sections rewritten for
+  spatial combat, the delve, and the crafting loop.
+
+## PR #6 — The delve, persistence, and the crafting pivot *(merged)*
+
+### Added
+- Camp and main menu rebuilt in 3D; the 2D battle theater retired.
+- Save system (schema-versioned JSON; items rebuild deterministically
+  from id/level/quality).
+- **The delve**: ten escalating rooms ending at the **Slime King**;
+  one starting delver, one bonus skill slot, health carrying between
+  rooms; rooms auto-advance with a spoils toast.
+- **Crafting pivot** ("monsters drop resources and knowledge, not
+  equipment"): per-enemy material identities, recipes as rare
+  permanent unlocks, the Forge tab, finished gear reduced to boss
+  trophies and 2% flukes.
+- Frost Nova, Hamstring, Charge, and Heal equippable from the loadout.
+- Battle sidebars and the loadout preview render from the 3D rigs.
+
+### Fixed
+- Units could freeze forever on an unreachable path (failed searches
+  cached until the goal tile changed); pathfinding resolves to
+  nearest-walkable, retries, and positions clamp to the arena.
+
+## PR #5 — Spatial combat and the 3D pivot *(merged)*
+
+- Tile-grid battlefield: A* pathfinding, Bresenham line of sight,
+  soft separation, threat tables, stationary ranged casts, cooldown
+  skills with behavior scripts.
+- Low-poly 3D battle theater on procedural primitive rigs, replaying
+  the headless sim's event log with cue-scheduled animation.

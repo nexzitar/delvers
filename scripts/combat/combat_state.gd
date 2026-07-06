@@ -542,7 +542,12 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			hero.weapon_reach = hero.main_weapon.effective_reach()
 		hero.move_speed = hero_template.move_speed
 		hero.attack_timer = hero.attack_interval
-		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
+		# Off-hand starts half a beat out of phase: dual wielding reads
+		# as an alternating flurry, and equal-speed weapons never land
+		# (and animate) on the same tick.
+		hero.off_attack_timer = (
+			hero.off_weapon.attack_speed * 0.5 if hero.off_weapon else 0.0
+		)
 
 		hero.tactic = hero_template.tactic
 		hero.skills = hero_template.starting_skills.duplicate()

@@ -493,7 +493,19 @@ func _update_camera(delta):
 func _yaw_of(facing: Vector2) -> float:
 	return atan2(facing.x, facing.y)
 
+## Bursts of numbers over the same body fan out into side lanes
+## (center, left, right, far-left, far-right) so nothing overlaps.
+var _float_lanes := {}
+
 func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0):
+	var key := Vector2i(roundi(at.x * 1.5), roundi(at.z * 1.5))
+	var lane := 0
+	var recent = _float_lanes.get(key)
+	if recent != null and _clock - recent.time < 0.9:
+		lane = recent.lane + 1
+	_float_lanes[key] = {"lane": lane, "time": _clock}
+	var side: float = [0.0, -1.0, 1.0, -2.0, 2.0][lane % 5]
+
 	var label := Label3D.new()
 	label.text = text
 	label.font = FONT
@@ -503,7 +515,11 @@ func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 
 	label.outline_size = 18
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
-	label.position = at + Vector3(randf_range(-0.15, 0.15), 1.5, 0)
+	label.position = at + Vector3(
+		side * 0.42 + randf_range(-0.06, 0.06),
+		1.5 + 0.18 * float(lane / 5),
+		0
+	)
 	add_child(label)
 
 	var tween := create_tween()
