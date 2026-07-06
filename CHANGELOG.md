@@ -32,6 +32,10 @@ Notable changes per pull request. Newest first.
 - Three gear slots come alive: craftable **Iron-Shod Boots**,
   **Goblin-Work Gauntlets**, and **Studded Belt** (new recipes with
   tomes, taught by spiders, archers, and warriors).
+- **The archer kit**: Multishot (a fan of arrows into the nearest
+  foes — held for 2+ targets) and Piercing Shot (a heavy arrow that
+  ignores armor — the answer to chitin walls), both scaling with bow
+  damage, with quick-draw animations and arrow streaks.
 - **Salvaging**: drag gear onto the salvage bin in the Gear tab —
   materials come back (about half the recipe bill, plus a rare-quality
   bonus), and **studying an unknown enchantment teaches that affix
@@ -63,6 +67,10 @@ Notable changes per pull request. Newest first.
   local settings file had master volume saved at 0).
 
 ### Changed
+- **Worn gear shows on the body**: shoulders, cloak, chest plate,
+  belt (with buckle), gauntlets, bracers, greaves, and boots all
+  render on the rig, colored by gear family — a kitted delver finally
+  looks the part (basic now, detailed later).
 - **Combat readability**: status badges (poison drop, daze spiral,
   stun star, web, snowflake, renew cross, shield) ride above heads
   while a status runs; damage numbers are team-colored (hits on your
@@ -92,6 +100,9 @@ Notable changes per pull request. Newest first.
   off-hand starts half a beat out of phase, so strikes alternate.
 - Theater victory saves respect `PlayerRoster.autosave` (capture
   harnesses can no longer clobber a real save).
+- Knowledge pity leaked tier-gated recipes at tier 1 (playtest:
+  greaves and pauldrons from a Darkwood I run) — pity honors
+  min_tier like every other drop now.
 - **Encounters ballooned within a session**: Array(typed) shares the
   resource buffer, so every encounter roll leaked its picks into the
   cached dungeon resource — rooms grew warrior-stuffed over a play

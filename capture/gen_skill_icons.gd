@@ -16,6 +16,8 @@ func _init():
 	_save(_renew(), "res://art/skills/skill_renew.png")
 	_save(_shield_wall(), "res://art/skills/skill_shield_wall.png")
 	_save(_thunderclap(), "res://art/skills/skill_thunderclap.png")
+	_save(_multishot(), "res://art/skills/skill_multishot.png")
+	_save(_piercing_shot(), "res://art/skills/skill_piercing_shot.png")
 	_save(_badge_poison(), "res://art/status/status_poison.png")
 	_save(_badge_daze(), "res://art/status/status_daze.png")
 	_save(_badge_stun(), "res://art/status/status_stun.png")
@@ -249,3 +251,29 @@ func _badge_fortify() -> Image:
 		if absf(p.x - 16.0) < half:
 			return Color("d8c684")
 		return null)
+
+## A fan of three arrows.
+func _multishot() -> Image:
+	var img = _tile(Color("2c3420"), Color("1a2012"), Color("50663a"))
+	for i in 3:
+		var a = -PI / 2 + (i - 1) * 0.45
+		var dir = Vector2(cos(a), sin(a))
+		var base = Vector2(C, 50)
+		var tip = base + dir * 34.0
+		_paint(img, func(p):
+			return _dist_to_segment(p, base, tip) < 2.0, Color("d8ceb0"))
+		_paint(img, func(p):
+			return p.distance_to(tip) < 3.2, Color("e8e0c8"))
+	return img
+
+## One heavy arrow through a plate.
+func _piercing_shot() -> Image:
+	var img = _tile(Color("34302a"), Color("201e18"), Color("5e5844"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 9.0 and absf(p.y - C) < 12.0, Color("6a7078"))
+	_paint(img, func(p):
+		return _dist_to_segment(p, Vector2(10, 44), Vector2(52, 18)) < 2.4,
+		Color("ffe27a"))
+	_paint(img, func(p):
+		return p.distance_to(Vector2(52, 18)) < 4.0, Color("ffe27a"))
+	return img

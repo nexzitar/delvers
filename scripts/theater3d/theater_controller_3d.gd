@@ -209,6 +209,21 @@ func _build_timeline(log):
 			CombatEvent.EventType.DAMAGE:
 				if event.dot:
 					continue
+				# Archer behaviors: a quick draw cue plus an arrow
+				# streak per victim at impact.
+				if event.skill_name in ["Multishot", "Piercing Shot"]:
+					var draw_key = "%d:%.2f:draw" % [event.source_id, event.time]
+					if not burst_keys.has(draw_key):
+						burst_keys[draw_key] = true
+						_timeline.append({
+							"time": maxf(0.0, event.time - 0.35),
+							"kind": "quickdraw", "id": event.source_id,
+						})
+					_timeline.append({
+						"time": event.time, "kind": "streak",
+						"from": event.source_id, "to": event.target_id,
+					})
+					continue
 				# AoE bursts get one distinctive cue, not a swing per victim.
 				if event.skill_name in ["Whirlwind", "Thunderclap"]:
 					var burst_key = "%d:%s:%.2f" % [event.source_id, event.skill_name, event.time]
@@ -251,6 +266,22 @@ func _dispatch(item):
 		if state and state.mode != "dead" and state.rig.has_method("pose_spin"):
 			state.mode = "spin"
 			state.anim_t = 0.0
+		return
+	if item.kind == "quickdraw":
+		var state = actors.get(item.id)
+		if state and state.mode != "dead" and state.rig.has_method("pose_shoot"):
+			state.mode = "shoot"
+			state.anim_t = 0.0
+			state.anim_speed = 2.4
+		return
+	if item.kind == "streak":
+		var from_state = actors.get(item.from)
+		var to_state = actors.get(item.to)
+		if from_state and to_state:
+			_spawn_arrow_streak(
+				from_state.rig.position + Vector3(0, 1.0, 0),
+				to_state.rig.position + Vector3(0, 0.7, 0)
+			)
 		return
 	if item.kind == "clap":
 		var state = actors.get(item.id)
@@ -615,6 +646,26 @@ func _yaw_of(facing: Vector2) -> float:
 ## climbing a half-step per full ring so long bursts stack upward.
 var _float_lanes := {}
 
+## A fast arrow flying point to point (archer behavior skills).
+func _spawn_arrow_streak(from: Vector3, to: Vector3):
+	var streak := MeshInstance3D.new()
+	var shaft := CylinderMesh.new()
+	shaft.top_radius = 0.015
+	shaft.bottom_radius = 0.015
+	shaft.height = 0.5
+	streak.mesh = shaft
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.9, 0.85, 0.7)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	streak.material_override = mat
+	add_child(streak)
+	streak.position = from
+	streak.look_at_from_position(from, to)
+	streak.rotate_object_local(Vector3.RIGHT, PI / 2)
+	var tween := create_tween()
+	tween.tween_property(streak, "position", to, 0.12)
+	tween.tween_callback(streak.queue_free)
+
 ## An expanding ground ring: thunder gold by default, renew green.
 func _spawn_shockwave(at: Vector3, tint := Color(1.0, 0.9, 0.5, 0.8), max_scale := 5.6):
 	var ring := MeshInstance3D.new()
@@ -754,8 +805,13 @@ func _finish_battle():
 			var pool := []
 			for template in slain:
 				for recipe_id in template.recipe_loot:
-					if not known.has(recipe_id) and not pool.has(recipe_id):
-						pool.append(recipe_id)
+					if known.has(recipe_id) or pool.has(recipe_id):
+						continue
+					# Pity honors tier gates like any other drop.
+					var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+					if recipe.min_tier > PlayerRoster.current_tier:
+						continue
+					pool.append(recipe_id)
 			if not pool.is_empty():
 				var granted = pool.pick_random()
 				found.recipes.append(granted)

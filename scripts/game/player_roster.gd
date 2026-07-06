@@ -45,6 +45,8 @@ var skill_catalog: Array = [
 	preload("res://resources/skills/renew.tres"),
 	preload("res://resources/skills/shield_wall.tres"),
 	preload("res://resources/skills/thunderclap.tres"),
+	preload("res://resources/skills/multishot.tres"),
+	preload("res://resources/skills/piercing_shot.tres"),
 ]
 
 ## Materials are consumed; knowledge is permanent. The camp grows more

@@ -275,7 +275,7 @@ func perform_off_hand_attack(combat_state, target):
 	var damage = maxi(1, floori(OFF_HAND_FACTOR * raw))
 	_strike(combat_state, skills[0], target, damage, true)
 
-func _strike(combat_state, skill, target, damage, off_hand := false):
+func _strike(combat_state, skill, target, damage, off_hand := false, pierce := false):
 	if target == null:
 		return
 
@@ -290,7 +290,8 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 		blocked = (randf() < target.block_chance)
 		if blocked:
 			damage = maxi(1, ceili(damage * 0.5))
-		damage = maxi(1, damage - target.armor)
+		if not pierce:
+			damage = maxi(1, damage - target.armor)
 		# Shield Wall and its kin shave what remains.
 		damage = maxi(1, roundi(damage * target.damage_taken_multiplier()))
 	else:

@@ -30,6 +30,29 @@ static func build_from_spawn(event) -> Node3D:
 static func build_hero(equipped: Dictionary) -> Node3D:
 	return DelverRig.new(hero_opts(equipped))
 
+## Worn-gear palette by family; slot fallbacks below.
+const WORN_COLORS := {
+	"wardens_pauldrons": Color(0.6, 0.63, 0.68),
+	"iron_greaves": Color(0.6, 0.63, 0.68),
+	"iron_shod_boots": Color(0.32, 0.26, 0.18),
+	"goblin_work_gauntlets": Color(0.54, 0.42, 0.26),
+	"studded_belt": Color(0.42, 0.31, 0.19),
+	"silk_bracers": Color(0.87, 0.84, 0.74),
+	"weavers_cloak": Color(0.74, 0.72, 0.8),
+	"chitin_armor": Color(0.38, 0.29, 0.2),
+	"starter_armor": Color(0.5, 0.36, 0.22),
+}
+const SLOT_WORN := {
+	GearDefinition.Slot.SHOULDER: ["shoulders", Color(0.55, 0.5, 0.42)],
+	GearDefinition.Slot.BACK: ["cloak", Color(0.6, 0.58, 0.64)],
+	GearDefinition.Slot.CHEST: ["chest_plate", Color(0.5, 0.4, 0.28)],
+	GearDefinition.Slot.WAIST: ["belt_trim", Color(0.42, 0.31, 0.19)],
+	GearDefinition.Slot.HANDS: ["gauntlets", Color(0.5, 0.4, 0.28)],
+	GearDefinition.Slot.WRIST: ["bracers", Color(0.6, 0.55, 0.45)],
+	GearDefinition.Slot.LEGS: ["greaves", Color(0.55, 0.55, 0.6)],
+	GearDefinition.Slot.FEET: ["boots_gear", Color(0.32, 0.26, 0.18)],
+}
+
 static func hero_opts(equipped: Dictionary) -> Dictionary:
 	var opts := {}
 	var main = equipped.get(Equip.Position.MAIN_HAND)
@@ -46,6 +69,13 @@ static func hero_opts(equipped: Dictionary) -> Dictionary:
 			opts["shield"] = true
 	if equipped.get(Equip.Position.HEAD):
 		opts["helmet"] = true
+	# Everything worn shows: shoulders, cloak, plate, belt, and the rest.
+	for pos in equipped:
+		var item = equipped[pos]
+		if item == null or not SLOT_WORN.has(item.slot):
+			continue
+		var entry = SLOT_WORN[item.slot]
+		opts[entry[0]] = WORN_COLORS.get(item.gear_id, entry[1])
 	return opts
 
 static func build_enemy(template) -> Node3D:

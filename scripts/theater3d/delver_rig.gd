@@ -106,6 +106,47 @@ func _init(opts := {}):
 		shield.rotation_degrees = Vector3(90, 45, 0)
 		arm_l.add_child(shield)
 
+	# --- Worn gear: basic but visible. Every slot earns its silhouette.
+	if opts.has("shoulders"):
+		var pad_color: Color = opts.shoulders
+		for pair in [[arm_l, 1.0], [arm_r, -1.0]]:
+			Builder._box(pair[0], Vector3(0.21, 0.1, 0.2), pad_color,
+				Vector3(pair[1] * 0.03, 0.1, 0))
+			Builder._box(pair[0], Vector3(0.16, 0.06, 0.16),
+				pad_color.lightened(0.18), Vector3(pair[1] * 0.03, 0.17, 0))
+	if opts.has("cloak"):
+		var cloth := Builder._box(spine, Vector3(0.38, 0.52, 0.045),
+			opts.cloak, Vector3(0, -0.02, -0.155))
+		cloth.rotation_degrees = Vector3(-4, 0, 0)
+		Builder._box(spine, Vector3(0.4, 0.05, 0.05),
+			Color("d8c684"), Vector3(0, 0.36, -0.14))
+	if opts.has("chest_plate"):
+		Builder._box(spine, Vector3(0.36, 0.3, 0.045), opts.chest_plate,
+			Vector3(0, 0.2, 0.125))
+	if opts.has("belt_trim"):
+		Builder._box(spine, Vector3(0.43, 0.09, 0.27),
+			opts.belt_trim, Vector3(0, 0.005, 0))
+		Builder._box(spine, Vector3(0.09, 0.09, 0.03),
+			Color("c7a94a"), Vector3(0, 0.005, 0.135))
+	if opts.has("gauntlets"):
+		for arm in [arm_l, arm_r]:
+			Builder._box(arm, Vector3(0.115, 0.12, 0.14), opts.gauntlets,
+				Vector3(0, -0.36, 0))
+	if opts.has("bracers"):
+		for arm in [arm_l, arm_r]:
+			Builder._box(arm, Vector3(0.115, 0.15, 0.13), opts.bracers,
+				Vector3(0, -0.2, 0))
+	if opts.has("greaves"):
+		for leg in [leg_l, leg_r]:
+			Builder._box(leg, Vector3(0.145, 0.2, 0.16), opts.greaves,
+				Vector3(0, -0.17, 0.005))
+	if opts.has("boots_gear"):
+		for leg in [leg_l, leg_r]:
+			Builder._box(leg, Vector3(0.16, 0.13, 0.22), opts.boots_gear,
+				Vector3(0, -0.34, 0.025))
+			Builder._box(leg, Vector3(0.14, 0.09, 0.05),
+				opts.boots_gear.lightened(0.25), Vector3(0, -0.35, 0.13))
+
 	if opts.get("bow", false):
 		bow = Builder.build_bow()
 		bow.position = Vector3(0.04, -0.36, 0.08)

@@ -10,7 +10,7 @@ const ShieldWall = preload("res://scripts/combat/skills/shield_wall.gd")
 const Thunderclap = preload("res://scripts/combat/skills/thunderclap.gd")
 
 func _ready():
-	assert(PlayerRoster.skill_catalog.size() == 11, "catalog grew to 11")
+	assert(PlayerRoster.skill_catalog.size() == 13, "catalog grew to 13")
 
 	var delver = load("res://resources/heroes/default_delver.tres").duplicate(true)
 	var slime = load("res://resources/enemies/green_slime.tres")
@@ -83,6 +83,42 @@ func _ready():
 		a.attack_timer -= 0.1 * a.attack_speed_multiplier()
 		undazed -= 0.1
 	assert(a.attack_timer > undazed, "daze slows the swing timer")
+
+	# The archer kit: multishot fans into the crowd, piercing punches
+	# through armor — both refuse hands without a bow.
+	var Multishot = preload("res://scripts/combat/skills/multishot.gd")
+	var Piercing = preload("res://scripts/combat/skills/piercing_shot.gd")
+	var multishot = load("res://resources/skills/multishot.tres")
+	var piercing = load("res://resources/skills/piercing_shot.tres")
+	assert(not Multishot.try_use(combat, hero, multishot), "no bow, no fan")
+	var archer_template = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	archer_template.equipped = {
+		Equip.Position.MAIN_HAND: LootTable.materialize("starter_bow", 5, 1),
+	}
+	var combat_bow = CombatState.new()
+	combat_bow.setup_combat([archer_template], [slime, slime, slime])
+	var archer = combat_bow.heroes[0]
+	for k in 3:
+		combat_bow.enemies[k].position = archer.position + Vector2(200 + k * 30, k * 20)
+		combat_bow.enemies[k].current_health = 200
+		combat_bow.enemies[k].max_health = 200
+	archer.target_id = combat_bow.enemies[0].entity_id
+	assert(Multishot.try_use(combat_bow, archer, multishot), "the fan flies")
+	var wounded := 0
+	for k in 3:
+		if combat_bow.enemies[k].current_health < 200:
+			wounded += 1
+	assert(wounded == 3, "three arrows, three targets")
+
+	# Piercing: an armored wall takes real damage, not armor-clamped 1s.
+	var wall_target = combat_bow.enemies[0]
+	wall_target.armor = 50
+	wall_target.current_health = 100
+	archer.crit_chance = 0.0
+	wall_target.dodge_chance = 0.0
+	wall_target.block_chance = 0.0
+	assert(Piercing.try_use(combat_bow, archer, piercing), "the bolt flies")
+	assert(100 - wall_target.current_health >= 4, "armor doesn't stop it")
 
 	# New gear slots: craft and equip boots, gauntlets, belt.
 	var roster = load("res://scripts/game/player_roster.gd").new()
