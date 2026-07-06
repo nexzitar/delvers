@@ -12,12 +12,13 @@ class_name DungeonDefinition
 @export var length: int = 10
 
 ## Encounter composition: core pool always draws, the deep pool joins
-## from deep_from onward, and one guaranteed enemy anchors every room
-## (the farmable identity — warriors in the Darkwood).
+## from deep_from onward, and the guaranteed pack anchors every room —
+## the dungeon's farmable identities (Darkwood: a warrior for iron and
+## a slime for gel), so no core material depends on pool luck.
 @export var pool_core: Array[EnemyDefinition] = []
 @export var pool_deep: Array[EnemyDefinition] = []
 @export var deep_from: int = 3
-@export var guaranteed: EnemyDefinition
+@export var guaranteed: Array[EnemyDefinition] = []
 @export var boss_pack: Array[EnemyDefinition] = []
 
 ## Loot band: item level = room + level_offset. Depth unlocks rarity:

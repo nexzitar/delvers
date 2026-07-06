@@ -24,7 +24,7 @@ class_name EnemyDefinition
 ## recipes are rare permanent unlocks; finished gear is a memorable
 ## fluke outside of bosses.
 @export var material_loot: Array[String] = []
-@export var material_drop_chance: float = 0.75
+@export var material_drop_chance: float = 1.0
 ## Base pieces per material drop (warriors haul iron in bulk).
 @export var material_drop_count: int = 1
 @export var recipe_loot: Array[String] = []

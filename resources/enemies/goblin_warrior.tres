@@ -15,7 +15,6 @@ move_speed = 85.0
 skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
 material_loot = Array[String](["iron_scrap", "iron_scrap", "iron_scrap", "leather"])
 material_drop_chance = 1.0
-material_drop_count = 2
 recipe_loot = Array[String](["reinforced_shield", "iron_helm"])
 affix_loot = Array[String](["guarding"])
 loot_ids = Array[String](["starter_sword", "starter_shield", "starter_armor"])

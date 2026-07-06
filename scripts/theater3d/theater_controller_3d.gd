@@ -134,14 +134,17 @@ func _ready():
 func roll_encounter(room: int) -> Array:
 	var d = dungeon()
 	if room >= d.length:
-		return Array(d.boss_pack)
-	var pool = Array(d.pool_core)
+		return d.boss_pack.duplicate()
+	# duplicate(): Array(typed) SHARES the resource's buffer — appends
+	# would leak into the .tres and balloon every later encounter.
+	var pool = d.pool_core.duplicate()
 	if room >= d.deep_from:
 		pool.append_array(d.pool_deep)
 	var low = clampi(2 + (room - 1) / 4, 2, 4)
 	var high = clampi(3 + (room - 1) / 2, 3, 6)
-	var encounter = [d.guaranteed] if d.guaranteed else []
-	for i in range(randi_range(low, high) - encounter.size()):
+	var encounter = d.guaranteed.duplicate()
+	var size = maxi(randi_range(low, high), encounter.size())
+	for i in range(size - encounter.size()):
 		encounter.append(pool.pick_random())
 	return encounter
 

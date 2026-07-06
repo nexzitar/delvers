@@ -9,7 +9,7 @@ func _ready():
 	assert(darkwood.dungeon_id == "darkwood" and nest.dungeon_id == "spider_nest",
 		"dungeons load")
 	for dungeon in [darkwood, nest]:
-		assert(dungeon.guaranteed != null and dungeon.boss_pack.size() > 0,
+		assert(not dungeon.guaranteed.is_empty() and dungeon.boss_pack.size() > 0,
 			"dungeon anchored and bossed")
 		for lore_id in dungeon.lore_ids:
 			assert(RosterSave.LORE_PATHS.has(lore_id), "lore series exists")
@@ -63,6 +63,18 @@ func _ready():
 		var drops = LootTable.roll_enemy_drops([spiderling], 2, [], [], found, nest, [])
 		found.append_array(drops.lore)
 	assert(found.size() == 4 and found[0] == "expedition_nest_1", "nest lore in order")
+
+	# Encounter rolls never mutate the dungeon resource (Array(typed)
+	# shares the buffer; picks must not leak into the .tres and balloon
+	# later rooms).
+	var controller = TheaterController3D.new()
+	var core_before = darkwood.pool_core.size()
+	var guaranteed_before = darkwood.guaranteed.size()
+	for i in 50:
+		controller.roll_encounter(1 + i % 9)
+	assert(darkwood.pool_core.size() == core_before, "pool stays pristine")
+	assert(darkwood.guaranteed.size() == guaranteed_before, "anchors stay pristine")
+	controller.free()
 
 	# Web Shot roots; the sim runs a nest pack to completion.
 	var WebShot = load("res://scripts/combat/skills/web_shot.gd")

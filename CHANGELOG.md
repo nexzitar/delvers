@@ -49,8 +49,21 @@ Notable changes per pull request. Newest first.
 
 ### Balanced
 - Standing separation spread brawls out (packed warriors all reach
-  the front line); the iron economy sim holds at ~2.2 iron per failed
-  run — still above the shield-within-two-runs bar.
+  the front line).
+- **Material flow rebalanced** (playtest: 92 iron vs 3 gel): every
+  enemy's materials now drop reliably (100%), warriors lost their
+  bulk multiplier and double pool slot, and each dungeon anchors TWO
+  farmable enemies per room — the Darkwood fields a warrior (iron)
+  and a slime (gel). The economy sim now measures both and asserts
+  iron never exceeds 3x the binder.
+
+### Fixed (continued)
+- **Encounters ballooned within a session**: Array(typed) shares the
+  resource buffer, so every encounter roll leaked its picks into the
+  cached dungeon resource — rooms grew warrior-stuffed over a play
+  session (a major hidden source of the iron flood and difficulty
+  spikes). Rolls duplicate properly now, with a pristine-resource
+  regression test.
 
 ## PR #8 — Affix recipes, the menagerie, and the Restoration *(merged)*
 
