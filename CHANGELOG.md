@@ -46,6 +46,12 @@ Notable changes per pull request. Newest first.
   off-hand starts half a beat out of phase, so strikes alternate.
 - Theater victory saves respect `PlayerRoster.autosave` (capture
   harnesses can no longer clobber a real save).
+- **Encounters ballooned within a session**: Array(typed) shares the
+  resource buffer, so every encounter roll leaked its picks into the
+  cached dungeon resource — rooms grew warrior-stuffed over a play
+  session (a major hidden source of the iron flood and difficulty
+  spikes). Rolls duplicate properly now, with a pristine-resource
+  regression test.
 
 ### Balanced
 - Standing separation spread brawls out (packed warriors all reach
@@ -57,13 +63,6 @@ Notable changes per pull request. Newest first.
   and a slime (gel). The economy sim now measures both and asserts
   iron never exceeds 3x the binder.
 
-### Fixed (continued)
-- **Encounters ballooned within a session**: Array(typed) shares the
-  resource buffer, so every encounter roll leaked its picks into the
-  cached dungeon resource — rooms grew warrior-stuffed over a play
-  session (a major hidden source of the iron flood and difficulty
-  spikes). Rolls duplicate properly now, with a pristine-resource
-  regression test.
 
 ## PR #8 — Affix recipes, the menagerie, and the Restoration *(merged)*
 
