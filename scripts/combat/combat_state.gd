@@ -147,7 +147,10 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	for existing in target.statuses:
 		if existing.id == status_id:
 			existing.remaining = maxf(existing.remaining, duration)
-			existing.magnitude = maxf(existing.magnitude, magnitude)
+			# EMPOWER mutates attack_power on apply; a refresh keeps the
+			# original magnitude to avoid double-stacking the buff.
+			if kind != StatusEffect.Kind.EMPOWER:
+				existing.magnitude = maxf(existing.magnitude, magnitude)
 			existing.source_id = source_id
 			return
 
@@ -157,6 +160,9 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	status.magnitude = magnitude
 	status.id = status_id
 	status.source_id = source_id
+	if kind == StatusEffect.Kind.EMPOWER:
+		target.attack_power += int(magnitude)
+		target.base_attack_power += int(magnitude)
 	target.statuses.append(status)
 
 	var event = CombatEvent.new()

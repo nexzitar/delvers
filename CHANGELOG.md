@@ -22,6 +22,11 @@ Notable changes per pull request. Newest first.
   dim empty.
 - Star-ups announce themselves in the spoils toast ("Garrick: Sword
   ★★ — Cleave!"). Veteran saves seed their current kit at two stars.
+- **Guild techniques for everyone**: Battle Shout (the whole party
+  hits harder for a while — new EMPOWER status with a badge) and
+  Rally (a heartening cry that mends the whole party) join Charge and
+  Heal in the slot catalog — a back-row archer finally has real
+  choices. One technique, one slot: doubling up on Heal is refused.
 - **Mastery owns the core techniques**: Cleave, Whirlwind, Multishot,
   Shield Wall and kin cannot be slotted — a whirlwind needs a sword
   in hand and the stars to back it. Technique Slots hold guild

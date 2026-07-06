@@ -10,7 +10,7 @@ const ShieldWall = preload("res://scripts/combat/skills/shield_wall.gd")
 const Thunderclap = preload("res://scripts/combat/skills/thunderclap.gd")
 
 func _ready():
-	assert(PlayerRoster.skill_catalog.size() == 13, "catalog grew to 13")
+	assert(PlayerRoster.skill_catalog.size() == 15, "catalog grew to 15")
 
 	var delver = load("res://resources/heroes/default_delver.tres").duplicate(true)
 	var slime = load("res://resources/enemies/green_slime.tres")
@@ -119,6 +119,40 @@ func _ready():
 	wall_target.block_chance = 0.0
 	assert(Piercing.try_use(combat_bow, archer, piercing), "the bolt flies")
 	assert(100 - wall_target.current_health >= 4, "armor doesn't stop it")
+
+	# Battle Shout: the whole party hits harder, then the voice fades.
+	var Shout = preload("res://scripts/combat/skills/battle_shout.gd")
+	var shout = load("res://resources/skills/battle_shout.tres")
+	var base_attack = hero.attack_power
+	for foe in combat.enemies:
+		foe.in_combat = true
+	assert(Shout.try_use(combat, hero, shout), "the shout carries")
+	assert(hero.attack_power == base_attack + 2, "the party hits harder")
+	assert(not Shout.try_use(combat, hero, shout), "one voice at a time")
+	for i in 90:
+		hero.tick_statuses(0.1, combat)
+	assert(hero.attack_power == base_attack, "the shout fades clean")
+
+	# Rally: everyone mends a little, for mana.
+	var Rally = preload("res://scripts/combat/skills/rally.gd")
+	var rally = load("res://resources/skills/rally.tres")
+	hero.current_health = hero.max_health - 20
+	hero.current_mana = 10
+	assert(Rally.try_use(combat, hero, rally), "the rally lands")
+	assert(hero.current_health > hero.max_health - 20, "wounds close")
+	assert(hero.current_mana == 6, "breath spent")
+
+	# One technique, one slot.
+	var dup_roster = load("res://scripts/game/player_roster.gd").new()
+	dup_roster.autosave = false
+	dup_roster._build_heroes()
+	dup_roster._build_stash()
+	dup_roster.bonus_skill_slots = 2
+	assert(dup_roster.equip_bonus_skill(0, load("res://resources/skills/heal.tres"), 1),
+		"heal slots once")
+	assert(not dup_roster.equip_bonus_skill(0, load("res://resources/skills/heal.tres"), 2),
+		"heal refuses a second slot")
+	dup_roster.free()
 
 	# New gear slots: craft and equip boots, gauntlets, belt.
 	var roster = load("res://scripts/game/player_roster.gd").new()

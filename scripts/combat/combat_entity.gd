@@ -110,6 +110,9 @@ func tick_statuses(delta, combat_state):
 				current_health += mend
 				combat_state.log_hot(self, s, mend)
 		if s.remaining <= 0.0:
+			if s.kind == StatusEffect.Kind.EMPOWER:
+				attack_power -= int(s.magnitude)
+				base_attack_power -= int(s.magnitude)
 			combat_state.log_buff_expired(self, s)
 	statuses = statuses.filter(func(s): return s.remaining > 0.0)
 

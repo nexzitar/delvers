@@ -18,6 +18,9 @@ func _init():
 	_save(_thunderclap(), "res://art/skills/skill_thunderclap.png")
 	_save(_multishot(), "res://art/skills/skill_multishot.png")
 	_save(_piercing_shot(), "res://art/skills/skill_piercing_shot.png")
+	_save(_battle_shout(), "res://art/skills/skill_battle_shout.png")
+	_save(_rally(), "res://art/skills/skill_rally.png")
+	_save(_badge_empower(), "res://art/status/status_empower.png")
 	_save(_badge_poison(), "res://art/status/status_poison.png")
 	_save(_badge_daze(), "res://art/status/status_daze.png")
 	_save(_badge_stun(), "res://art/status/status_stun.png")
@@ -298,4 +301,37 @@ func _star(tint: Color, filled: bool) -> Image:
 			return tint if r <= edge else null
 		if absf(r - edge) < 1.6:
 			return tint
+		return null)
+
+## A raised banner with sound lines.
+func _battle_shout() -> Image:
+	var img = _tile(Color("40261a"), Color("28160c"), Color("74452a"))
+	_paint(img, func(p):
+		return absf(p.x - 24.0) < 2.2 and p.y > 14.0 and p.y < 50.0, Color("d8c684"))
+	_paint(img, func(p):
+		return p.x >= 26.0 and p.x <= 44.0 and p.y >= 16.0 and p.y <= 30.0 \
+			and (p.x - 26.0) < (32.0 - p.y) * 2.4 + 18.0, Color("c04a3a"))
+	for i in 3:
+		_paint(img, func(p):
+			return _dist_to_segment(p, Vector2(46, 34 + i * 5),
+				Vector2(54, 30 + i * 6)) < 1.5, Color("f0d05a"))
+	return img
+
+## Two hearts mended as one.
+func _rally() -> Image:
+	var img = _tile(Color("22381e"), Color("142212"), Color("3e6a38"))
+	for off in [-8.0, 8.0]:
+		_paint(img, func(p):
+			var v = absf(p.x - C - off) < 2.4 and absf(p.y - 32.0) < 8.0
+			var h = absf(p.y - 32.0) < 2.4 and absf(p.x - C - off) < 8.0
+			return v or h, Color("a8dc8a") if off < 0 else Color("74b060"))
+	return img
+
+func _badge_empower() -> Image:
+	return _badge(func(p):
+		var up = absf(p.x - 16.0) < 2.2 and p.y > 8.0 and p.y < 24.0
+		var left = _dist_to_segment(p, Vector2(16, 8), Vector2(9, 15)) < 2.0
+		var right = _dist_to_segment(p, Vector2(16, 8), Vector2(23, 15)) < 2.0
+		if up or left or right:
+			return Color("f0a04a")
 		return null)

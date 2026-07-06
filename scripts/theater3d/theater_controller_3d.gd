@@ -45,6 +45,7 @@ const STATUS_ICON := {
 	"slow_frostforged": "res://art/status/status_chill.png",
 	"renew_hot": "res://art/status/status_renew.png",
 	"shield_wall": "res://art/status/status_fortify.png",
+	"battle_shout": "res://art/status/status_empower.png",
 }
 
 const STATUS_TEXT := {
@@ -58,6 +59,7 @@ const STATUS_TEXT := {
 	"renew_hot": "Renewed!",
 	"shield_wall": "Shield Wall!",
 	"thunderclap_daze": "Dazed!",
+	"battle_shout": "Emboldened!",
 }
 
 var actors := {}

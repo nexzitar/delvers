@@ -105,6 +105,8 @@ const SKILL_PATHS := {
 	"thunderclap": "res://resources/skills/thunderclap.tres",
 	"multishot": "res://resources/skills/multishot.tres",
 	"piercing_shot": "res://resources/skills/piercing_shot.tres",
+	"battle_shout": "res://resources/skills/battle_shout.tres",
+	"rally": "res://resources/skills/rally.tres",
 }
 
 ## Items serialize as {id, level, quality} and rebuild deterministically

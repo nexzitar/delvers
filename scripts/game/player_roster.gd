@@ -47,6 +47,8 @@ var skill_catalog: Array = [
 	preload("res://resources/skills/thunderclap.tres"),
 	preload("res://resources/skills/multishot.tres"),
 	preload("res://resources/skills/piercing_shot.tres"),
+	preload("res://resources/skills/battle_shout.tres"),
+	preload("res://resources/skills/rally.tres"),
 ]
 
 ## Materials are consumed; knowledge is permanent. The camp grows more
@@ -412,6 +414,13 @@ func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bo
 	# in hand and the stars to back it, not a slot.
 	if skill != null and Mastery.is_core(skill.skill_id):
 		return false
+	# One technique, one slot: no doubling up on Heal.
+	if skill != null:
+		var hero = heroes[hero_index]
+		for i in hero.bonus_skills.size():
+			if i != slot and hero.bonus_skills[i] is SkillDefinition \
+					and hero.bonus_skills[i].skill_id == skill.skill_id:
+				return false
 	if slot < 1 or slot > bonus_skill_slots:
 		return false
 	var hero = heroes[hero_index]

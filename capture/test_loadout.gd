@@ -66,7 +66,7 @@ func _ready():
 		roster.default_position(0, spare_head) == Equip.Position.HEAD)
 
 	# The full technique catalog is browsable (mastery gates the core).
-	_ok("thirteen techniques known", roster.skill_catalog.size() == 13)
+	_ok("fifteen techniques known", roster.skill_catalog.size() == 15)
 	_ok("all catalog skills have icons",
 		roster.skill_catalog.all(func(s): return s.icon != null))
 	var charge = roster.skill_catalog.filter(
