@@ -89,5 +89,22 @@ func _ready():
 	combat3.tick_movement(chaser, prey, 0.1)
 	assert(chaser.position.x >= 16.0, "positions clamp to the arena")
 
+	# Regression: chasing a mover re-paths from the tile center, which
+	# used to walk the chaser backward each time — whipsawing facing.
+	# While netting rightward, the face must never flip left.
+	var combat4 = CombatState.new()
+	combat4.setup_combat([delver], [slime])
+	var chaser2 = combat4.heroes[0]
+	var prey2 = combat4.enemies[0]
+	prey2.position = chaser2.position + Vector2(300, 0)
+	combat4.combat_time = 0.0
+	for i in 40:
+		combat4.combat_time += 0.1
+		prey2.position.x += 6.0
+		combat4.tick_movement(chaser2, prey2, 0.1)
+		if i > 2:
+			assert(chaser2.facing.x > 0.0,
+				"facing never flips against the chase")
+
 	print("PASS spatial move")
 	get_tree().quit()

@@ -291,6 +291,15 @@ func tick_movement(entity, target, delta):
 	if entity.path.is_empty():
 		return
 
+	# A re-path starts from the tile center, which can sit BEHIND the
+	# entity — skip leading waypoints that would walk it backward, or
+	# facing (and motion) whipsaws every time the target changes tile.
+	while entity.path_index + 1 < entity.path.size() \
+			and (entity.path[entity.path_index] - entity.position).dot(
+				entity.path[entity.path_index + 1]
+				- entity.path[entity.path_index]) <= 0.0:
+		entity.path_index += 1
+
 	var before = entity.position
 	var budget = entity.move_speed * entity.move_speed_multiplier() * delta
 	while budget > 0.0 and entity.path_index < entity.path.size():
@@ -304,6 +313,12 @@ func tick_movement(entity, target, delta):
 			entity.position += (waypoint - entity.position) / dist * budget
 			budget = 0.0
 
+	# Facing follows the path walked, sampled BEFORE separation so
+	# collision nudges never turn the body.
+	var walked = entity.position - before
+	if walked.length_squared() > 0.25:
+		entity.facing = walked.normalized()
+
 	# Soft collision: paths may overlap, bodies should not stack. The
 	# push must never shove anyone off the field.
 	entity.position += Separation.compute_offset(
@@ -313,7 +328,6 @@ func tick_movement(entity, target, delta):
 
 	var moved = entity.position - before
 	if moved.length_squared() > 0.01:
-		entity.facing = moved.normalized()
 		var started = not entity.moving
 		entity.moving = true
 		_log_move(entity, started)
