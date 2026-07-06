@@ -133,6 +133,12 @@ func _ready():
 		hero.tick_statuses(0.1, combat)
 	assert(hero.attack_power == base_attack, "the shout fades clean")
 
+	# The shout is loud: every engaged enemy now minds the shouter.
+	for foe in combat.enemies:
+		if foe.alive:
+			assert(foe.threat_table.get(hero.entity_id, 0.0) > 0.0,
+				"the shout draws every eye")
+
 	# Rally: everyone mends a little, for mana.
 	var Rally = preload("res://scripts/combat/skills/rally.gd")
 	var rally = load("res://resources/skills/rally.tres")

@@ -63,6 +63,7 @@ const TACTICS := [
 	["lowest", "Finish the Wounded", "Always strikes whoever has the least health left."],
 	["priority", "Focus Order", "Follows the party's focus order below."],
 	["spread", "Spread the Venom", "Poisons uncovered foes first, then follows the focus order."],
+	["guard", "Guard the Line", "Strikes whoever heeds this delver least - the tank keeps every eye on them."],
 ]
 var _right_tabs: TabContainer
 ## Clicked recipe: its crafted-item preview stays pinned in the

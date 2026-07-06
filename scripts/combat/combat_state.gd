@@ -109,6 +109,10 @@ func _pick_by_tactic(hero) -> int:
 				key = [enemy.current_health, dist]
 			"priority":
 				key = [_priority_rank(enemy), dist]
+			"guard":
+				# The tank's eye: whoever holds the least threat toward
+				# this delver gets struck (and taught) first.
+				key = [enemy.threat_table.get(hero.entity_id, 0.0), dist]
 			"spread":
 				# Prefer foes not yet carrying this hero's poison.
 				var covered := 0

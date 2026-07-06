@@ -22,6 +22,11 @@ Notable changes per pull request. Newest first.
   dim empty.
 - Star-ups announce themselves in the spoils toast ("Garrick: Sword
   ★★ — Cleave!"). Veteran saves seed their current kit at two stars.
+- **Tanking tools**: Battle Shout is LOUD — it generates threat on
+  every engaged enemy (10 per ally emboldened, split across the
+  pack), making it Garrick's AoE aggro opener. And the new **Guard
+  the Line** tactic strikes whoever holds the least threat toward
+  this delver, so the tank actively keeps every eye on themselves.
 - **Guild techniques for everyone**: Battle Shout (the whole party
   hits harder for a while — new EMPOWER status with a badge) and
   Rally (a heartening cry that mends the whole party) join Charge and
