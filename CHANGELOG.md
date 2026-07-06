@@ -16,6 +16,14 @@ Notable changes per pull request. Newest first.
 - Three gear slots come alive: craftable **Iron-Shod Boots**,
   **Goblin-Work Gauntlets**, and **Studded Belt** (new recipes with
   tomes, taught by spiders, archers, and warriors).
+- **Salvaging**: drag gear onto the salvage bin in the Gear tab —
+  materials come back (about half the recipe bill, plus a rare-quality
+  bonus), and **studying an unknown enchantment teaches that affix
+  forever**.
+- **Boss trophies are always enchanted**: a random affix, possibly one
+  the guild hasn't learned — wield it, or salvage it to study it.
+  Normal enemies drop no finished gear at all (playtest: starter-gear
+  flukes and affixless trophies both felt pointless).
 - **The Spider Nest** — second dungeon, unlocked by a Weathered Map
   Fragment the Slime King guards (dropped once, ever). Dungeons are
   data now (`DungeonDefinition`): pools, guaranteed enemy, boss pack,

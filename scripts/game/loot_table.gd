@@ -133,12 +133,18 @@ static func roll_enemy_drops(
 				and not drops.maps.has(template.map_loot):
 			drops.maps.append(template.map_loot)
 
-		# Finished equipment: a memorable fluke, or a boss trophy.
+		# Finished equipment comes only from bosses — and a trophy
+		# always carries an affix, possibly one not yet learned:
+		# wield it, or salvage it to study the enchantment.
 		if not template.loot_ids.is_empty() and randf() <= template.drop_chance:
+			var trophy_affix := ""
+			if template.is_boss:
+				trophy_affix = RosterSave.AFFIX_PATHS.keys().pick_random()
 			var gear = materialize(
 				template.loot_ids.pick_random(),
 				item_level,
-				roll_quality(room, template.is_boss, rare_chance, epic_chance)
+				roll_quality(room, template.is_boss, rare_chance, epic_chance),
+				trophy_affix
 			)
 			if gear:
 				drops.gear.append(gear)

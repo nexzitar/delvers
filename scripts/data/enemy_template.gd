@@ -33,7 +33,7 @@ class_name EnemyDefinition
 @export var affix_loot: Array[String] = []
 @export var affix_drop_chance: float = 0.03
 @export var loot_ids: Array[String] = []
-@export var drop_chance: float = 0.02
+@export var drop_chance: float = 0.0
 @export var is_boss: bool = false
 ## Dungeon id this enemy's map fragment unlocks (bosses guard the way
 ## deeper). Dropped once, ever.

@@ -53,6 +53,7 @@ var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
+var _salvage_label: Label
 var _library_box: VBoxContainer
 var _tactics_box: VBoxContainer
 
@@ -296,8 +297,33 @@ func _build_right_tabs():
 	_gear_grid.offset_left = 12
 	_gear_grid.offset_top = 12
 	_gear_grid.offset_right = -12
-	_gear_grid.offset_bottom = -12
+	_gear_grid.offset_bottom = -60
 	bin.add_child(_gear_grid)
+
+	# The salvage bin: drag gear in, get materials back — and study
+	# any enchantment the guild doesn't know yet.
+	var salvage_bin = DROP.new()
+	salvage_bin.screen = self
+	salvage_bin.target_kind = "salvage"
+	var salvage_style = _slot_style()
+	salvage_style.border_color = Color(0.55, 0.35, 0.25)
+	salvage_bin.add_theme_stylebox_override("panel", salvage_style)
+	salvage_bin.anchor_top = 1.0
+	salvage_bin.anchor_bottom = 1.0
+	salvage_bin.anchor_right = 1.0
+	salvage_bin.offset_left = 12
+	salvage_bin.offset_top = -52
+	salvage_bin.offset_right = -12
+	salvage_bin.offset_bottom = -8
+	bin.add_child(salvage_bin)
+	_salvage_label = Label.new()
+	_salvage_label.text = "Salvage: drag gear here to break it down"
+	_salvage_label.add_theme_font_override("font", FONT)
+	_salvage_label.add_theme_font_size_override("font_size", 15)
+	_salvage_label.add_theme_color_override("font_color", DIM)
+	_salvage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_salvage_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	salvage_bin.add_child(_salvage_label)
 
 	# Skills tab: the known catalog (sparse for now).
 	var skills_tab = ScrollContainer.new()
@@ -990,6 +1016,8 @@ func can_accept(target_kind, data) -> bool:
 		return false  # skill slots are read-only for now
 	if target_kind == "gear_stash":
 		return data.kind == "gear" and String(data.origin).begins_with("equipped")
+	if target_kind == "salvage":
+		return data.kind == "gear" and data.origin == "stash"
 	if target_kind == "auto":
 		if data.kind != "gear" or data.origin != "stash":
 			return false
@@ -1011,6 +1039,31 @@ func accept_drop(target_kind, data):
 	if target_kind == "gear_stash":
 		var pos = int(String(data.origin).split(":")[1])
 		PlayerRoster.unequip_gear(hero_index, pos)
+	elif target_kind == "salvage":
+		var yields = PlayerRoster.salvage(data.res)
+		var learned = yields.get("__learned", "")
+		yields.erase("__learned")
+		var bits := []
+		for material_id in yields:
+			bits.append("%s x%d" % [
+				load(RosterSave.MATERIAL_PATHS[material_id]).material_name,
+				yields[material_id],
+			])
+		var report = "Recovered: " + ", ".join(bits)
+		if learned != "":
+			var affix = load(RosterSave.AFFIX_PATHS[learned])
+			report += "  -  studied %s!" % affix.affix_name
+			_salvage_label.add_theme_color_override(
+				"font_color", ItemQuality.color(ItemQuality.Tier.EPIC))
+		else:
+			_salvage_label.add_theme_color_override(
+				"font_color", Color(0.85, 0.8, 0.7))
+		_salvage_label.text = report
+		UiSounds.click()
+		hide_tooltip()
+		refresh()
+		hero_changed.emit(hero_index)
+		return
 	elif target_kind == "auto":
 		PlayerRoster.equip_gear(hero_index, data.res)
 	elif target_kind.begins_with("equip:"):

@@ -168,6 +168,42 @@ func recruit_hero(kit_ids: Array):
 	heroes.append(hero)
 	_sync_role(hero)
 
+## Breaks a stash item down: materials come back (roughly half the
+## recipe bill), and an unfamiliar enchantment is STUDIED — salvaging
+## an unknown-affix trophy teaches that affix forever.
+func salvage(gear: GearDefinition) -> Dictionary:
+	var index = gear_stash.find(gear)
+	if index == -1:
+		return {}
+	gear_stash.remove_at(index)
+
+	var yields := {}
+	for recipe_id in RosterSave.RECIPE_PATHS:
+		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+		if recipe.result_gear_id != gear.gear_id:
+			continue
+		for material_id in recipe.costs:
+			var back = maxi(1, int(recipe.costs[material_id] / 2.0))
+			yields[material_id] = yields.get(material_id, 0) + back
+		break
+	if yields.is_empty():
+		# No known pattern: scrap by kind.
+		yields["iron_scrap" if gear.weapon_type != GearDefinition.WeaponType.NONE
+			else "leather"] = 1
+	if gear.quality >= ItemQuality.Tier.RARE:
+		yields["corrosion_core"] = yields.get("corrosion_core", 0) + 1
+
+	for material_id in yields:
+		material_stash[material_id] = material_stash.get(material_id, 0) + yields[material_id]
+
+	if gear.affix_id != "" and not known_affixes.has(gear.affix_id):
+		known_affixes.append(gear.affix_id)
+		yields["__learned"] = gear.affix_id
+
+	if autosave:
+		RosterSave.save(self)
+	return yields
+
 # --- Crafting ---------------------------------------------------------
 
 ## Affixes the camp knows that can enchant this recipe's result.
