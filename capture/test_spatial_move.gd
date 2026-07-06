@@ -106,5 +106,23 @@ func _ready():
 			assert(chaser2.facing.x > 0.0,
 				"facing never flips against the chase")
 
+	# Regression: two brawlers who stopped on the same spot must
+	# separate while standing, not freeze inside each other.
+	var warrior_template = load("res://resources/enemies/goblin_warrior.tres")
+	var combat5 = CombatState.new()
+	combat5.setup_combat([delver], [warrior_template, warrior_template])
+	var stand_hero = combat5.heroes[0]
+	var brawler_a = combat5.enemies[0]
+	var brawler_b = combat5.enemies[1]
+	var spot = stand_hero.position + Vector2(40, 0)
+	brawler_a.position = spot
+	brawler_b.position = spot
+	for i in 20:
+		combat5.update(0.1)
+	assert(
+		brawler_a.position.distance_to(brawler_b.position) > 15.0,
+		"standing units separate"
+	)
+
 	print("PASS spatial move")
 	get_tree().quit()

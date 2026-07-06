@@ -146,6 +146,9 @@ func update(delta, combat_state):
 	if combat_state.within_stop_range(self, target):
 		combat_state.stop_movement(self)
 		combat_state.face_target(self, target)
+		# Two brawlers converging on the same spot must not freeze
+		# inside each other: separation keeps working while standing.
+		combat_state.nudge_separation(self)
 	else:
 		combat_state.tick_movement(self, target, delta)
 

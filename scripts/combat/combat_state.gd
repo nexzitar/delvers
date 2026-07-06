@@ -313,6 +313,18 @@ func face_target(entity, target):
 
 # --- Movement ---------------------------------------------------------
 
+## Standing units un-stack too: separation while stopped, gently,
+## with the shift logged so the theater sees it. No-op when clear.
+func nudge_separation(entity):
+	var push = Separation.compute_offset(
+		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0,
+		float(entity.entity_id)
+	)
+	if push == Vector2.ZERO:
+		return
+	entity.position = grid.clamp_world(entity.position + push)
+	_log_move(entity)
+
 func stop_movement(entity):
 	entity.path = PackedVector2Array()
 	entity.path_index = 0
@@ -374,7 +386,8 @@ func tick_movement(entity, target, delta):
 	# Soft collision: paths may overlap, bodies should not stack. The
 	# push must never shove anyone off the field.
 	entity.position += Separation.compute_offset(
-		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0
+		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0,
+		float(entity.entity_id)
 	)
 	entity.position = grid.clamp_world(entity.position)
 

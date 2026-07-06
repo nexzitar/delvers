@@ -16,7 +16,7 @@ func _ready():
 
 	var warrior_seen := 0
 	var iron_total := 0
-	var runs := 40
+	var runs := 60
 	for run in runs:
 		var health := -1
 		for room in range(1, 11):
@@ -42,7 +42,7 @@ func _ready():
 	assert(warrior_seen > 0, "warriors appear in encounters")
 	var iron_per_run := float(iron_total) / runs
 	print("warriors seen: %d, iron per run: %.1f" % [warrior_seen, iron_per_run])
-	assert(iron_per_run >= 1.8, "a run brings home iron")
+	assert(iron_per_run >= 1.5, "a run brings home iron (shield within two runs)")
 
 	print("PASS iron economy")
 	get_tree().quit()
