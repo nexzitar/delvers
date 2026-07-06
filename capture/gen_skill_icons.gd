@@ -16,6 +16,13 @@ func _init():
 	_save(_renew(), "res://art/skills/skill_renew.png")
 	_save(_shield_wall(), "res://art/skills/skill_shield_wall.png")
 	_save(_thunderclap(), "res://art/skills/skill_thunderclap.png")
+	_save(_badge_poison(), "res://art/status/status_poison.png")
+	_save(_badge_daze(), "res://art/status/status_daze.png")
+	_save(_badge_stun(), "res://art/status/status_stun.png")
+	_save(_badge_root(), "res://art/status/status_root.png")
+	_save(_badge_chill(), "res://art/status/status_chill.png")
+	_save(_badge_renew(), "res://art/status/status_renew.png")
+	_save(_badge_fortify(), "res://art/status/status_fortify.png")
 	print("icons written")
 	quit()
 
@@ -163,3 +170,82 @@ func _thunderclap() -> Image:
 		var bar = _dist_to_segment(p, Vector2(26, 32), Vector2(38, 30)) < 2.8
 		return upper or lower or bar, Color("ffe27a"))
 	return img
+
+## Status badges: 32px transparent symbols hovering over heads.
+const B := 32
+
+func _badge(paint: Callable) -> Image:
+	var img := Image.create(B, B, false, Image.FORMAT_RGBA8)
+	for y in B:
+		for x in B:
+			var color = paint.call(Vector2(x, y))
+			if color != null:
+				img.set_pixel(x, y, color)
+	return img
+
+func _badge_poison() -> Image:
+	return _badge(func(p):
+		var blob = p.distance_to(Vector2(16, 19)) < 7.0
+		var tip = absf(p.x - 16.0) < (p.y - 6.0) * 0.5 and p.y >= 6.0 and p.y < 13.0
+		if blob or tip:
+			return Color("b464e6")
+		return null)
+
+func _badge_daze() -> Image:
+	return _badge(func(p):
+		var d = p.distance_to(Vector2(16, 16))
+		var a = atan2(p.y - 16.0, p.x - 16.0)
+		var spiral = absf(d - (4.0 + fposmod(a + PI, TAU) * 1.5)) < 1.8
+		if spiral and d < 14.0:
+			return Color("f0d05a")
+		return null)
+
+func _badge_stun() -> Image:
+	return _badge(func(p):
+		for i in 5:
+			var a = -PI / 2 + TAU * i / 5.0
+			var tip = Vector2(16, 16) + Vector2(cos(a), sin(a)) * 11.0
+			if _dist_to_segment(p, Vector2(16, 16), tip) < 2.0:
+				return Color("ffe27a")
+		return null)
+
+func _badge_root() -> Image:
+	return _badge(func(p):
+		var d = p.distance_to(Vector2(16, 16))
+		if (absf(d - 6.0) < 1.2 or absf(d - 11.0) < 1.2) and d < 13.0:
+			return Color("e8e4d8")
+		for i in 4:
+			var a = TAU * i / 8.0
+			if _dist_to_segment(p, Vector2(16, 16),
+					Vector2(16, 16) + Vector2(cos(a), sin(a)) * 13.0) < 1.2:
+				return Color("e8e4d8")
+			if _dist_to_segment(p, Vector2(16, 16),
+					Vector2(16, 16) - Vector2(cos(a), sin(a)) * 13.0) < 1.2:
+				return Color("e8e4d8")
+		return null)
+
+func _badge_chill() -> Image:
+	return _badge(func(p):
+		for i in 3:
+			var a = TAU * i / 6.0
+			var dir = Vector2(cos(a), sin(a)) * 12.0
+			if _dist_to_segment(p, Vector2(16, 16) - dir, Vector2(16, 16) + dir) < 1.6:
+				return Color("9ad4ff")
+		return null)
+
+func _badge_renew() -> Image:
+	return _badge(func(p):
+		var v = absf(p.x - 16.0) < 2.4 and absf(p.y - 16.0) < 10.0
+		var h = absf(p.y - 16.0) < 2.4 and absf(p.x - 16.0) < 10.0
+		if v or h:
+			return Color("8adc72")
+		return null)
+
+func _badge_fortify() -> Image:
+	return _badge(func(p):
+		if p.y < 6.0 or p.y > 27.0:
+			return null
+		var half = 9.0 if p.y < 17.0 else 9.0 * (1.0 - (p.y - 17.0) / 10.0)
+		if absf(p.x - 16.0) < half:
+			return Color("d8c684")
+		return null)

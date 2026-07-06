@@ -47,6 +47,13 @@ Notable changes per pull request. Newest first.
   local settings file had master volume saved at 0).
 
 ### Changed
+- **Combat readability**: status badges (poison drop, daze spiral,
+  stun star, web, snowflake, renew cross, shield) ride above heads
+  while a status runs; damage numbers are team-colored (hits on your
+  party glow red, your hits read pale gold, crits gold/red by side);
+  floating text lanes key on the entity so bursts on one body never
+  overlap; Whirlwind spins the rig with arms flung wide and
+  Thunderclap stamps an expanding shockwave ring.
 - Forge layout scales to a full recipe book: compact one-line recipe
   rows with color-coded costs; the full bill with hunting grounds
   lives in the pinned selection tooltip.

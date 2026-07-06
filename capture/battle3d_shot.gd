@@ -8,8 +8,8 @@ var out_dir := ProjectSettings.globalize_path("res://capture/proto3d/renders")
 func _ready():
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	PlayerRoster.unlocked_dungeons = ["darkwood", "spider_nest"]
-	PlayerRoster.start_delve("spider_nest")
-	PlayerRoster.delve_room = 5
+	PlayerRoster.start_delve("darkwood")
+	PlayerRoster.delve_room = 7
 	PlayerRoster.heroes[0].equipped = {
 		Equip.Position.MAIN_HAND: LootTable.materialize("starter_sword", 12, 2, "virulent"),
 		Equip.Position.OFF_HAND: LootTable.materialize("starter_shield", 12, 2),
@@ -17,7 +17,9 @@ func _ready():
 		Equip.Position.CHEST: LootTable.materialize("starter_armor", 12, 1),
 	}
 	PlayerRoster._sync_role(PlayerRoster.heroes[0])
-	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/heal.tres"), 1)
+	PlayerRoster.bonus_skill_slots = 2
+	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/thunderclap.tres"), 1)
+	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/whirlwind.tres"), 2)
 	var scene = load("res://scenes/theater/battle_theater_3d.tscn").instantiate()
 	add_child(scene)
 	_run()

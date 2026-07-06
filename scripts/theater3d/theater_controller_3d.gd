@@ -33,6 +33,20 @@ const CAMERA_OFFSET := Vector3(0.55, 0.63, 0.76)
 const HERO_ARROW_COLOR := Color(0.92, 0.76, 0.3, 0.75)
 const ENEMY_ARROW_COLOR := Color(0.85, 0.32, 0.25, 0.75)
 
+## Persistent badge shown over the head while a status runs.
+const STATUS_ICON := {
+	"poison_virulent": "res://art/status/status_poison.png",
+	"venom_bite_poison": "res://art/status/status_poison.png",
+	"thunderclap_daze": "res://art/status/status_daze.png",
+	"charge_stun": "res://art/status/status_stun.png",
+	"frost_nova_root": "res://art/status/status_root.png",
+	"web_root": "res://art/status/status_root.png",
+	"hamstring_slow": "res://art/status/status_chill.png",
+	"slow_frostforged": "res://art/status/status_chill.png",
+	"renew_hot": "res://art/status/status_renew.png",
+	"shield_wall": "res://art/status/status_fortify.png",
+}
+
 const STATUS_TEXT := {
 	"frost_nova_root": "Rooted!",
 	"hamstring_slow": "Slowed!",
@@ -220,6 +234,19 @@ func _dispatch(item):
 			state.mode = "attack_off" if item.get("off", false) else "attack"
 			state.anim_t = 0.0
 		return
+	if item.kind == "spin":
+		var state = actors.get(item.id)
+		if state and state.mode != "dead" and state.rig.has_method("pose_spin"):
+			state.mode = "spin"
+			state.anim_t = 0.0
+		return
+	if item.kind == "clap":
+		var state = actors.get(item.id)
+		if state and state.mode != "dead":
+			if state.rig.has_method("pose_spellcast"):
+				state.rig.pose_spellcast(0.5)
+			_spawn_shockwave(state.rig.position)
+		return
 	_play_event(item.event)
 
 func _play_event(event):
@@ -248,6 +275,8 @@ func _play_event(event):
 			_play_death(event)
 		CombatEvent.EventType.BUFF_APPLIED:
 			_play_buff(event)
+		CombatEvent.EventType.BUFF_EXPIRED:
+			_play_buff_expired(event)
 		CombatEvent.EventType.TELEGRAPH:
 			var telegraph = AoeTelegraph3D.new(
 				event.telegraph_radius * WORLD_SCALE, event.telegraph_duration
@@ -261,8 +290,14 @@ func _play_spawn(event):
 	rig.position = to_world(event.position)
 	rig.rotation.y = _yaw_of(event.facing)
 
+	var badge_row := Node3D.new()
+	rig.add_child(badge_row)
+	badge_row.position = Vector3(0, 1.95, 0)
+
 	actors[event.entity_id] = {
 		"rig": rig,
+		"badge_row": badge_row,
+		"badges": {},
 		"is_slime": rig.has_method("pose_attack"),
 		"team": event.team,
 		"mode": "idle",
@@ -323,16 +358,22 @@ func _play_damage(event):
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
+	# Hits on YOUR party glow red; your hits on the enemy read pale
+	# gold — one glance tells who is bleeding.
+	var incoming: bool = target.team == CombatEntity.Team.HERO
 	if event.dot:
 		# Poison ticks: a quiet purple number, no impact sound or swing.
 		_spawn_floating_text(
-			target.rig.position, str(event.amount), Color(0.7, 0.35, 0.85)
+			target.rig.position, str(event.amount),
+			Color(0.85, 0.3, 0.55) if incoming else Color(0.7, 0.35, 0.85),
+			1.0, event.target_id
 		)
 		return
 	if event.dodged:
 		# The swing whiffs: no impact sound, a pale sidestep note.
 		_spawn_floating_text(
-			target.rig.position, "Dodge!", Color(0.85, 0.85, 0.8)
+			target.rig.position, "Dodge!", Color(0.85, 0.85, 0.8),
+			1.0, event.target_id
 		)
 		return
 	var ranged = (
@@ -346,16 +387,19 @@ func _play_damage(event):
 	if event.blocked:
 		_spawn_floating_text(
 			target.rig.position, "%d (blocked)" % event.amount,
-			Color(0.5, 0.7, 0.95)
+			Color(0.5, 0.7, 0.95), 1.0, event.target_id
 		)
 	elif event.crit:
 		_spawn_floating_text(
 			target.rig.position, "%d!" % event.amount,
-			Color(1.0, 0.62, 0.1), 1.45
+			Color(1.0, 0.3, 0.15) if incoming else Color(1.0, 0.72, 0.15),
+			1.45, event.target_id
 		)
 	else:
 		_spawn_floating_text(
-			target.rig.position, str(event.amount), Color(0.9, 0.2, 0.15)
+			target.rig.position, str(event.amount),
+			Color(0.95, 0.25, 0.2) if incoming else Color(0.95, 0.88, 0.62),
+			1.0, event.target_id
 		)
 
 func _play_heal(event):
@@ -369,7 +413,8 @@ func _play_heal(event):
 	if caster_bar and event.max_mana > 0:
 		caster_bar.set_mana(event.source_id, event.current_mana, event.max_mana)
 	_spawn_floating_text(
-		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3)
+		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3),
+		1.0, event.target_id
 	)
 
 func _play_death(event):
@@ -378,6 +423,8 @@ func _play_death(event):
 		return
 	state.mode = "dead"
 	state.anim_t = 0.0
+	for status_id in state.badges.keys():
+		_remove_badge(state, status_id)
 	sidebars_by_entity[event.target_id].mark_dead(event.target_id)
 	var arrow = arrows.get(event.target_id)
 	if arrow:
@@ -386,12 +433,48 @@ func _play_death(event):
 
 func _play_buff(event):
 	var target = actors.get(event.target_id)
-	if target == null or not STATUS_TEXT.has(event.status_id):
+	if target == null:
 		return
-	_spawn_floating_text(
-		target.rig.position + Vector3(0, 0.35, 0),
-		STATUS_TEXT[event.status_id], Color(0.55, 0.75, 1.0)
-	)
+	if STATUS_TEXT.has(event.status_id):
+		_spawn_floating_text(
+			target.rig.position + Vector3(0, 0.35, 0),
+			STATUS_TEXT[event.status_id], Color(0.55, 0.75, 1.0),
+			1.0, event.target_id
+		)
+	_add_badge(target, event.status_id)
+
+func _play_buff_expired(event):
+	var target = actors.get(event.target_id)
+	if target:
+		_remove_badge(target, event.status_id)
+
+## A little symbol rides above the head for as long as the status runs.
+func _add_badge(state, status_id: String):
+	if not STATUS_ICON.has(status_id) or state.badges.has(status_id):
+		return
+	var badge := Sprite3D.new()
+	badge.texture = load(STATUS_ICON[status_id])
+	badge.pixel_size = 0.011
+	badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	badge.no_depth_test = true
+	badge.render_priority = 10
+	state.badge_row.add_child(badge)
+	state.badges[status_id] = badge
+	_layout_badges(state)
+
+func _remove_badge(state, status_id: String):
+	if not state.badges.has(status_id):
+		return
+	state.badges[status_id].queue_free()
+	state.badges.erase(status_id)
+	_layout_badges(state)
+
+func _layout_badges(state):
+	var ids = state.badges.keys()
+	for i in ids.size():
+		state.badges[ids[i]].position = Vector3(
+			(i - (ids.size() - 1) * 0.5) * 0.34, 0, 0
+		)
 
 # --- Continuous animation ----------------------------------------------
 
@@ -427,6 +510,12 @@ func _update_actors(delta):
 						rig.pose_swing(state.anim_t)
 					if state.anim_t >= DelverRig.SWING_T:
 						state.mode = "idle"
+			"spin":
+				state.anim_t += delta
+				rig.pose_spin(state.anim_t)
+				rig.rotation.y += delta * 10.5
+				if state.anim_t >= DelverRig.SPIN_T:
+					state.mode = "idle"
 			"shoot":
 				if not rig.has_method("pose_shoot"):
 					state.mode = "idle"
@@ -499,15 +588,40 @@ func _update_camera(delta):
 func _yaw_of(facing: Vector2) -> float:
 	return atan2(facing.x, facing.y)
 
-## Bursts of numbers over the same body fan out into side lanes
-## (center, left, right, far-left, far-right) so nothing overlaps.
+## Bursts of text over the same body claim lanes — keyed by the
+## entity when known (position quantization misses fast movers), and
+## climbing a half-step per full ring so long bursts stack upward.
 var _float_lanes := {}
 
-func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0):
-	var key := Vector2i(roundi(at.x * 1.5), roundi(at.z * 1.5))
+## Thunderclap's expanding ground ring.
+func _spawn_shockwave(at: Vector3):
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.42
+	torus.outer_radius = 0.5
+	torus.rings = 24
+	torus.ring_segments = 6
+	ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.9, 0.5, 0.8)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = mat
+	ring.position = at + Vector3(0, 0.08, 0)
+	ring.scale = Vector3(0.3, 0.12, 0.3)
+	add_child(ring)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(ring, "scale", Vector3(5.6, 0.12, 5.6), 0.45) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.45)
+	tween.chain().tween_callback(ring.queue_free)
+
+func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0, key_id := -1):
+	var key = key_id if key_id != -1 else Vector2i(roundi(at.x * 1.5), roundi(at.z * 1.5))
 	var lane := 0
 	var recent = _float_lanes.get(key)
-	if recent != null and _clock - recent.time < 0.9:
+	if recent != null and _clock - recent.time < 1.1:
 		lane = recent.lane + 1
 	_float_lanes[key] = {"lane": lane, "time": _clock}
 	var side: float = [0.0, -1.0, 1.0, -2.0, 2.0][lane % 5]
@@ -522,8 +636,8 @@ func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.position = at + Vector3(
-		side * 0.42 + randf_range(-0.06, 0.06),
-		1.5 + 0.18 * float(lane / 5),
+		side * 0.46 + randf_range(-0.05, 0.05),
+		1.5 + 0.24 * float(lane / 5),
 		0
 	)
 	add_child(label)
