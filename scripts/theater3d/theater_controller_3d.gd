@@ -41,6 +41,9 @@ const STATUS_TEXT := {
 	"slow_frostforged": "Chilled!",
 	"venom_bite_poison": "Poisoned!",
 	"web_root": "Webbed!",
+	"renew_hot": "Renewed!",
+	"shield_wall": "Shield Wall!",
+	"thunderclap_daze": "Dazed!",
 }
 
 var actors := {}

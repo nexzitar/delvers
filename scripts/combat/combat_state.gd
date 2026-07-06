@@ -189,6 +189,23 @@ func apply_on_hit(attacker, weapon, target):
 				"slow_" + affix.affix_id, attacker.entity_id
 			)
 
+## A regeneration tick mended health: a small green number, credited
+## to whoever cast it.
+func log_hot(target, status, amount: int):
+	var source = entity_by_id(status.source_id)
+	var event = CombatEvent.new()
+	event.time = combat_time
+	event.type = CombatEvent.EventType.HEAL
+	event.source_id = status.source_id
+	event.source_name = source.entity_name if source else "Renew"
+	event.target_id = target.entity_id
+	event.target_name = target.entity_name
+	event.remaining_health = target.current_health
+	event.max_health = target.max_health
+	event.skill_name = "Renew"
+	event.amount = amount
+	add_event(event)
+
 ## A poison tick dealt damage: log it (flagged as a dot so the theater
 ## shows the number without swinging anyone's arm) and feed threat.
 func log_dot(victim, status, amount: int, died: bool):

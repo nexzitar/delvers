@@ -32,6 +32,9 @@ const RECIPE_PATHS := {
 	"silk_hood": "res://resources/recipes/silk_hood.tres",
 	"chitin_shield": "res://resources/recipes/chitin_shield.tres",
 	"chitin_armor": "res://resources/recipes/chitin_armor.tres",
+	"iron_shod_boots": "res://resources/recipes/iron_shod_boots.tres",
+	"goblin_work_gauntlets": "res://resources/recipes/goblin_work_gauntlets.tres",
+	"studded_belt": "res://resources/recipes/studded_belt.tres",
 }
 
 const AFFIX_PATHS := {
@@ -72,6 +75,9 @@ const GEAR_PATHS := {
 	"starter_armor": "res://resources/gear/starter_armor.tres",
 	"fast_dagger": "res://resources/gear/fast_dagger.tres",
 	"heavy_axe": "res://resources/gear/heavy_axe.tres",
+	"iron_shod_boots": "res://resources/gear/iron_shod_boots.tres",
+	"goblin_work_gauntlets": "res://resources/gear/goblin_work_gauntlets.tres",
+	"studded_belt": "res://resources/gear/studded_belt.tres",
 }
 
 const SKILL_PATHS := {
@@ -81,6 +87,11 @@ const SKILL_PATHS := {
 	"hamstring": "res://resources/skills/hamstring.tres",
 	"charge": "res://resources/skills/charge.tres",
 	"heal": "res://resources/skills/heal.tres",
+	"cleave": "res://resources/skills/cleave.tres",
+	"whirlwind": "res://resources/skills/whirlwind.tres",
+	"renew": "res://resources/skills/renew.tres",
+	"shield_wall": "res://resources/skills/shield_wall.tres",
+	"thunderclap": "res://resources/skills/thunderclap.tres",
 }
 
 ## Items serialize as {id, level, quality} and rebuild deterministically

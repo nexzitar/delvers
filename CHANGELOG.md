@@ -5,6 +5,17 @@ Notable changes per pull request. Newest first.
 ## PR #9 — The Spider Nest, Tactics, and a sharper Forge *(open)*
 
 ### Added
+- **The multi-enemy toolkit** (playtest: "5–6 enemies and no way to
+  deal with it"): five new skills — **Cleave** (carries into two foes
+  beside the target), **Whirlwind** (hits everything around you; holds
+  until 2+ are close), **Renew** (instant heal-over-time), **Shield
+  Wall** (near-halves incoming damage when hurt and pressed), and
+  **Thunderclap** (small AoE that dazes enemy attack speed and
+  generates triple threat — the tank button, ready for the second
+  delver).
+- Three gear slots come alive: craftable **Iron-Shod Boots**,
+  **Goblin-Work Gauntlets**, and **Studded Belt** (new recipes with
+  tomes, taught by spiders, archers, and warriors).
 - **The Spider Nest** — second dungeon, unlocked by a Weathered Map
   Fragment the Slime King guards (dropped once, ever). Dungeons are
   data now (`DungeonDefinition`): pools, guaranteed enemy, boss pack,

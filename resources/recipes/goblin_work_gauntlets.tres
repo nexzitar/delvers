@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "goblin_work_gauntlets"
+recipe_name = "Goblin-Work Gauntlets"
+tome_name = "Fistwright's Knuckle Notes"
+tome_lore = "Goblin-stitched: ugly, tight, and quick to the grip."
+result_gear_id = "goblin_work_gauntlets"
+result_item_level = 5
+result_quality = 1
+costs = {"leather": 3, "iron_scrap": 1}

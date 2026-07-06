@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "iron_shod_boots"
+recipe_name = "Iron-Shod Boots"
+tome_name = "Bootmaker's Muddy Ledger"
+tome_lore = "Whoever ran from the warrens ran far. The soles held."
+result_gear_id = "iron_shod_boots"
+result_item_level = 5
+result_quality = 1
+costs = {"leather": 2, "iron_scrap": 2}

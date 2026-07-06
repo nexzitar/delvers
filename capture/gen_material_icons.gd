@@ -22,6 +22,9 @@ func _init():
 	_save(_silk(Color("e8e4d8")), "res://art/materials/mat_silk_thread.png")
 	_save(_chitin(), "res://art/materials/mat_chitin_plate.png")
 	_save(_silk(Color("cdb8e0")), "res://art/materials/mat_brood_silk.png")
+	_save(_boots(), "res://art/gear/iron_shod_boots.png")
+	_save(_gauntlets(), "res://art/gear/goblin_work_gauntlets.png")
+	_save(_belt(), "res://art/gear/studded_belt.png")
 	print("material icons written")
 	quit()
 
@@ -169,4 +172,49 @@ func _chitin() -> Image:
 			var half = 16.0 - row * 1.5
 			return absf(p.x - C) < half * (1.0 - (p.y - cy) / 22.0 * 0.4),
 			Color("6e4f2e").lightened(0.12 * row))
+	return img
+
+## A sturdy boot, iron at the toe.
+func _boots() -> Image:
+	var img = _tile(Color("32281c"), Color("1e1810"))
+	_paint(img, func(p):
+		return p.x >= 22.0 and p.x <= 34.0 and p.y >= 14.0 and p.y <= 42.0,
+		Color("6e4f2e"))
+	_paint(img, func(p):
+		return p.x >= 22.0 and p.x <= 48.0 and p.y >= 36.0 and p.y <= 48.0,
+		Color("6e4f2e"))
+	_paint(img, func(p):
+		return p.x >= 40.0 and p.x <= 48.0 and p.y >= 38.0 and p.y <= 48.0,
+		Color("9aa3ad"))
+	return img
+
+## A studded fist wrap.
+func _gauntlets() -> Image:
+	var img = _tile(Color("2c241c"), Color("1a1610"))
+	_paint(img, func(p):
+		return p.distance_to(Vector2(30, 34)) < 13.0, Color("8a6a42"))
+	for i in 4:
+		_paint(img, func(p):
+			return p.distance_to(Vector2(20.0 + i * 7.0, 24)) < 3.2,
+			Color("c7ced6"))
+	_paint(img, func(p):
+		return p.x >= 24.0 and p.x <= 40.0 and p.y >= 42.0 and p.y <= 50.0,
+		Color("5e4426"))
+	return img
+
+## A wide belt, studded, heavy buckle.
+func _belt() -> Image:
+	var img = _tile(Color("2c2418"), Color("1a160e"))
+	_paint(img, func(p):
+		return p.y >= 26.0 and p.y <= 40.0, Color("6e4f2e"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 7.0 and absf(p.y - 33.0) < 6.0, Color("c7a94a"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 3.0 and absf(p.y - 33.0) < 2.5, Color("2c2418"))
+	for i in 4:
+		_paint(img, func(p):
+			var x = 10.0 + i * 12.0
+			if absf(x - C) < 10.0:
+				return false
+			return p.distance_to(Vector2(x, 33)) < 2.2, Color("c7ced6"))
 	return img

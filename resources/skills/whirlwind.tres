@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/whirlwind.gd" id="2_behavior"]
+[ext_resource type="Texture2D" path="res://art/skills/skill_whirlwind.png" id="3_icon"]
+
+[resource]
+resource_name = "Whirlwind"
+script = ExtResource("1_skill")
+skill_id = "whirlwind"
+skill_name = "Whirlwind"
+icon = ExtResource("3_icon")
+behavior_script = ExtResource("2_behavior")
+range = 90.0
+cooldown = 9.0
+base_min_damage = 2
+base_max_damage = 5

@@ -11,6 +11,11 @@ func _init():
 	_save(_hamstring(), "res://art/skills/skill_hamstring.png")
 	_save(_charge(), "res://art/skills/skill_charge.png")
 	_save(_heal(), "res://art/skills/skill_heal.png")
+	_save(_cleave(), "res://art/skills/skill_cleave.png")
+	_save(_whirlwind(), "res://art/skills/skill_whirlwind.png")
+	_save(_renew(), "res://art/skills/skill_renew.png")
+	_save(_shield_wall(), "res://art/skills/skill_shield_wall.png")
+	_save(_thunderclap(), "res://art/skills/skill_thunderclap.png")
 	print("icons written")
 	quit()
 
@@ -88,4 +93,73 @@ func _heal() -> Image:
 		return (absf(p.x - C) < 6.0 and absf(p.y - C) < 18.0) \
 			or (absf(p.y - C) < 6.0 and absf(p.x - C) < 18.0),
 		Color("a8eb9e"))
+	return img
+
+## Three parallel slashes carrying through.
+func _cleave() -> Image:
+	var img = _tile(Color("4a2c20"), Color("2c1810"), Color("7a4a30"))
+	for i in 3:
+		var off = -12.0 + i * 12.0
+		_paint(img, func(p):
+			return _dist_to_segment(p,
+				Vector2(18 + off, 14), Vector2(34 + off, 50)) < 2.6,
+			Color("e8d8c0"))
+	return img
+
+## A spun circle of blades.
+func _whirlwind() -> Image:
+	var img = _tile(Color("3a3426"), Color("241f14"), Color("6a6244"))
+	_paint(img, func(p):
+		var d = p.distance_to(Vector2(C, C))
+		return d > 11.0 and d < 16.0, Color("d8d0b8"))
+	for i in 3:
+		var a = TAU * i / 3.0
+		var tip = Vector2(C, C) + Vector2(cos(a), sin(a)) * 22.0
+		var base = Vector2(C, C) + Vector2(cos(a + 0.5), sin(a + 0.5)) * 14.0
+		_paint(img, func(p):
+			return _dist_to_segment(p, base, tip) < 2.6, Color("e8e0c8"))
+	return img
+
+## A sprouting leaf over soft rings: healing that keeps going.
+func _renew() -> Image:
+	var img = _tile(Color("22381e"), Color("142212"), Color("3e6a38"))
+	_paint(img, func(p):
+		var d = p.distance_to(Vector2(C, 40))
+		return d > 12.0 and d < 15.0 and p.y < 42.0, Color("74b060"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 2.2 and p.y > 20.0 and p.y < 44.0, Color("a8dc8a"))
+	_paint(img, func(p):
+		var leaf = p.distance_to(Vector2(C - 7, 22)) < 6.0
+		var leaf2 = p.distance_to(Vector2(C + 7, 27)) < 5.0
+		return leaf or leaf2, Color("a8dc8a"))
+	return img
+
+## Planted shield before a wall.
+func _shield_wall() -> Image:
+	var img = _tile(Color("33302a"), Color("1e1c18"), Color("5e5844"))
+	for row in 2:
+		for col in 3:
+			_paint(img, func(p):
+				var x0 = 10.0 + col * 15.0 + (7.5 if row == 1 else 0.0)
+				var y0 = 14.0 + row * 11.0
+				return p.x >= x0 and p.x <= x0 + 13.0 \
+					and p.y >= y0 and p.y <= y0 + 9.0, Color("6a6152"))
+	_paint(img, func(p):
+		if p.y < 26.0 or p.y > 52.0:
+			return false
+		var half = 10.0 if p.y < 40.0 else 10.0 * (1.0 - (p.y - 40.0) / 13.0)
+		return absf(p.x - C) < half, Color("d8c684"))
+	return img
+
+## A bolt inside a shock ring.
+func _thunderclap() -> Image:
+	var img = _tile(Color("3a3418"), Color("221e0c"), Color("6a6030"))
+	_paint(img, func(p):
+		var d = p.distance_to(Vector2(C, C))
+		return d > 20.0 and d < 24.0, Color("b0a860"))
+	_paint(img, func(p):
+		var upper = _dist_to_segment(p, Vector2(36, 12), Vector2(26, 32)) < 2.8
+		var lower = _dist_to_segment(p, Vector2(38, 30), Vector2(26, 52)) < 2.8
+		var bar = _dist_to_segment(p, Vector2(26, 32), Vector2(38, 30)) < 2.8
+		return upper or lower or bar, Color("ffe27a"))
 	return img
