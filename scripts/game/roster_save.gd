@@ -317,5 +317,8 @@ static func _gear_from_entry(entry):
 static func _skill_from_id(skill_id):
 	if skill_id == null:
 		return null
+	# Older saves slotted core techniques; mastery owns them now.
+	if Mastery.is_core(skill_id):
+		return null
 	var path = SKILL_PATHS.get(skill_id)
 	return load(path) if path else null

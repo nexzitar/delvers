@@ -22,6 +22,12 @@ Notable changes per pull request. Newest first.
   dim empty.
 - Star-ups announce themselves in the spoils toast ("Garrick: Sword
   ★★ — Cleave!"). Veteran saves seed their current kit at two stars.
+- **Mastery owns the core techniques**: Cleave, Whirlwind, Multishot,
+  Shield Wall and kin cannot be slotted — a whirlwind needs a sword
+  in hand and the stars to back it. Technique Slots hold guild
+  techniques (Charge, Heal); the catalog dims core entries and their
+  tooltips name the discipline and star that earn them. Old saves
+  that slotted core techniques come back clean.
 
 ## PR #9 — The Spider Nest, Tactics, and a sharper Forge *(open)*
 

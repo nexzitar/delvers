@@ -65,8 +65,8 @@ func _ready():
 	_ok("default_position routes HEAD item to HEAD",
 		roster.default_position(0, spare_head) == Equip.Position.HEAD)
 
-	# The full MVP skill set is in the catalog, iconed and equippable.
-	_ok("six skills known", roster.skill_catalog.size() == 6)
+	# The full technique catalog is browsable (mastery gates the core).
+	_ok("thirteen techniques known", roster.skill_catalog.size() == 13)
 	_ok("all catalog skills have icons",
 		roster.skill_catalog.all(func(s): return s.icon != null))
 	var charge = roster.skill_catalog.filter(

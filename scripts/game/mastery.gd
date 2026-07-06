@@ -149,3 +149,16 @@ static func kit(hero) -> Dictionary:
 					else:
 						passives[key] += step.passive[key]
 	return {"skills": skills, "passives": passives}
+
+## Core techniques belong to their discipline: they cannot be slotted,
+## only earned — and they only fight when the discipline is in hand.
+static func core_requirement(skill_id: String):
+	for discipline in DISCIPLINES:
+		var track = DISCIPLINES[discipline].track
+		for star in track:
+			if track[star].get("skill", "") == skill_id:
+				return {"discipline": discipline, "star": star}
+	return null
+
+static func is_core(skill_id: String) -> bool:
+	return core_requirement(skill_id) != null

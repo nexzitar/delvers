@@ -349,7 +349,10 @@ func _build_right_tabs():
 	grid.columns = 4
 	skill_box.add_child(grid)
 	for skill in PlayerRoster.skill_catalog:
-		grid.add_child(_make_icon("skill", skill, "catalog"))
+		var icon = _make_icon("skill", skill, "catalog")
+		if Mastery.is_core(skill.skill_id):
+			icon.modulate = Color(0.55, 0.55, 0.55)
+		grid.add_child(icon)
 
 	# Forge tab: known recipes and the material stash. Materials are
 	# consumed; recipes are the camp's permanent knowledge.
@@ -1307,7 +1310,17 @@ func _tooltip_twohand(main: GearDefinition):
 		_tip_cmp("Equipped weapons", GOLD, 22)
 		_tip_cmp_line("Main hand", main, true)
 
+func _tooltip_skill_core_line(skill):
+	var req = Mastery.core_requirement(skill.skill_id)
+	if req == null:
+		return
+	_tip_line("Core technique: %s %s" % [
+		Mastery.DISCIPLINES[req.discipline].name, "*".repeat(req.star)
+	], Color(0.95, 0.8, 0.35), 15, 0)
+	_tip_line("Earned by practice, never slotted.", DIM, 13, 0)
+
 func _tooltip_skill(skill: SkillDefinition):
+	_tooltip_skill_core_line(skill)
 	_tip_line(skill.skill_name, ItemQuality.color(skill.quality), 26, 0)
 	_tip_line(ItemQuality.tier_name(skill.quality), ItemQuality.color(skill.quality), 16, 0)
 	var ranged = skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE

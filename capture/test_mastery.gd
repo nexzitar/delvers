@@ -61,6 +61,17 @@ func _ready():
 	for report in reports:
 		assert(report.has("hero"), "reports carry the name")
 
+	# Mastery OWNS the core techniques: slots refuse them, and old
+	# saves that slotted them come back clean.
+	assert(not roster.equip_bonus_skill(0,
+		load("res://resources/skills/whirlwind.tres"), 1),
+		"a whirlwind needs a sword, not a slot")
+	assert(roster.equip_bonus_skill(0,
+		load("res://resources/skills/charge.tres"), 1),
+		"guild techniques still slot freely")
+	assert(RosterSave._skill_from_id("cleave") == null, "stale core slots strip")
+	assert(RosterSave._skill_from_id("heal") != null, "guild skills load")
+
 	# Everything survives a save round trip.
 	var path := "user://test_mastery_save.json"
 	RosterSave.save(roster, path)

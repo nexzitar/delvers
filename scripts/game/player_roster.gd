@@ -408,6 +408,10 @@ func set_tactic(hero_index: int, tactic: String):
 		RosterSave.save(self)
 
 func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
+	# Core techniques are owned by mastery: a whirlwind needs a sword
+	# in hand and the stars to back it, not a slot.
+	if skill != null and Mastery.is_core(skill.skill_id):
+		return false
 	if slot < 1 or slot > bonus_skill_slots:
 		return false
 	var hero = heroes[hero_index]
