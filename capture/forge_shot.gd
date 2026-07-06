@@ -12,7 +12,7 @@ func _ready():
 		"gel": 5, "iron_scrap": 3, "ash_wood": 2, "bow_string": 1,
 		"poison_sac": 2, "royal_jelly": 1,
 	}
-	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield"]
+	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield", "iron_helm", "leather_hood", "silk_hood", "chitin_shield", "chitin_armor"]
 	PlayerRoster.known_affixes = ["virulent", "frostforged", "guarding"]
 	PlayerRoster.known_lore = ["expedition_log_1", "expedition_log_2"]
 	PlayerRoster.material_stash["corrosion_core"] = 2

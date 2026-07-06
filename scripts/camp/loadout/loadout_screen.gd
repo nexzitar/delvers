@@ -612,6 +612,12 @@ func _fill_forge():
 		empty.add_theme_color_override("font_color", DIM)
 		_forge_box.add_child(empty)
 
+	# Bottom padding: the pinned tooltip panels overlay the panel's
+	# lower third — let the scroll lift every shelf above them.
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 250)
+	_forge_box.add_child(spacer)
+
 	_refresh_forge_tooltip()
 
 ## The selected recipe's crafted item stays pinned in the tooltip
@@ -639,6 +645,20 @@ func _refresh_forge_tooltip():
 		prefix = load(RosterSave.AFFIX_PATHS[chosen]).affix_name + " "
 	preview.gear_name = prefix + recipe.recipe_name
 	show_tooltip("gear", preview)
+	# The selection's full bill, with hunting grounds.
+	_divider(1)
+	_tip_line("Costs", GOLD, 16, 1)
+	var bill = PlayerRoster.craft_costs(recipe, chosen)
+	for material_id in bill:
+		var material = load(RosterSave.MATERIAL_PATHS[material_id])
+		var have = PlayerRoster.material_stash.get(material_id, 0)
+		var owner = LootTable.material_owner(material_id)
+		var line = "%s %d/%d" % [material.material_name, have, bill[material_id]]
+		if owner != "":
+			line += "  -  %s" % owner
+		_tip_line(line,
+			PARCHMENT if have >= bill[material_id] else Color(0.75, 0.4, 0.35),
+			14, 1)
 
 func _material_chip(material_id: String, count: int) -> Control:
 	var material = load(RosterSave.MATERIAL_PATHS[material_id])
@@ -695,24 +715,27 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 		"font_color", ItemQuality.color(recipe.result_quality)
 	)
 	info.add_child(name_label)
+	# One compact line: every cost colored by sufficiency. The pinned
+	# tooltip carries the full breakdown with hunting grounds.
 	var bill = PlayerRoster.craft_costs(recipe, chosen)
+	var cost_bits := []
 	for material_id in bill:
 		var material = load(RosterSave.MATERIAL_PATHS[material_id])
 		var have = PlayerRoster.material_stash.get(material_id, 0)
-		var owner = LootTable.material_owner(material_id)
-		var cost_label = Label.new()
-		cost_label.text = "%s %d/%d" % [
-			material.material_name, have, bill[material_id]
-		]
-		if owner != "":
-			cost_label.text += "  -  %s" % owner
-		cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cost_label.add_theme_font_size_override("font_size", 13)
-		cost_label.add_theme_color_override(
-			"font_color",
-			PARCHMENT if have >= bill[material_id] else Color(0.75, 0.4, 0.35)
-		)
-		info.add_child(cost_label)
+		var color = "#d9ccb2" if have >= bill[material_id] else "#c06055"
+		cost_bits.append("[color=%s]%s %d/%d[/color]" % [
+			color, material.material_name, have, bill[material_id]
+		])
+	var cost_line = RichTextLabel.new()
+	cost_line.bbcode_enabled = true
+	cost_line.fit_content = true
+	cost_line.scroll_active = false
+	cost_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cost_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cost_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cost_line.add_theme_font_size_override("normal_font_size", 13)
+	cost_line.text = "  -  ".join(cost_bits)
+	info.add_child(cost_line)
 
 	# Clicking the row selects it: the exact item this craft would
 	# forge stays pinned in the tooltip, compared against equipped gear.
