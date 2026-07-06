@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GearDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/goblin_work_gauntlets.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_gear")
+gear_id = "goblin_work_gauntlets"
+gear_name = "Goblin-Work Gauntlets"
+slot = 8
+icon = ExtResource("2_tex")
+attack_bonus = 2
+crit_rating = 0.04

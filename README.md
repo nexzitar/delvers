@@ -4,6 +4,14 @@ Delvers is a roguelite guild-building RPG where you recruit adventurers, craft e
 
 A crafting-driven dungeon crawler built with [Godot 4.6](https://godotengine.org/). Lead your delvers through escalating dungeon rooms, hunt monsters for **materials and recipes**, and grow your camp's knowledge — combat resolves in a headless simulation and replays as a low-poly 3D theater scene built entirely from procedural rigs.
 
+## Trailer
+
+**[Watch: Delvers — Chapter One: The Darkwood (vertical slice)](https://youtu.be/40jkvYQuu3A)**
+
+[![Delvers — Chapter One: The Darkwood](https://img.youtube.com/vi/40jkvYQuu3A/maxresdefault.jpg)](https://youtu.be/40jkvYQuu3A)
+
+Fifty-six seconds, captured entirely from the live game: the abandoned camp, the Darkwood, poison and arrows, a recovered treatise, the Virulent Iron Sword forged, the Slime King slain, the banner rising — and a stranger at the fire. (Re-render it anytime: `capture/trailer_shot.tscn`, then `capture/make_trailer.sh`.)
+
 ## Screenshots
 
 | Main menu | The camp |

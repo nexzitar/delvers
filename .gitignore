@@ -5,3 +5,6 @@
 # macOS
 .DS_Store
 .superpowers/
+
+# Trailer render intermediates (regenerate via trailer_shot + make_trailer)
+capture/proto3d/renders/trailer/

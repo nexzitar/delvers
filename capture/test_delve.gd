@@ -24,8 +24,7 @@ func _ready():
 		for material_id in drops.materials:
 			assert(goblin.material_loot.has(material_id), "materials from own table")
 
-	# Finished equipment is a fluke (2%): 40 slain slimes essentially
-	# never yield gear, though materials flow steadily.
+	# Normals drop no finished gear; materials flow steadily.
 	var slime = load("res://resources/enemies/green_slime.tres")
 	var gear_total := 0
 	var material_total := 0
@@ -34,7 +33,7 @@ func _ready():
 		gear_total += d.gear.size()
 		for material_id in d.materials:
 			material_total += d.materials[material_id]
-	assert(gear_total < 8, "finished gear is a fluke")
+	assert(gear_total == 0, "normals drop no finished gear")
 	assert(material_total >= 10, "materials flow")
 
 	# Recipes: known knowledge never re-drops.
@@ -81,6 +80,7 @@ func _ready():
 	var bounty = LootTable.roll_enemy_drops([king], 10)
 	assert(bounty.gear.size() == 1, "boss drops a trophy")
 	assert(bounty.gear[0].quality >= ItemQuality.Tier.RARE, "trophy is rare+")
+	assert(bounty.gear[0].affix_id != "", "trophy carries an enchantment")
 	assert(bounty.recipes.size() == 1, "boss teaches a recipe")
 	assert(not bounty.materials.is_empty(), "boss drops materials")
 

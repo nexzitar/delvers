@@ -12,7 +12,7 @@ func _ready():
 		"gel": 5, "iron_scrap": 3, "ash_wood": 2, "bow_string": 1,
 		"poison_sac": 2, "royal_jelly": 1,
 	}
-	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield"]
+	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield", "iron_helm", "leather_hood", "silk_hood", "chitin_shield", "chitin_armor"]
 	PlayerRoster.known_affixes = ["virulent", "frostforged", "guarding"]
 	PlayerRoster.known_lore = ["expedition_log_1", "expedition_log_2"]
 	PlayerRoster.material_stash["corrosion_core"] = 2
@@ -39,6 +39,17 @@ func _ready():
 	img.save_png("%s/forge_tab.png" % out_dir)
 
 	loadout.hide_tooltip()
+	PlayerRoster.seen_enemies = ["green_slime", "goblin_archer",
+		"goblin_warrior", "venomous_spider", "web_weaver"]
+	PlayerRoster.enemy_priority = ["venomous_spider", "web_weaver"]
+	for tabs in loadout.find_children("*", "TabContainer", true, false):
+		tabs.current_tab = 4
+	loadout._fill_tactics()
+	await get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	img = get_viewport().get_texture().get_image()
+	img.save_png("%s/tactics_tab.png" % out_dir)
+
 	for tabs in loadout.find_children("*", "TabContainer", true, false):
 		tabs.current_tab = 3
 	await get_tree().create_timer(0.3).timeout

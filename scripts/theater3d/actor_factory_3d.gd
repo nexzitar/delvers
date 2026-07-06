@@ -68,4 +68,32 @@ static func build_enemy(template) -> Node3D:
 			var spider = SpiderRig.new()
 			spider.scale = Vector3.ONE * 0.9
 			return spider
+		"nest_spiderling":
+			var spiderling = SpiderRig.new({
+				"chitin": Color("4a3a2c"), "chitin_dark": Color("332619"),
+				"marking": Color("c8b98a"),
+			})
+			spiderling.scale = Vector3.ONE * 0.55
+			return spiderling
+		"web_weaver":
+			var weaver = SpiderRig.new({
+				"chitin": Color("8f8878"), "chitin_dark": Color("6b6456"),
+				"marking": Color("e8e4d8"), "eyes": Color("3c68b0"),
+			})
+			weaver.scale = Vector3.ONE * 0.95
+			return weaver
+		"chitin_crawler":
+			var crawler = SpiderRig.new({
+				"chitin": Color("5e4426"), "chitin_dark": Color("402d18"),
+				"marking": Color("8a6a3a"), "bulky": true,
+			})
+			crawler.scale = Vector3.ONE * 1.2
+			return crawler
+		"broodmother":
+			var brood = SpiderRig.new({
+				"chitin": Color("3a2438"), "chitin_dark": Color("281627"),
+				"marking": Color("a06fd0"), "eyes": Color("d84a9a"),
+			})
+			brood.scale = Vector3.ONE * 2.1
+			return brood
 	return DelverRig.new({})

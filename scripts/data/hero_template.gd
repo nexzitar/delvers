@@ -15,6 +15,9 @@ class_name HeroTemplate
 
 @export var portrait: Texture2D
 @export var starting_skills: Array[SkillDefinition]
+## Targeting directive: "nearest", "lowest", "priority" (the party's
+## focus order), or "spread" (move poison to uncovered targets).
+@export var tactic := "nearest"
 @export var starting_gear: Array[GearDefinition]
 @export var preferred_row: Formation.Row = Formation.Row.FRONT
 

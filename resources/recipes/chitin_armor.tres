@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "chitin_armor"
+recipe_name = "Chitin Armor"
+tome_name = "The Molt Journal"
+tome_lore = "It sheds its shell whole. We learned to wear what it leaves."
+result_gear_id = "starter_armor"
+result_item_level = 14
+result_quality = 1
+costs = {"chitin_plate": 4, "silk_thread": 2}

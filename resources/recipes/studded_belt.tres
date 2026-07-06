@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "studded_belt"
+recipe_name = "Studded Belt"
+tome_name = "The Quartermaster's Last Requisition"
+tome_lore = "A guild marches on its belts. Signed, and never collected."
+result_gear_id = "studded_belt"
+result_item_level = 5
+result_quality = 1
+costs = {"leather": 2, "iron_scrap": 1, "gel": 1}

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "silk_hood"
+recipe_name = "Silk-Lined Hood"
+tome_name = "Weaver's Pattern Cards"
+tome_lore = "The thread refused to fray, even in acid."
+result_gear_id = "starter_helmet"
+result_item_level = 14
+result_quality = 1
+costs = {"silk_thread": 3, "leather": 1}

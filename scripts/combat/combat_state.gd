@@ -73,9 +73,61 @@ func validate_target(entity):
 		return
 
 	var current = entity_by_id(entity.target_id)
+	# "nearest" is sticky (classic brawl); the other tactics re-evaluate
+	# on a short cadence so lowest-health / focus-order stay honest.
 	if current and current.alive:
-		return
-	_set_target(entity, _nearest_opponent_id(entity))
+		if entity.tactic == "nearest":
+			return
+		if combat_time < entity.retarget_at:
+			return
+	entity.retarget_at = combat_time + 0.8
+	_set_target(entity, _pick_by_tactic(entity))
+
+## The party's focus order (enemy_ids, first = kill first), fed from
+## the roster at setup. Tactics score against it.
+var enemy_priority: Array = []
+
+func _priority_rank(target) -> int:
+	var idx = enemy_priority.find(target.template.enemy_id)
+	return idx if idx >= 0 else enemy_priority.size()
+
+## Scores living opponents under the entity's tactic; lower wins.
+## (Enemies without threat also route here and use "nearest".)
+func _pick_by_tactic(hero) -> int:
+	var best_id := -1
+	var best_key := []
+	var opponents = enemies if hero.team == CombatEntity.Team.HERO else heroes
+	for enemy in opponents:
+		if not enemy.alive:
+			continue
+		var dist = hero.position.distance_to(enemy.position)
+		var key := []
+		match hero.tactic:
+			"lowest":
+				key = [enemy.current_health, dist]
+			"priority":
+				key = [_priority_rank(enemy), dist]
+			"spread":
+				# Prefer foes not yet carrying this hero's poison.
+				var covered := 0
+				for status in enemy.statuses:
+					if status.kind == StatusEffect.Kind.POISON \
+							and status.source_id == hero.entity_id \
+							and status.remaining > 0.0:
+						covered = 1
+				key = [covered, _priority_rank(enemy), dist]
+			_:
+				key = [dist]
+		if best_id == -1 or _key_less(key, best_key):
+			best_id = enemy.entity_id
+			best_key = key
+	return best_id
+
+static func _key_less(a: Array, b: Array) -> bool:
+	for i in a.size():
+		if a[i] != b[i]:
+			return a[i] < b[i]
+	return false
 
 func _set_target(entity, new_target_id: int):
 	if entity.target_id == new_target_id:
@@ -109,6 +161,7 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	event.type = CombatEvent.EventType.BUFF_APPLIED
 	event.time = combat_time
 	event.entity_id = target.entity_id
+	event.source_id = source_id
 	event.target_id = target.entity_id
 	event.target_name = target.entity_name
 	event.status_id = status_id
@@ -136,6 +189,23 @@ func apply_on_hit(attacker, weapon, target):
 				affix.on_hit_duration, affix.on_hit_magnitude,
 				"slow_" + affix.affix_id, attacker.entity_id
 			)
+
+## A regeneration tick mended health: a small green number, credited
+## to whoever cast it.
+func log_hot(target, status, amount: int):
+	var source = entity_by_id(status.source_id)
+	var event = CombatEvent.new()
+	event.time = combat_time
+	event.type = CombatEvent.EventType.HEAL
+	event.source_id = status.source_id
+	event.source_name = source.entity_name if source else "Renew"
+	event.target_id = target.entity_id
+	event.target_name = target.entity_name
+	event.remaining_health = target.current_health
+	event.max_health = target.max_health
+	event.skill_name = "Renew"
+	event.amount = amount
+	add_event(event)
 
 ## A poison tick dealt damage: log it (flagged as a dot so the theater
 ## shows the number without swinging anyone's arm) and feed threat.
@@ -261,6 +331,18 @@ func face_target(entity, target):
 
 # --- Movement ---------------------------------------------------------
 
+## Standing units un-stack too: separation while stopped, gently,
+## with the shift logged so the theater sees it. No-op when clear.
+func nudge_separation(entity):
+	var push = Separation.compute_offset(
+		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0,
+		float(entity.entity_id)
+	)
+	if push == Vector2.ZERO:
+		return
+	entity.position = grid.clamp_world(entity.position + push)
+	_log_move(entity)
+
 func stop_movement(entity):
 	entity.path = PackedVector2Array()
 	entity.path_index = 0
@@ -291,6 +373,15 @@ func tick_movement(entity, target, delta):
 	if entity.path.is_empty():
 		return
 
+	# A re-path starts from the tile center, which can sit BEHIND the
+	# entity — skip leading waypoints that would walk it backward, or
+	# facing (and motion) whipsaws every time the target changes tile.
+	while entity.path_index + 1 < entity.path.size() \
+			and (entity.path[entity.path_index] - entity.position).dot(
+				entity.path[entity.path_index + 1]
+				- entity.path[entity.path_index]) <= 0.0:
+		entity.path_index += 1
+
 	var before = entity.position
 	var budget = entity.move_speed * entity.move_speed_multiplier() * delta
 	while budget > 0.0 and entity.path_index < entity.path.size():
@@ -304,16 +395,22 @@ func tick_movement(entity, target, delta):
 			entity.position += (waypoint - entity.position) / dist * budget
 			budget = 0.0
 
+	# Facing follows the path walked, sampled BEFORE separation so
+	# collision nudges never turn the body.
+	var walked = entity.position - before
+	if walked.length_squared() > 0.25:
+		entity.facing = walked.normalized()
+
 	# Soft collision: paths may overlap, bodies should not stack. The
 	# push must never shove anyone off the field.
 	entity.position += Separation.compute_offset(
-		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0
+		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0,
+		float(entity.entity_id)
 	)
 	entity.position = grid.clamp_world(entity.position)
 
 	var moved = entity.position - before
 	if moved.length_squared() > 0.01:
-		entity.facing = moved.normalized()
 		var started = not entity.moving
 		entity.moving = true
 		_log_move(entity, started)
@@ -463,8 +560,14 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			hero.weapon_reach = hero.main_weapon.effective_reach()
 		hero.move_speed = hero_template.move_speed
 		hero.attack_timer = hero.attack_interval
-		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
+		# Off-hand starts half a beat out of phase: dual wielding reads
+		# as an alternating flurry, and equal-speed weapons never land
+		# (and animate) on the same tick.
+		hero.off_attack_timer = (
+			hero.off_weapon.attack_speed * 0.5 if hero.off_weapon else 0.0
+		)
 
+		hero.tactic = hero_template.tactic
 		hero.skills = hero_template.starting_skills.duplicate()
 		# Loadout skill slots feed straight into combat.
 		for extra in hero_template.bonus_skills:

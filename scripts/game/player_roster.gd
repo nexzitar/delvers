@@ -40,6 +40,11 @@ var skill_catalog: Array = [
 	HAMSTRING,
 	CHARGE,
 	HEAL,
+	preload("res://resources/skills/cleave.tres"),
+	preload("res://resources/skills/whirlwind.tres"),
+	preload("res://resources/skills/renew.tres"),
+	preload("res://resources/skills/shield_wall.tres"),
+	preload("res://resources/skills/thunderclap.tres"),
 ]
 
 ## Materials are consumed; knowledge is permanent. The camp grows more
@@ -50,6 +55,23 @@ var known_affixes: Array = []
 ## Recovered history (expedition logs etc.) — pure memory, shelved in
 ## the camp library.
 var known_lore: Array = []
+## Guild restoration purchases (see GuildUnlocks). The "restoration"
+## marker records the free first-victory companion.
+var purchased_unlocks: Array = []
+## Dungeons the guild holds maps for; delves target current_dungeon.
+var unlocked_dungeons: Array = ["darkwood"]
+var current_dungeon := "darkwood"
+## Party focus order (enemy_ids, first = kill first) for the
+## "priority" and "spread" tactics.
+var enemy_priority: Array = []
+## Enemies the guild has faced — the focus order only lists these.
+## No spoilers: the Broodmother isn't a name until she's a memory.
+var seen_enemies: Array = []
+## Cleared rooms since the last knowledge drop: three dry rooms
+## guarantee a recipe (short failed runs still make progress).
+var rooms_since_knowledge := 0
+## One-shot camp line for arrivals ("You're not alone anymore.").
+var arrival_message := ""
 
 var battles_fought := 0
 var adventures_completed := 0
@@ -71,15 +93,19 @@ var delve_materials := {}
 var delve_recipes: Array = []
 var delve_affixes: Array = []
 var delve_lore: Array = []
+var delve_maps: Array = []
 var delve_health := {}
 
-func start_delve():
+func start_delve(dungeon_id := ""):
+	if dungeon_id != "" and unlocked_dungeons.has(dungeon_id):
+		current_dungeon = dungeon_id
 	delve_room = 1
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
 	delve_affixes = []
 	delve_lore = []
+	delve_maps = []
 	delve_health = {}
 
 func bank_delve_loot():
@@ -97,15 +123,86 @@ func bank_delve_loot():
 	for lore_id in delve_lore:
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
+	for dungeon_id in delve_maps:
+		if RosterSave.DUNGEON_PATHS.has(dungeon_id) \
+				and not unlocked_dungeons.has(dungeon_id):
+			unlocked_dungeons.append(dungeon_id)
+			var found = load(RosterSave.DUNGEON_PATHS[dungeon_id])
+			arrival_message = "A weathered map. %s is marked." % found.dungeon_name
 	delve_loot = []
 	delve_materials = {}
 	delve_recipes = []
 	delve_affixes = []
 	delve_lore = []
+	delve_maps = []
 	delve_room = 0
 	sort_gear_stash()
+	check_milestones()
 	if autosave:
 		RosterSave.save(self)
+
+## First victory raises the banner — and someone sees it. The first
+## companion arrives free: the Restoration of the Guild.
+func check_milestones():
+	if adventures_completed >= 1 \
+			and not purchased_unlocks.has(GuildUnlocks.RESTORATION):
+		purchased_unlocks.append(GuildUnlocks.RESTORATION)
+		recruit_hero(["starter_bow", "starter_helmet"])
+		arrival_message = "You're not alone anymore."
+		if autosave:
+			RosterSave.save(self)
+
+## A new delver answers the fire, wearing their own worn basics.
+func recruit_hero(kit_ids: Array):
+	var hero = DEFAULT_DELVER.duplicate(true)
+	var used = heroes.map(func(h): return h.hero_name)
+	for candidate in GuildUnlocks.COMPANION_NAMES:
+		if not used.has(candidate):
+			hero.hero_name = candidate
+			break
+	hero.bonus_skills = [null, null, null, null, null]
+	var kit := []
+	for gear_id in kit_ids:
+		kit.append(LootTable.materialize(gear_id, 1, ItemQuality.Tier.COMMON))
+	_seed_loadout(hero, kit)
+	heroes.append(hero)
+	_sync_role(hero)
+
+## Breaks a stash item down: materials come back (roughly half the
+## recipe bill), and an unfamiliar enchantment is STUDIED — salvaging
+## an unknown-affix trophy teaches that affix forever.
+func salvage(gear: GearDefinition) -> Dictionary:
+	var index = gear_stash.find(gear)
+	if index == -1:
+		return {}
+	gear_stash.remove_at(index)
+
+	var yields := {}
+	for recipe_id in RosterSave.RECIPE_PATHS:
+		var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+		if recipe.result_gear_id != gear.gear_id:
+			continue
+		for material_id in recipe.costs:
+			var back = maxi(1, int(recipe.costs[material_id] / 2.0))
+			yields[material_id] = yields.get(material_id, 0) + back
+		break
+	if yields.is_empty():
+		# No known pattern: scrap by kind.
+		yields["iron_scrap" if gear.weapon_type != GearDefinition.WeaponType.NONE
+			else "leather"] = 1
+	if gear.quality >= ItemQuality.Tier.RARE:
+		yields["corrosion_core"] = yields.get("corrosion_core", 0) + 1
+
+	for material_id in yields:
+		material_stash[material_id] = material_stash.get(material_id, 0) + yields[material_id]
+
+	if gear.affix_id != "" and not known_affixes.has(gear.affix_id):
+		known_affixes.append(gear.affix_id)
+		yields["__learned"] = gear.affix_id
+
+	if autosave:
+		RosterSave.save(self)
+	return yields
 
 # --- Crafting ---------------------------------------------------------
 
@@ -251,6 +348,22 @@ func first_empty_bonus_skill_slot(hero_index: int) -> int:
 		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
 			return i + 1
 	return -1
+
+## Called when a battle begins: whatever walks out of the dark is
+## seen, win or lose.
+func record_seen(enemy_ids: Array):
+	var changed := false
+	for enemy_id in enemy_ids:
+		if not seen_enemies.has(enemy_id):
+			seen_enemies.append(enemy_id)
+			changed = true
+	if changed and autosave:
+		RosterSave.save(self)
+
+func set_tactic(hero_index: int, tactic: String):
+	heroes[hero_index].tactic = tactic
+	if autosave:
+		RosterSave.save(self)
 
 func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
 	if slot < 1 or slot > bonus_skill_slots:

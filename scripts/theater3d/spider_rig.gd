@@ -23,7 +23,14 @@ var body: Node3D
 ## Leg pivots: [side(-1|1)][0..3 front-to-back].
 var legs := []
 
-func _init(_opts := {}):
+## opts: chitin/chitin_dark/marking/eyes colors, and "bulky" for the
+## armored crawler build (bigger abdomen, shorter legs).
+func _init(opts := {}):
+	var chitin: Color = opts.get("chitin", CHITIN)
+	var chitin_dark: Color = opts.get("chitin_dark", CHITIN_DARK)
+	var marking: Color = opts.get("marking", MARKING)
+	var eye_color: Color = opts.get("eyes", EYES)
+	var bulky: bool = opts.get("bulky", false)
 	body = Node3D.new()
 	body.position.y = 0.22
 	add_child(body)
@@ -34,22 +41,22 @@ func _init(_opts := {}):
 	head.height = 0.28
 	head.radial_segments = 8
 	head.rings = 4
-	Builder._add(body, head, CHITIN, Vector3(0, 0.02, 0.14))
+	Builder._add(body, head, chitin, Vector3(0, 0.02, 0.14))
 
 	var abdomen := SphereMesh.new()
 	abdomen.radius = 0.2
 	abdomen.height = 0.4
 	abdomen.radial_segments = 8
 	abdomen.rings = 4
-	var rear := Builder._add(body, abdomen, CHITIN_DARK, Vector3(0, 0.05, -0.16))
-	rear.scale = Vector3(1.0, 0.85, 1.15)
+	var rear := Builder._add(body, abdomen, chitin_dark, Vector3(0, 0.05, -0.16))
+	rear.scale = Vector3(1.3, 1.05, 1.35) if bulky else Vector3(1.0, 0.85, 1.15)
 
 	# Venom-green marking hugging the abdomen's back.
-	Builder._box(body, Vector3(0.08, 0.015, 0.12), MARKING, Vector3(0, 0.2, -0.16))
+	Builder._box(body, Vector3(0.08, 0.015, 0.12), marking, Vector3(0, 0.2 + (0.06 if bulky else 0.0), -0.16))
 
 	# Eyes and fangs up front.
 	for side in [-1, 1]:
-		Builder._box(body, Vector3(0.035, 0.035, 0.02), EYES,
+		Builder._box(body, Vector3(0.035, 0.035, 0.02), eye_color,
 			Vector3(side * 0.05, 0.06, 0.27))
 		var fang := CylinderMesh.new()
 		fang.top_radius = 0.018
@@ -69,13 +76,13 @@ func _init(_opts := {}):
 			pivot.rotation.y = -side * FAN[i]
 			body.add_child(pivot)
 			var upper := Builder._box(
-				pivot, Vector3(0.26, 0.024, 0.024), CHITIN,
-				Vector3(side * 0.13, 0.07, 0)
+				pivot, Vector3(0.2 if bulky else 0.26, 0.03 if bulky else 0.024, 0.03 if bulky else 0.024), chitin,
+				Vector3(side * (0.1 if bulky else 0.13), 0.07, 0)
 			)
 			upper.rotation.z = side * -0.6
 			var lower := Builder._box(
-				pivot, Vector3(0.024, 0.3, 0.024), CHITIN_DARK,
-				Vector3(side * 0.25, -0.07, 0)
+				pivot, Vector3(0.03 if bulky else 0.024, 0.24 if bulky else 0.3, 0.03 if bulky else 0.024), chitin_dark,
+				Vector3(side * (0.19 if bulky else 0.25), -0.07, 0)
 			)
 			lower.rotation.z = side * 0.28
 			row.append(pivot)

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/venom_bite.tres" id="4_venom"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "broodmother"
+enemy_name = "The Broodmother"
+base_health = 260
+base_attack = 8
+base_attack_interval = 2.8
+move_speed = 80.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_venom")])
+material_loot = Array[String](["brood_silk", "silk_thread", "poison_sac"])
+material_drop_chance = 1.0
+material_drop_count = 2
+recipe_loot = Array[String](["silk_hood", "chitin_shield", "chitin_armor"])
+recipe_drop_chance = 1.0
+affix_loot = Array[String](["flaming", "virulent", "frostforged", "guarding", "quick"])
+affix_drop_chance = 1.0
+loot_ids = Array[String](["starter_sword", "starter_bow", "starter_shield", "starter_helmet", "starter_armor", "fast_dagger", "heavy_axe"])
+drop_chance = 1.0
+is_boss = true
+armor = 3

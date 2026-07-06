@@ -348,3 +348,17 @@ func pose_spellcast(t: float):
 	arm_r.rotation.z = lerpf(0.0, -0.35, lift)
 	spine.rotation.x = lerpf(0.0, 0.08, lift) - push * 0.5
 	head.rotation.x = lerpf(0.0, -0.12, lift)
+
+const SPIN_T := 0.6
+
+## Whirlwind stance: arms flung wide, knees bent; the theater spins
+## the whole rig while this holds.
+func pose_spin(t: float):
+	_reset_pose()
+	var p := clampf(t / SPIN_T, 0.0, 1.0)
+	var open_arms := sin(minf(p * 1.4, 1.0) * PI)
+	arm_l.rotation.z = 1.35 * open_arms
+	arm_r.rotation.z = -1.35 * open_arms
+	spine.rotation.x = 0.1 * open_arms
+	leg_l.rotation.x = -0.25 * open_arms
+	leg_r.rotation.x = 0.25 * open_arms

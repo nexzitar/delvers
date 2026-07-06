@@ -53,7 +53,16 @@ var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
+var _salvage_label: Label
 var _library_box: VBoxContainer
+var _tactics_box: VBoxContainer
+
+const TACTICS := [
+	["nearest", "Nearest Foe", "Classic brawl: sticks to its target until it falls."],
+	["lowest", "Finish the Wounded", "Always strikes whoever has the least health left."],
+	["priority", "Focus Order", "Follows the party's focus order below."],
+	["spread", "Spread the Venom", "Poisons uncovered foes first, then follows the focus order."],
+]
 var _right_tabs: TabContainer
 ## Clicked recipe: its crafted-item preview stays pinned in the
 ## tooltip panels (no hovering needed).
@@ -288,8 +297,33 @@ func _build_right_tabs():
 	_gear_grid.offset_left = 12
 	_gear_grid.offset_top = 12
 	_gear_grid.offset_right = -12
-	_gear_grid.offset_bottom = -12
+	_gear_grid.offset_bottom = -60
 	bin.add_child(_gear_grid)
+
+	# The salvage bin: drag gear in, get materials back — and study
+	# any enchantment the guild doesn't know yet.
+	var salvage_bin = DROP.new()
+	salvage_bin.screen = self
+	salvage_bin.target_kind = "salvage"
+	var salvage_style = _slot_style()
+	salvage_style.border_color = Color(0.55, 0.35, 0.25)
+	salvage_bin.add_theme_stylebox_override("panel", salvage_style)
+	salvage_bin.anchor_top = 1.0
+	salvage_bin.anchor_bottom = 1.0
+	salvage_bin.anchor_right = 1.0
+	salvage_bin.offset_left = 12
+	salvage_bin.offset_top = -52
+	salvage_bin.offset_right = -12
+	salvage_bin.offset_bottom = -8
+	bin.add_child(salvage_bin)
+	_salvage_label = Label.new()
+	_salvage_label.text = "Salvage: drag gear here to break it down"
+	_salvage_label.add_theme_font_override("font", FONT)
+	_salvage_label.add_theme_font_size_override("font_size", 15)
+	_salvage_label.add_theme_color_override("font_color", DIM)
+	_salvage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_salvage_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	salvage_bin.add_child(_salvage_label)
 
 	# Skills tab: the known catalog (sparse for now).
 	var skills_tab = ScrollContainer.new()
@@ -334,6 +368,118 @@ func _build_right_tabs():
 	_library_box.custom_minimum_size = Vector2(500, 0)
 	_library_box.add_theme_constant_override("separation", 10)
 	library_tab.add_child(_library_box)
+
+	# Tactics tab: how this hero picks targets, and the party's focus
+	# order. First rung of the programmable-party ladder.
+	var tactics_tab = ScrollContainer.new()
+	tactics_tab.name = "Tactics"
+	tactics_tab.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(tactics_tab)
+	_tactics_box = VBoxContainer.new()
+	_tactics_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tactics_box.custom_minimum_size = Vector2(500, 0)
+	_tactics_box.add_theme_constant_override("separation", 10)
+	tactics_tab.add_child(_tactics_box)
+
+func _fill_tactics():
+	_clear(_tactics_box)
+	var hero = PlayerRoster.heroes[hero_index]
+
+	_tactics_box.add_child(_title("Targeting"))
+	var picker = OptionButton.new()
+	picker.add_theme_font_override("font", FONT)
+	picker.add_theme_font_size_override("font_size", 18)
+	var description = Label.new()
+	for i in TACTICS.size():
+		picker.add_item(TACTICS[i][1])
+		picker.set_item_metadata(i, TACTICS[i][0])
+		if TACTICS[i][0] == hero.tactic:
+			picker.select(i)
+			description.text = TACTICS[i][2]
+	picker.item_selected.connect(func(index):
+		PlayerRoster.set_tactic(hero_index, picker.get_item_metadata(index))
+		UiSounds.click()
+		_fill_tactics())
+	_tactics_box.add_child(picker)
+	description.add_theme_font_size_override("font_size", 14)
+	description.add_theme_color_override("font_color", DIM)
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tactics_box.add_child(description)
+
+	_tactics_box.add_child(_title("Focus Order"))
+	var hint = Label.new()
+	hint.text = "The party kills from the top down (Focus Order and Spread tactics)."
+	hint.add_theme_font_size_override("font_size", 13)
+	hint.add_theme_color_override("font_color", DIM)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tactics_box.add_child(hint)
+	var order = _known_enemy_order()
+	if order.is_empty():
+		var none = Label.new()
+		none.text = "Nothing faced yet. The order fills in as the guild meets its enemies."
+		none.add_theme_color_override("font_color", DIM)
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_tactics_box.add_child(none)
+	for i in order.size():
+		_tactics_box.add_child(_priority_row(order, i))
+
+## The saved focus order first, then any newly-seen enemies. Only
+## what the guild has actually faced — no spoilers.
+func _known_enemy_order() -> Array:
+	var order: Array = PlayerRoster.enemy_priority.duplicate()
+	for enemy_id in PlayerRoster.seen_enemies:
+		if not order.has(enemy_id):
+			order.append(enemy_id)
+	return order
+
+func _priority_row(order: Array, index: int) -> Control:
+	var enemy_id: String = order[index]
+	var enemy_name := enemy_id.capitalize()
+	for path in LootTable.ENEMY_PATHS:
+		var template = load(path)
+		if template.enemy_id == enemy_id:
+			enemy_name = template.enemy_name
+
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
+
+	var rank = Label.new()
+	rank.text = "%d." % (index + 1)
+	rank.add_theme_font_override("font", FONT)
+	rank.add_theme_font_size_override("font_size", 18)
+	rank.add_theme_color_override("font_color", GOLD if index == 0 else DIM)
+	rank.custom_minimum_size = Vector2(30, 0)
+	row.add_child(rank)
+
+	var name_label = Label.new()
+	name_label.text = enemy_name
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.add_theme_color_override("font_color", PARCHMENT)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_label)
+
+	for move in [[-1, "^"], [1, "v"]]:
+		var btn = Button.new()
+		btn.text = move[1]
+		btn.custom_minimum_size = Vector2(38, 34)
+		btn.disabled = (index + move[0] < 0 or index + move[0] >= order.size())
+		var delta: int = move[0]
+		btn.pressed.connect(func():
+			var new_order = _known_enemy_order()
+			var j = new_order.find(enemy_id)
+			new_order.remove_at(j)
+			new_order.insert(j + delta, enemy_id)
+			PlayerRoster.enemy_priority = new_order
+			if PlayerRoster.autosave:
+				RosterSave.save(PlayerRoster)
+			UiSounds.click()
+			_fill_tactics())
+		row.add_child(btn)
+	return panel
 
 func _fill_library():
 	_clear(_library_box)
@@ -492,6 +638,12 @@ func _fill_forge():
 		empty.add_theme_color_override("font_color", DIM)
 		_forge_box.add_child(empty)
 
+	# Bottom padding: the pinned tooltip panels overlay the panel's
+	# lower third — let the scroll lift every shelf above them.
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 250)
+	_forge_box.add_child(spacer)
+
 	_refresh_forge_tooltip()
 
 ## The selected recipe's crafted item stays pinned in the tooltip
@@ -519,6 +671,20 @@ func _refresh_forge_tooltip():
 		prefix = load(RosterSave.AFFIX_PATHS[chosen]).affix_name + " "
 	preview.gear_name = prefix + recipe.recipe_name
 	show_tooltip("gear", preview)
+	# The selection's full bill, with hunting grounds.
+	_divider(1)
+	_tip_line("Costs", GOLD, 16, 1)
+	var bill = PlayerRoster.craft_costs(recipe, chosen)
+	for material_id in bill:
+		var material = load(RosterSave.MATERIAL_PATHS[material_id])
+		var have = PlayerRoster.material_stash.get(material_id, 0)
+		var owner = LootTable.material_owner(material_id)
+		var line = "%s %d/%d" % [material.material_name, have, bill[material_id]]
+		if owner != "":
+			line += "  -  %s" % owner
+		_tip_line(line,
+			PARCHMENT if have >= bill[material_id] else Color(0.75, 0.4, 0.35),
+			14, 1)
 
 func _material_chip(material_id: String, count: int) -> Control:
 	var material = load(RosterSave.MATERIAL_PATHS[material_id])
@@ -532,8 +698,10 @@ func _material_chip(material_id: String, count: int) -> Control:
 	row.add_child(icon)
 	var label = Label.new()
 	label.text = "%s x%d" % [material.material_name, count]
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.custom_minimum_size = Vector2(0, 0)
 	label.add_theme_font_override("font", FONT)
-	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_font_size_override("font_size", 14)
 	label.add_theme_color_override("font_color", ItemQuality.color(material.tier))
 	row.add_child(label)
 	return row
@@ -575,24 +743,27 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 		"font_color", ItemQuality.color(recipe.result_quality)
 	)
 	info.add_child(name_label)
+	# One compact line: every cost colored by sufficiency. The pinned
+	# tooltip carries the full breakdown with hunting grounds.
 	var bill = PlayerRoster.craft_costs(recipe, chosen)
+	var cost_bits := []
 	for material_id in bill:
 		var material = load(RosterSave.MATERIAL_PATHS[material_id])
 		var have = PlayerRoster.material_stash.get(material_id, 0)
-		var owner = LootTable.material_owner(material_id)
-		var cost_label = Label.new()
-		cost_label.text = "%s %d/%d" % [
-			material.material_name, have, bill[material_id]
-		]
-		if owner != "":
-			cost_label.text += "  -  %s" % owner
-		cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cost_label.add_theme_font_size_override("font_size", 13)
-		cost_label.add_theme_color_override(
-			"font_color",
-			PARCHMENT if have >= bill[material_id] else Color(0.75, 0.4, 0.35)
-		)
-		info.add_child(cost_label)
+		var color = "#d9ccb2" if have >= bill[material_id] else "#c06055"
+		cost_bits.append("[color=%s]%s %d/%d[/color]" % [
+			color, material.material_name, have, bill[material_id]
+		])
+	var cost_line = RichTextLabel.new()
+	cost_line.bbcode_enabled = true
+	cost_line.fit_content = true
+	cost_line.scroll_active = false
+	cost_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cost_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cost_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cost_line.add_theme_font_size_override("normal_font_size", 13)
+	cost_line.text = "  -  ".join(cost_bits)
+	info.add_child(cost_line)
 
 	# Clicking the row selects it: the exact item this craft would
 	# forge stays pinned in the tooltip, compared against equipped gear.
@@ -609,6 +780,7 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	# Known compatible affixes: pick one to enchant the craft.
 	if not affixes.is_empty():
 		var picker = OptionButton.new()
+		picker.fit_to_longest_item = false
 		picker.add_theme_font_override("font", FONT)
 		picker.add_theme_font_size_override("font_size", 14)
 		picker.add_item("No affix")
@@ -627,9 +799,9 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	var craft = Button.new()
 	craft.text = "Craft"
 	craft.add_theme_font_override("font", FONT)
-	craft.add_theme_font_size_override("font_size", 18)
+	craft.add_theme_font_size_override("font_size", 16)
 	craft.disabled = not PlayerRoster.can_craft(recipe, chosen)
-	craft.custom_minimum_size = Vector2(92, 40)
+	craft.custom_minimum_size = Vector2(70, 38)
 	craft.pressed.connect(func():
 		if PlayerRoster.craft(recipe, chosen) != null:
 			UiSounds.click()
@@ -716,6 +888,7 @@ func refresh():
 	_fill_gear_grid()
 	_fill_forge()
 	_fill_library()
+	_fill_tactics()
 	_update_preview()
 
 func _role_text() -> String:
@@ -846,6 +1019,8 @@ func can_accept(target_kind, data) -> bool:
 		return false  # skill slots are read-only for now
 	if target_kind == "gear_stash":
 		return data.kind == "gear" and String(data.origin).begins_with("equipped")
+	if target_kind == "salvage":
+		return data.kind == "gear" and data.origin == "stash"
 	if target_kind == "auto":
 		if data.kind != "gear" or data.origin != "stash":
 			return false
@@ -867,6 +1042,31 @@ func accept_drop(target_kind, data):
 	if target_kind == "gear_stash":
 		var pos = int(String(data.origin).split(":")[1])
 		PlayerRoster.unequip_gear(hero_index, pos)
+	elif target_kind == "salvage":
+		var yields = PlayerRoster.salvage(data.res)
+		var learned = yields.get("__learned", "")
+		yields.erase("__learned")
+		var bits := []
+		for material_id in yields:
+			bits.append("%s x%d" % [
+				load(RosterSave.MATERIAL_PATHS[material_id]).material_name,
+				yields[material_id],
+			])
+		var report = "Recovered: " + ", ".join(bits)
+		if learned != "":
+			var affix = load(RosterSave.AFFIX_PATHS[learned])
+			report += "  -  studied %s!" % affix.affix_name
+			_salvage_label.add_theme_color_override(
+				"font_color", ItemQuality.color(ItemQuality.Tier.EPIC))
+		else:
+			_salvage_label.add_theme_color_override(
+				"font_color", Color(0.85, 0.8, 0.7))
+		_salvage_label.text = report
+		UiSounds.click()
+		hide_tooltip()
+		refresh()
+		hero_changed.emit(hero_index)
+		return
 	elif target_kind == "auto":
 		PlayerRoster.equip_gear(hero_index, data.res)
 	elif target_kind.begins_with("equip:"):

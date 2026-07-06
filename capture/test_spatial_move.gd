@@ -89,5 +89,40 @@ func _ready():
 	combat3.tick_movement(chaser, prey, 0.1)
 	assert(chaser.position.x >= 16.0, "positions clamp to the arena")
 
+	# Regression: chasing a mover re-paths from the tile center, which
+	# used to walk the chaser backward each time — whipsawing facing.
+	# While netting rightward, the face must never flip left.
+	var combat4 = CombatState.new()
+	combat4.setup_combat([delver], [slime])
+	var chaser2 = combat4.heroes[0]
+	var prey2 = combat4.enemies[0]
+	prey2.position = chaser2.position + Vector2(300, 0)
+	combat4.combat_time = 0.0
+	for i in 40:
+		combat4.combat_time += 0.1
+		prey2.position.x += 6.0
+		combat4.tick_movement(chaser2, prey2, 0.1)
+		if i > 2:
+			assert(chaser2.facing.x > 0.0,
+				"facing never flips against the chase")
+
+	# Regression: two brawlers who stopped on the same spot must
+	# separate while standing, not freeze inside each other.
+	var warrior_template = load("res://resources/enemies/goblin_warrior.tres")
+	var combat5 = CombatState.new()
+	combat5.setup_combat([delver], [warrior_template, warrior_template])
+	var stand_hero = combat5.heroes[0]
+	var brawler_a = combat5.enemies[0]
+	var brawler_b = combat5.enemies[1]
+	var spot = stand_hero.position + Vector2(40, 0)
+	brawler_a.position = spot
+	brawler_b.position = spot
+	for i in 20:
+		combat5.update(0.1)
+	assert(
+		brawler_a.position.distance_to(brawler_b.position) > 15.0,
+		"standing units separate"
+	)
+
 	print("PASS spatial move")
 	get_tree().quit()

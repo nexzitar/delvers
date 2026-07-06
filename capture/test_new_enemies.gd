@@ -18,7 +18,7 @@ func _ready():
 			assert(RosterSave.RECIPE_PATHS.has(recipe_id), "recipes exist")
 		for affix_id in template.affix_loot:
 			assert(RosterSave.AFFIX_PATHS.has(affix_id), "affixes exist")
-	assert(warrior.material_loot.count("iron_scrap") == 2, "warrior owns iron")
+	assert(warrior.material_loot.count("iron_scrap") == 3, "warrior owns iron")
 	assert(warrior.material_loot.has("leather"), "warrior carries leather")
 	assert(spider.material_loot.count("poison_sac") == 2, "spider owns poison")
 

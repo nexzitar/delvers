@@ -41,6 +41,10 @@ var moving: bool = false
 var last_logged_facing: Vector2 = Vector2.RIGHT
 var target_id: int = -1
 var threat_table: Dictionary = {}
+## Hero targeting directive (see HeroTemplate.tactic) and the next
+## time it re-evaluates its choice.
+var tactic := "nearest"
+var retarget_at: float = 0.0
 var in_combat: bool = false
 var statuses: Array = []
 var is_casting: bool = false
@@ -94,9 +98,32 @@ func tick_statuses(delta, combat_state):
 				s.accum -= dmg
 				var died = take_damage(dmg)
 				combat_state.log_dot(self, s, dmg, died)
+		if s.kind == StatusEffect.Kind.REGEN and alive \
+				and current_health < max_health:
+			s.accum += s.magnitude * delta
+			if s.accum >= 1.0:
+				var mend = mini(int(s.accum), max_health - current_health)
+				s.accum -= int(s.accum)
+				current_health += mend
+				combat_state.log_hot(self, s, mend)
 		if s.remaining <= 0.0:
 			combat_state.log_buff_expired(self, s)
 	statuses = statuses.filter(func(s): return s.remaining > 0.0)
+
+## SLUGGISH slows the swing timer; FORTIFY shrinks damage taken.
+func attack_speed_multiplier() -> float:
+	var m := 1.0
+	for s in statuses:
+		if s.kind == StatusEffect.Kind.SLUGGISH and s.remaining > 0.0:
+			m = minf(m, s.magnitude)
+	return m
+
+func damage_taken_multiplier() -> float:
+	var m := 1.0
+	for s in statuses:
+		if s.kind == StatusEffect.Kind.FORTIFY and s.remaining > 0.0:
+			m = minf(m, s.magnitude)
+	return m
 
 func move_speed_multiplier() -> float:
 	var m := 1.0
@@ -142,12 +169,16 @@ func update(delta, combat_state):
 	if combat_state.within_stop_range(self, target):
 		combat_state.stop_movement(self)
 		combat_state.face_target(self, target)
+		# Two brawlers converging on the same spot must not freeze
+		# inside each other: separation keeps working while standing.
+		combat_state.nudge_separation(self)
 	else:
 		combat_state.tick_movement(self, target, delta)
 
 	# Timers run while closing so the strike lands on arrival, but a
-	# swing only fires (and resets the timer) in range.
-	attack_timer -= delta
+	# swing only fires (and resets the timer) in range. Thunderclap's
+	# daze drags the timer.
+	attack_timer -= delta * attack_speed_multiplier()
 	if attack_timer <= 0.0 and in_range:
 		var skill = skills[0]
 		if (
@@ -161,7 +192,7 @@ func update(delta, combat_state):
 		attack_timer = attack_interval
 
 	if off_weapon:
-		off_attack_timer -= delta
+		off_attack_timer -= delta * attack_speed_multiplier()
 		if off_attack_timer <= 0.0 and in_range:
 			perform_off_hand_attack(combat_state, target)
 			off_attack_timer = off_weapon.attack_speed
@@ -257,6 +288,8 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 		if blocked:
 			damage = maxi(1, ceili(damage * 0.5))
 		damage = maxi(1, damage - target.armor)
+		# Shield Wall and its kin shave what remains.
+		damage = maxi(1, roundi(damage * target.damage_taken_multiplier()))
 	else:
 		damage = 0
 

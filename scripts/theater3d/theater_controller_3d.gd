@@ -33,6 +33,20 @@ const CAMERA_OFFSET := Vector3(0.55, 0.63, 0.76)
 const HERO_ARROW_COLOR := Color(0.92, 0.76, 0.3, 0.75)
 const ENEMY_ARROW_COLOR := Color(0.85, 0.32, 0.25, 0.75)
 
+## Persistent badge shown over the head while a status runs.
+const STATUS_ICON := {
+	"poison_virulent": "res://art/status/status_poison.png",
+	"venom_bite_poison": "res://art/status/status_poison.png",
+	"thunderclap_daze": "res://art/status/status_daze.png",
+	"charge_stun": "res://art/status/status_stun.png",
+	"frost_nova_root": "res://art/status/status_root.png",
+	"web_root": "res://art/status/status_root.png",
+	"hamstring_slow": "res://art/status/status_chill.png",
+	"slow_frostforged": "res://art/status/status_chill.png",
+	"renew_hot": "res://art/status/status_renew.png",
+	"shield_wall": "res://art/status/status_fortify.png",
+}
+
 const STATUS_TEXT := {
 	"frost_nova_root": "Rooted!",
 	"hamstring_slow": "Slowed!",
@@ -40,6 +54,10 @@ const STATUS_TEXT := {
 	"poison_virulent": "Poisoned!",
 	"slow_frostforged": "Chilled!",
 	"venom_bite_poison": "Poisoned!",
+	"web_root": "Webbed!",
+	"renew_hot": "Renewed!",
+	"shield_wall": "Shield Wall!",
+	"thunderclap_daze": "Dazed!",
 }
 
 var actors := {}
@@ -70,6 +88,17 @@ const ARENA_POOL := [
 ## Harness hook: force a specific arena (set before adding to the tree).
 var forced_arena_path := ""
 
+## The dungeon being delved (drives encounters, loot band, and theme).
+var _dungeon_def: DungeonDefinition = null
+
+func dungeon() -> DungeonDefinition:
+	if _dungeon_def == null:
+		_dungeon_def = load(RosterSave.DUNGEON_PATHS.get(
+			PlayerRoster.current_dungeon,
+			"res://resources/dungeons/darkwood.tres"
+		))
+	return _dungeon_def
+
 ## Roster indices of the heroes fielded this room (attrition can
 ## bench the fallen for the rest of the delve).
 var _party_indices := []
@@ -93,12 +122,18 @@ func _ready():
 		_party_indices.append(i)
 
 	var combat = CombatState.new()
+	combat.enemy_priority = PlayerRoster.enemy_priority.duplicate()
 	# Rooms deepen: bigger packs, higher enemy levels.
 	combat.enemy_level_bonus = (room - 1) / 4
 	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
 	while not combat.combat_over:
 		combat.update(0.1)
 	combat_result = combat.build_result()
+
+	# Win or lose, what walked out of the dark is now seen.
+	PlayerRoster.record_seen(combat.enemies.map(
+		func(e): return e.template.enemy_id
+	))
 
 	# Record how the party came out of the fight.
 	for k in combat.heroes.size():
@@ -110,19 +145,23 @@ func _ready():
 	_build_timeline(combat_result.combat_log)
 	_playing = true
 
-## A random pack of enemies, growing with the delve's depth. The final
-## room is the boss lair: the Slime King and his retinue.
+## A random pack from the dungeon's pools, growing with depth. One
+## guaranteed enemy anchors every room (the farmable identity), and
+## the final room is the boss lair.
 func roll_encounter(room: int) -> Array:
-	if room >= PlayerRoster.DELVE_LENGTH:
-		return [SLIME_KING, GREEN_SLIME, GOBLIN_ARCHER]
-	var pool = [GREEN_SLIME, GREEN_SLIME, GOBLIN_ARCHER, GOBLIN_WARRIOR]
-	if room >= 3:
-		pool.append(VENOMOUS_SPIDER)
-		pool.append(VENOMOUS_SPIDER)
-	var low = clampi(2 + (room - 1) / 4, 2, 4)
-	var high = clampi(3 + (room - 1) / 2, 3, 6)
-	var encounter = []
-	for i in randi_range(low, high):
+	var d = dungeon()
+	if room >= d.length:
+		return d.boss_pack.duplicate()
+	# duplicate(): Array(typed) SHARES the resource's buffer — appends
+	# would leak into the .tres and balloon every later encounter.
+	var pool = d.pool_core.duplicate()
+	if room >= d.deep_from:
+		pool.append_array(d.pool_deep)
+	var low = clampi(2 + (room - 1) / 4, 2, 4) + d.pack_bonus
+	var high = clampi(3 + (room - 1) / 2, 3, 6) + d.pack_bonus
+	var encounter = d.guaranteed.duplicate()
+	var size = maxi(randi_range(low, high), encounter.size())
+	for i in range(size - encounter.size()):
 		encounter.append(pool.pick_random())
 	return encounter
 
@@ -131,7 +170,7 @@ func roll_encounter(room: int) -> Array:
 func _pick_arena(room: int) -> BattleArena:
 	if forced_arena_path != "":
 		return load(forced_arena_path)
-	if room <= 1 or room >= PlayerRoster.DELVE_LENGTH:
+	if room <= 1 or room >= dungeon().length:
 		return load(ARENA_POOL[0])
 	return load(ARENA_POOL.pick_random())
 
@@ -161,6 +200,7 @@ func _build_timeline(log):
 				and event.team == CombatEntity.Team.ENEMY:
 			is_slime[event.entity_id] = event.template.enemy_id in ["green_slime", "slime_king", "venomous_spider"]
 
+	var burst_keys := {}
 	var events: Array = log.events
 	for i in events.size():
 		var event = events[i]
@@ -168,6 +208,17 @@ func _build_timeline(log):
 		match event.type:
 			CombatEvent.EventType.DAMAGE:
 				if event.dot:
+					continue
+				# AoE bursts get one distinctive cue, not a swing per victim.
+				if event.skill_name in ["Whirlwind", "Thunderclap"]:
+					var burst_key = "%d:%s:%.2f" % [event.source_id, event.skill_name, event.time]
+					if not burst_keys.has(burst_key):
+						burst_keys[burst_key] = true
+						_timeline.append({
+							"time": maxf(0.0, event.time - 0.3),
+							"kind": "spin" if event.skill_name == "Whirlwind" else "clap",
+							"id": event.source_id,
+						})
 					continue
 				if event.skill == null or event.skill.delivery_type == SkillDefinition.DeliveryType.MELEE:
 					var lead = SLIME_LEAD if is_slime.get(event.source_id, false) else SWING_LEAD
@@ -194,6 +245,19 @@ func _dispatch(item):
 		if state and state.mode != "dead":
 			state.mode = "attack_off" if item.get("off", false) else "attack"
 			state.anim_t = 0.0
+		return
+	if item.kind == "spin":
+		var state = actors.get(item.id)
+		if state and state.mode != "dead" and state.rig.has_method("pose_spin"):
+			state.mode = "spin"
+			state.anim_t = 0.0
+		return
+	if item.kind == "clap":
+		var state = actors.get(item.id)
+		if state and state.mode != "dead":
+			if state.rig.has_method("pose_spellcast"):
+				state.rig.pose_spellcast(0.5)
+			_spawn_shockwave(state.rig.position)
 		return
 	_play_event(item.event)
 
@@ -223,6 +287,8 @@ func _play_event(event):
 			_play_death(event)
 		CombatEvent.EventType.BUFF_APPLIED:
 			_play_buff(event)
+		CombatEvent.EventType.BUFF_EXPIRED:
+			_play_buff_expired(event)
 		CombatEvent.EventType.TELEGRAPH:
 			var telegraph = AoeTelegraph3D.new(
 				event.telegraph_radius * WORLD_SCALE, event.telegraph_duration
@@ -236,8 +302,14 @@ func _play_spawn(event):
 	rig.position = to_world(event.position)
 	rig.rotation.y = _yaw_of(event.facing)
 
+	var badge_row := Node3D.new()
+	rig.add_child(badge_row)
+	badge_row.position = Vector3(0, 1.95, 0)
+
 	actors[event.entity_id] = {
 		"rig": rig,
+		"badge_row": badge_row,
+		"badges": {},
 		"is_slime": rig.has_method("pose_attack"),
 		"team": event.team,
 		"mode": "idle",
@@ -298,16 +370,22 @@ func _play_damage(event):
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
+	# Hits on YOUR party glow red; your hits on the enemy read pale
+	# gold — one glance tells who is bleeding.
+	var incoming: bool = target.team == CombatEntity.Team.HERO
 	if event.dot:
 		# Poison ticks: a quiet purple number, no impact sound or swing.
 		_spawn_floating_text(
-			target.rig.position, str(event.amount), Color(0.7, 0.35, 0.85)
+			target.rig.position, str(event.amount),
+			Color(0.85, 0.3, 0.55) if incoming else Color(0.7, 0.35, 0.85),
+			1.0, event.target_id
 		)
 		return
 	if event.dodged:
 		# The swing whiffs: no impact sound, a pale sidestep note.
 		_spawn_floating_text(
-			target.rig.position, "Dodge!", Color(0.85, 0.85, 0.8)
+			target.rig.position, "Dodge!", Color(0.85, 0.85, 0.8),
+			1.0, event.target_id
 		)
 		return
 	var ranged = (
@@ -321,16 +399,19 @@ func _play_damage(event):
 	if event.blocked:
 		_spawn_floating_text(
 			target.rig.position, "%d (blocked)" % event.amount,
-			Color(0.5, 0.7, 0.95)
+			Color(0.5, 0.7, 0.95), 1.0, event.target_id
 		)
 	elif event.crit:
 		_spawn_floating_text(
 			target.rig.position, "%d!" % event.amount,
-			Color(1.0, 0.62, 0.1), 1.45
+			Color(1.0, 0.3, 0.15) if incoming else Color(1.0, 0.72, 0.15),
+			1.45, event.target_id
 		)
 	else:
 		_spawn_floating_text(
-			target.rig.position, str(event.amount), Color(0.9, 0.2, 0.15)
+			target.rig.position, str(event.amount),
+			Color(0.95, 0.25, 0.2) if incoming else Color(0.95, 0.88, 0.62),
+			1.0, event.target_id
 		)
 
 func _play_heal(event):
@@ -344,7 +425,8 @@ func _play_heal(event):
 	if caster_bar and event.max_mana > 0:
 		caster_bar.set_mana(event.source_id, event.current_mana, event.max_mana)
 	_spawn_floating_text(
-		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3)
+		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3),
+		1.0, event.target_id
 	)
 
 func _play_death(event):
@@ -353,6 +435,8 @@ func _play_death(event):
 		return
 	state.mode = "dead"
 	state.anim_t = 0.0
+	for status_id in state.badges.keys():
+		_remove_badge(state, status_id)
 	sidebars_by_entity[event.target_id].mark_dead(event.target_id)
 	var arrow = arrows.get(event.target_id)
 	if arrow:
@@ -361,12 +445,58 @@ func _play_death(event):
 
 func _play_buff(event):
 	var target = actors.get(event.target_id)
-	if target == null or not STATUS_TEXT.has(event.status_id):
+	if target == null:
 		return
-	_spawn_floating_text(
-		target.rig.position + Vector3(0, 0.35, 0),
-		STATUS_TEXT[event.status_id], Color(0.55, 0.75, 1.0)
-	)
+	if STATUS_TEXT.has(event.status_id):
+		_spawn_floating_text(
+			target.rig.position + Vector3(0, 0.35, 0),
+			STATUS_TEXT[event.status_id], Color(0.55, 0.75, 1.0),
+			1.0, event.target_id
+		)
+	_add_badge(target, event.status_id)
+	# Renew shows its cast: the healer raises hands, the target gets a
+	# soft green ring.
+	if event.status_id == "renew_hot":
+		var caster = actors.get(event.source_id)
+		if caster and caster.mode == "idle" \
+				and caster.rig.has_method("pose_shoot"):
+			caster.mode = "shoot"
+			caster.anim_t = 0.0
+			caster.anim_speed = 1.8
+		_spawn_shockwave(target.rig.position, Color(0.5, 0.9, 0.45, 0.7), 2.2)
+
+func _play_buff_expired(event):
+	var target = actors.get(event.target_id)
+	if target:
+		_remove_badge(target, event.status_id)
+
+## A little symbol rides above the head for as long as the status runs.
+func _add_badge(state, status_id: String):
+	if not STATUS_ICON.has(status_id) or state.badges.has(status_id):
+		return
+	var badge := Sprite3D.new()
+	badge.texture = load(STATUS_ICON[status_id])
+	badge.pixel_size = 0.011
+	badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	badge.no_depth_test = true
+	badge.render_priority = 10
+	state.badge_row.add_child(badge)
+	state.badges[status_id] = badge
+	_layout_badges(state)
+
+func _remove_badge(state, status_id: String):
+	if not state.badges.has(status_id):
+		return
+	state.badges[status_id].queue_free()
+	state.badges.erase(status_id)
+	_layout_badges(state)
+
+func _layout_badges(state):
+	var ids = state.badges.keys()
+	for i in ids.size():
+		state.badges[ids[i]].position = Vector3(
+			(i - (ids.size() - 1) * 0.5) * 0.34, 0, 0
+		)
 
 # --- Continuous animation ----------------------------------------------
 
@@ -402,6 +532,12 @@ func _update_actors(delta):
 						rig.pose_swing(state.anim_t)
 					if state.anim_t >= DelverRig.SWING_T:
 						state.mode = "idle"
+			"spin":
+				state.anim_t += delta
+				rig.pose_spin(state.anim_t)
+				rig.rotation.y += delta * 10.5
+				if state.anim_t >= DelverRig.SPIN_T:
+					state.mode = "idle"
 			"shoot":
 				if not rig.has_method("pose_shoot"):
 					state.mode = "idle"
@@ -474,7 +610,44 @@ func _update_camera(delta):
 func _yaw_of(facing: Vector2) -> float:
 	return atan2(facing.x, facing.y)
 
-func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0):
+## Bursts of text over the same body claim lanes — keyed by the
+## entity when known (position quantization misses fast movers), and
+## climbing a half-step per full ring so long bursts stack upward.
+var _float_lanes := {}
+
+## An expanding ground ring: thunder gold by default, renew green.
+func _spawn_shockwave(at: Vector3, tint := Color(1.0, 0.9, 0.5, 0.8), max_scale := 5.6):
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.42
+	torus.outer_radius = 0.5
+	torus.rings = 24
+	torus.ring_segments = 6
+	ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tint
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = mat
+	ring.position = at + Vector3(0, 0.08, 0)
+	ring.scale = Vector3(0.3, 0.12, 0.3)
+	add_child(ring)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(ring, "scale", Vector3(max_scale, 0.12, max_scale), 0.45) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.45)
+	tween.chain().tween_callback(ring.queue_free)
+
+func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 1.0, key_id := -1):
+	var key = key_id if key_id != -1 else Vector2i(roundi(at.x * 1.5), roundi(at.z * 1.5))
+	var lane := 0
+	var recent = _float_lanes.get(key)
+	if recent != null and _clock - recent.time < 1.1:
+		lane = recent.lane + 1
+	_float_lanes[key] = {"lane": lane, "time": _clock}
+	var side: float = [0.0, -1.0, 1.0, -2.0, 2.0][lane % 5]
+
 	var label := Label3D.new()
 	label.text = text
 	label.font = FONT
@@ -484,7 +657,11 @@ func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 
 	label.outline_size = 18
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
-	label.position = at + Vector3(randf_range(-0.15, 0.15), 1.5, 0)
+	label.position = at + Vector3(
+		side * 0.46 + randf_range(-0.05, 0.05),
+		1.5 + 0.24 * float(lane / 5),
+		0
+	)
 	add_child(label)
 
 	var tween := create_tween()
@@ -499,7 +676,7 @@ func _show_room_banner(room: int):
 	layer.layer = 11
 	add_child(layer)
 	var label := Label.new()
-	label.text = "Room %d of %d" % [room, PlayerRoster.DELVE_LENGTH]
+	label.text = "%s  -  Room %d of %d" % [dungeon().dungeon_name, room, dungeon().length]
 	label.anchor_left = 0.0
 	label.anchor_right = 1.0
 	label.offset_top = 40
@@ -526,7 +703,8 @@ func _finish_battle():
 	PlayerRoster.last_battle_won = combat_result.victory
 
 	if not combat_result.victory:
-		RosterSave.save(PlayerRoster)
+		if PlayerRoster.autosave:
+			RosterSave.save(PlayerRoster)
 		await _show_battle_result(false)
 		await get_tree().create_timer(1.2).timeout
 		_show_summary(
@@ -543,7 +721,9 @@ func _finish_battle():
 		slain, room,
 		PlayerRoster.known_recipes + PlayerRoster.delve_recipes,
 		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
-		PlayerRoster.known_lore + PlayerRoster.delve_lore
+		PlayerRoster.known_lore + PlayerRoster.delve_lore,
+		dungeon(),
+		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -554,28 +734,61 @@ func _finish_battle():
 	PlayerRoster.delve_recipes.append_array(found.recipes)
 	PlayerRoster.delve_affixes.append_array(found.affixes)
 	PlayerRoster.delve_lore.append_array(found.lore)
+	PlayerRoster.delve_maps.append_array(found.maps)
 
-	if room >= PlayerRoster.DELVE_LENGTH:
+	# Knowledge pity: three dry rooms guarantee a recipe from the slain
+	# enemies' pools. Short failed runs still make progress.
+	var learned_something = not (found.recipes.is_empty() and found.affixes.is_empty()
+		and found.lore.is_empty() and found.maps.is_empty())
+	if learned_something:
+		PlayerRoster.rooms_since_knowledge = 0
+	else:
+		PlayerRoster.rooms_since_knowledge += 1
+		if PlayerRoster.rooms_since_knowledge >= 3:
+			var known = PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+			var pool := []
+			for template in slain:
+				for recipe_id in template.recipe_loot:
+					if not known.has(recipe_id) and not pool.has(recipe_id):
+						pool.append(recipe_id)
+			if not pool.is_empty():
+				var granted = pool.pick_random()
+				found.recipes.append(granted)
+				PlayerRoster.delve_recipes.append(granted)
+				PlayerRoster.rooms_since_knowledge = 0
+
+	if room >= dungeon().length:
 		PlayerRoster.adventures_completed += 1
-		RosterSave.save(PlayerRoster)
+		if PlayerRoster.autosave:
+			RosterSave.save(PlayerRoster)
 		await _show_battle_result(true)
 		await get_tree().create_timer(1.2).timeout
 		_show_summary(
 			"Delve Complete!",
-			"The Slime King is slain. All %d rooms conquered." % PlayerRoster.DELVE_LENGTH
+			"%s is conquered, all %d rooms of it." % [
+				dungeon().dungeon_name, dungeon().length
+			]
 		)
 		return
 
-	RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore))
+	if PlayerRoster.autosave:
+		RosterSave.save(PlayerRoster)
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
 ## crown jewels — newly learned recipes and affixes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = []) -> Array:
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = []) -> Array:
 	var entries := []
+	for dungeon_id in maps:
+		var mapped = load(RosterSave.DUNGEON_PATHS[dungeon_id])
+		entries.append({
+			"texture": preload("res://art/tomes/tome_journal.png"),
+			"text": "Weathered Map:\n%s" % mapped.dungeon_name,
+			"color": Color(0.95, 0.8, 0.35),
+		})
 	for lore_id in lore:
 		var fragment = load(RosterSave.LORE_PATHS[lore_id])
 		entries.append({
@@ -670,7 +883,8 @@ func _show_summary(title: String, subtitle: String):
 		PlayerRoster.delve_materials,
 		PlayerRoster.delve_recipes,
 		PlayerRoster.delve_affixes,
-		PlayerRoster.delve_lore
+		PlayerRoster.delve_lore,
+		PlayerRoster.delve_maps
 	)
 	panel.setup(title, subtitle, entries, "Return to Camp")
 	panel.primary_pressed.connect(_bank_and_return)
@@ -708,26 +922,34 @@ func _show_battle_result(victory):
 # --- World & UI ---------------------------------------------------------
 
 func _setup_world(arena):
+	# Each dungeon dresses its own stage: the Darkwood is a moonlit
+	# forest clearing; the Nest a warm webbed cavern.
+	var nest: bool = dungeon().theme == "nest"
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("23242c")
+	env.background_color = Color("140e14") if nest else Color("0d1118")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("b8c0d6")
-	env.ambient_light_energy = 0.7
+	env.ambient_light_color = Color("7a5e6e") if nest else Color("66748e")
+	env.ambient_light_energy = 0.6
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.fog_enabled = true
+	env.fog_light_color = Color("1c1218") if nest else Color("131a22")
+	env.fog_density = 0.014 if nest else 0.011
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
 
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48, -32, 0)
-	sun.light_energy = 1.3
-	sun.shadow_enabled = true
-	add_child(sun)
+	var moon := DirectionalLight3D.new()
+	moon.rotation_degrees = Vector3(-52, -30, 0)
+	moon.light_energy = 0.9 if nest else 1.0
+	moon.light_color = Color(1.0, 0.86, 0.72) if nest else Color(0.82, 0.88, 1.0)
+	moon.shadow_enabled = true
+	add_child(moon)
 
 	var fill := DirectionalLight3D.new()
-	fill.rotation_degrees = Vector3(-20, 140, 0)
-	fill.light_energy = 0.35
+	fill.rotation_degrees = Vector3(-18, 140, 0)
+	fill.light_energy = 0.22
+	fill.light_color = Color(0.6, 0.45, 0.6) if nest else Color(0.55, 0.7, 0.55)
 	add_child(fill)
 
 	var center = to_world(Vector2(
@@ -740,16 +962,106 @@ func _setup_world(arena):
 	plane.size = Vector2(arena.width + 40, arena.height + 40)
 	ground.mesh = plane
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("55584a")
+	mat.albedo_color = Color("332631") if nest else Color("2c3626")
 	mat.roughness = 1.0
 	ground.material_override = mat
 	ground.position = center
 	add_child(ground)
 
+	# The treeline: rings of low-poly firs just beyond the field.
+	var trunk_mat := StandardMaterial3D.new()
+	trunk_mat.albedo_color = Color("32251a")
+	trunk_mat.roughness = 1.0
+	# The backdrop ring hugs the visible clearing, but only behind and
+	# beside the fight — the camera's foreground stays clear.
+	var cam_dir = Vector3(CAMERA_OFFSET.x, 0, CAMERA_OFFSET.z).normalized()
+	for i in 30:
+		var a = TAU * i / 30.0 + 0.35 * sin(i * 3.1)
+		var ring = 0.35 * ((i * 7) % 4)
+		var offset = Vector3(
+			(8.6 + 1.4 * ring) * cos(a), 0,
+			(6.0 + 1.1 * ring) * sin(a)
+		)
+		if offset.normalized().dot(cam_dir) > 0.25:
+			continue
+		var tree := Node3D.new()
+		tree.position = center + offset
+		var height = 1.0 + 0.5 * ((i * 5) % 4) / 3.0
+		tree.scale = Vector3.ONE * height
+		add_child(tree)
+		if nest:
+			# Stalagmite columns wrapped in pale silk, egg sacs at the base.
+			var spire := CylinderMesh.new()
+			spire.top_radius = 0.05
+			spire.bottom_radius = 0.5
+			spire.height = 2.6
+			spire.radial_segments = 7
+			var spire_mesh := MeshInstance3D.new()
+			spire_mesh.mesh = spire
+			var spire_mat := StandardMaterial3D.new()
+			spire_mat.albedo_color = Color("453242") * (0.85 + 0.3 * ((i * 11) % 3) / 2.0)
+			spire_mat.roughness = 1.0
+			spire_mesh.material_override = spire_mat
+			spire_mesh.position.y = 1.3
+			tree.add_child(spire_mesh)
+			var wrap := CylinderMesh.new()
+			wrap.top_radius = 0.16
+			wrap.bottom_radius = 0.3
+			wrap.height = 0.8
+			wrap.radial_segments = 7
+			var wrap_mesh := MeshInstance3D.new()
+			wrap_mesh.mesh = wrap
+			var wrap_mat := StandardMaterial3D.new()
+			wrap_mat.albedo_color = Color("cfc8b8")
+			wrap_mat.roughness = 0.9
+			wrap_mesh.material_override = wrap_mat
+			wrap_mesh.position.y = 0.9 + 0.5 * ((i * 7) % 3) / 2.0
+			tree.add_child(wrap_mesh)
+			if i % 3 == 0:
+				var sac := SphereMesh.new()
+				sac.radius = 0.22
+				sac.height = 0.4
+				sac.radial_segments = 7
+				sac.rings = 4
+				var sac_mesh := MeshInstance3D.new()
+				sac_mesh.mesh = sac
+				var sac_mat := StandardMaterial3D.new()
+				sac_mat.albedo_color = Color("ded6c2")
+				sac_mat.roughness = 0.85
+				sac_mesh.material_override = sac_mat
+				sac_mesh.position = Vector3(0.5, 0.2, 0.2)
+				tree.add_child(sac_mesh)
+			continue
+		var trunk := CylinderMesh.new()
+		trunk.top_radius = 0.09
+		trunk.bottom_radius = 0.13
+		trunk.height = 0.9
+		trunk.radial_segments = 6
+		var trunk_mesh := MeshInstance3D.new()
+		trunk_mesh.mesh = trunk
+		trunk_mesh.material_override = trunk_mat
+		trunk_mesh.position.y = 0.45
+		tree.add_child(trunk_mesh)
+		var shade = 0.85 + 0.3 * ((i * 11) % 3) / 2.0
+		var leaf_mat := StandardMaterial3D.new()
+		leaf_mat.albedo_color = Color("1c2e1f") * shade
+		leaf_mat.roughness = 1.0
+		for layer in 2:
+			var cone := CylinderMesh.new()
+			cone.top_radius = 0.0
+			cone.bottom_radius = 0.85 - 0.3 * layer
+			cone.height = 1.15 - 0.2 * layer
+			cone.radial_segments = 7
+			var cone_mesh := MeshInstance3D.new()
+			cone_mesh.mesh = cone
+			cone_mesh.material_override = leaf_mat
+			cone_mesh.position.y = 1.0 + 0.72 * layer
+			tree.add_child(cone_mesh)
+
 	# Blocked tiles rise as stone pillars: the same cells the sim's
 	# pathfinding and line of sight respect.
 	var pillar_mat := StandardMaterial3D.new()
-	pillar_mat.albedo_color = Color("5b5e57")
+	pillar_mat.albedo_color = Color("42463e")
 	pillar_mat.roughness = 1.0
 	for tile in arena.blocked_tiles:
 		var pillar := BoxMesh.new()
@@ -778,13 +1090,13 @@ func _setup_world(arena):
 			rock.radial_segments = 7
 			rock.rings = 4
 			mesh.mesh = rock
-			prop_mat.albedo_color = Color("6e7266")
+			prop_mat.albedo_color = Color("4a4f45")
 		else:
 			var tuft := BoxMesh.new()
 			tuft.size = Vector3(0.05, 0.14, 0.05)
 			mesh.mesh = tuft
 			mesh.position.y = 0.07
-			prop_mat.albedo_color = Color("5e7a4a")
+			prop_mat.albedo_color = Color("3f5a33")
 		mesh.material_override = prop_mat
 		mesh.position += center + Vector3(7.5 * cos(a), 0, 4.6 * sin(a))
 		add_child(mesh)

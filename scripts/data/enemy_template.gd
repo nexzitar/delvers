@@ -24,15 +24,20 @@ class_name EnemyDefinition
 ## recipes are rare permanent unlocks; finished gear is a memorable
 ## fluke outside of bosses.
 @export var material_loot: Array[String] = []
-@export var material_drop_chance: float = 0.65
+@export var material_drop_chance: float = 1.0
+## Base pieces per material drop (warriors haul iron in bulk).
+@export var material_drop_count: int = 1
 @export var recipe_loot: Array[String] = []
 @export var recipe_drop_chance: float = 0.05
 ## Affix knowledge this enemy can teach (rarer than base recipes).
 @export var affix_loot: Array[String] = []
 @export var affix_drop_chance: float = 0.03
 @export var loot_ids: Array[String] = []
-@export var drop_chance: float = 0.02
+@export var drop_chance: float = 0.0
 @export var is_boss: bool = false
+## Dungeon id this enemy's map fragment unlocks (bosses guard the way
+## deeper). Dropped once, ever.
+@export var map_loot: String = ""
 
 ## Defensive/offensive secondary stats (see GearDefinition for the
 ## hero-side equivalents).

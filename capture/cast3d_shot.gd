@@ -47,6 +47,22 @@ func _run():
 		load("res://resources/enemies/slime_king.tres")
 	), "cast_slime_king", 1.6)
 
+	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/nest_spiderling.tres")
+	), "cast_nest_spiderling", 0.5)
+
+	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/web_weaver.tres")
+	), "cast_web_weaver", 0.75)
+
+	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/chitin_crawler.tres")
+	), "cast_chitin_crawler", 0.95)
+
+	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/broodmother.tres")
+	), "cast_broodmother", 1.5)
+
 	get_tree().quit()
 
 func _shoot(rig: Node3D, file_name: String, frame_height: float):
