@@ -113,6 +113,11 @@ func _ready():
 		combat.update(0.1)
 	combat_result = combat.build_result()
 
+	# Win or lose, what walked out of the dark is now seen.
+	PlayerRoster.record_seen(combat.enemies.map(
+		func(e): return e.template.enemy_id
+	))
+
 	# Record how the party came out of the fight.
 	for k in combat.heroes.size():
 		PlayerRoster.delve_health[_party_indices[k]] = combat.heroes[k].current_health

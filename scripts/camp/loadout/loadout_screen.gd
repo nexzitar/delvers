@@ -388,20 +388,22 @@ func _fill_tactics():
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tactics_box.add_child(hint)
 	var order = _known_enemy_order()
+	if order.is_empty():
+		var none = Label.new()
+		none.text = "Nothing faced yet. The order fills in as the guild meets its enemies."
+		none.add_theme_color_override("font_color", DIM)
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_tactics_box.add_child(none)
 	for i in order.size():
 		_tactics_box.add_child(_priority_row(order, i))
 
-## The saved focus order first, then any enemies from unlocked
-## dungeons the list doesn't know yet.
+## The saved focus order first, then any newly-seen enemies. Only
+## what the guild has actually faced — no spoilers.
 func _known_enemy_order() -> Array:
 	var order: Array = PlayerRoster.enemy_priority.duplicate()
-	for dungeon_id in PlayerRoster.unlocked_dungeons:
-		var dungeon = load(RosterSave.DUNGEON_PATHS[dungeon_id])
-		var pools = Array(dungeon.pool_core) + Array(dungeon.pool_deep) \
-			+ Array(dungeon.boss_pack)
-		for template in pools:
-			if not order.has(template.enemy_id):
-				order.append(template.enemy_id)
+	for enemy_id in PlayerRoster.seen_enemies:
+		if not order.has(enemy_id):
+			order.append(enemy_id)
 	return order
 
 func _priority_row(order: Array, index: int) -> Control:

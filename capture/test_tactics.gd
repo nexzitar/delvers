@@ -51,6 +51,37 @@ func _ready():
 	assert(hero.target_id == far_spider.entity_id,
 		"all covered: falls back to focus order")
 
+	# Sightings: recorded once, persisted, and veterans get backfilled.
+	var watcher = load("res://scripts/game/player_roster.gd").new()
+	watcher.autosave = false
+	watcher._build_heroes()
+	watcher._build_stash()
+	watcher.record_seen(["green_slime", "green_slime", "broodmother"])
+	assert(watcher.seen_enemies == ["green_slime", "broodmother"], "seen once each")
+	var sight_path := "user://test_seen_save.json"
+	RosterSave.save(watcher, sight_path)
+	var sighted = load("res://scripts/game/player_roster.gd").new()
+	sighted.autosave = false
+	assert(RosterSave.load_into(sighted, sight_path), "save loads")
+	assert(sighted.seen_enemies == ["green_slime", "broodmother"], "sightings persist")
+	var old_file := FileAccess.open(sight_path, FileAccess.WRITE)
+	old_file.store_string(JSON.stringify({
+		"version": 7, "adventures_completed": 2,
+		"heroes": [{"template": "default_delver", "name": "Vet",
+			"equipped": {}, "bonus_skills": []}],
+		"stash": [],
+	}))
+	old_file = null
+	var vet = load("res://scripts/game/player_roster.gd").new()
+	vet.autosave = false
+	assert(RosterSave.load_into(vet, sight_path), "veteran save loads")
+	assert(vet.seen_enemies.has("slime_king"), "victors have seen the king")
+	assert(not vet.seen_enemies.has("broodmother"), "the deep stays unspoiled")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(sight_path))
+	watcher.free()
+	sighted.free()
+	vet.free()
+
 	# Tactic and focus order survive a save round trip.
 	var roster = load("res://scripts/game/player_roster.gd").new()
 	roster.autosave = false

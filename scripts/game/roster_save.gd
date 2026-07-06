@@ -127,6 +127,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"current_dungeon": roster.current_dungeon,
 		"enemy_priority": roster.enemy_priority,
 		"rooms_since_knowledge": roster.rooms_since_knowledge,
+		"seen_enemies": roster.seen_enemies,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -210,6 +211,19 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		if not roster.enemy_priority.has(enemy_id):
 			roster.enemy_priority.append(enemy_id)
 	roster.rooms_since_knowledge = int(data.get("rooms_since_knowledge", 0))
+
+	roster.seen_enemies = []
+	for enemy_id in data.get("seen_enemies", []):
+		if not roster.seen_enemies.has(enemy_id):
+			roster.seen_enemies.append(enemy_id)
+	# Veterans predate sightings: what they've clearly fought is seen.
+	if roster.seen_enemies.is_empty():
+		if roster.adventures_completed >= 1:
+			roster.seen_enemies = ["green_slime", "goblin_archer",
+				"goblin_warrior", "venomous_spider", "slime_king"]
+		elif roster.battles_fought > 0:
+			roster.seen_enemies = ["green_slime", "goblin_archer",
+				"goblin_warrior"]
 
 	# A pre-update save may already hold the first victory: the
 	# companion arrives the moment the camp loads.

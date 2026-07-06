@@ -59,6 +59,9 @@ var current_dungeon := "darkwood"
 ## Party focus order (enemy_ids, first = kill first) for the
 ## "priority" and "spread" tactics.
 var enemy_priority: Array = []
+## Enemies the guild has faced — the focus order only lists these.
+## No spoilers: the Broodmother isn't a name until she's a memory.
+var seen_enemies: Array = []
 ## Cleared rooms since the last knowledge drop: three dry rooms
 ## guarantee a recipe (short failed runs still make progress).
 var rooms_since_knowledge := 0
@@ -304,6 +307,17 @@ func first_empty_bonus_skill_slot(hero_index: int) -> int:
 		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
 			return i + 1
 	return -1
+
+## Called when a battle begins: whatever walks out of the dark is
+## seen, win or lose.
+func record_seen(enemy_ids: Array):
+	var changed := false
+	for enemy_id in enemy_ids:
+		if not seen_enemies.has(enemy_id):
+			seen_enemies.append(enemy_id)
+			changed = true
+	if changed and autosave:
+		RosterSave.save(self)
 
 func set_tactic(hero_index: int, tactic: String):
 	heroes[hero_index].tactic = tactic

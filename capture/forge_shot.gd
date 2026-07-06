@@ -39,7 +39,8 @@ func _ready():
 	img.save_png("%s/forge_tab.png" % out_dir)
 
 	loadout.hide_tooltip()
-	PlayerRoster.unlocked_dungeons = ["darkwood", "spider_nest"]
+	PlayerRoster.seen_enemies = ["green_slime", "goblin_archer",
+		"goblin_warrior", "venomous_spider", "web_weaver"]
 	PlayerRoster.enemy_priority = ["venomous_spider", "web_weaver"]
 	for tabs in loadout.find_children("*", "TabContainer", true, false):
 		tabs.current_tab = 4
