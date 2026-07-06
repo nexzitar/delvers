@@ -105,6 +105,7 @@ func _ready():
 		_party_indices.append(i)
 
 	var combat = CombatState.new()
+	combat.enemy_priority = PlayerRoster.enemy_priority.duplicate()
 	# Rooms deepen: bigger packs, higher enemy levels.
 	combat.enemy_level_bonus = (room - 1) / 4
 	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
@@ -571,6 +572,27 @@ func _finish_battle():
 	PlayerRoster.delve_affixes.append_array(found.affixes)
 	PlayerRoster.delve_lore.append_array(found.lore)
 	PlayerRoster.delve_maps.append_array(found.maps)
+
+	# Knowledge pity: three dry rooms guarantee a recipe from the slain
+	# enemies' pools. Short failed runs still make progress.
+	var learned_something = not (found.recipes.is_empty() and found.affixes.is_empty()
+		and found.lore.is_empty() and found.maps.is_empty())
+	if learned_something:
+		PlayerRoster.rooms_since_knowledge = 0
+	else:
+		PlayerRoster.rooms_since_knowledge += 1
+		if PlayerRoster.rooms_since_knowledge >= 3:
+			var known = PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+			var pool := []
+			for template in slain:
+				for recipe_id in template.recipe_loot:
+					if not known.has(recipe_id) and not pool.has(recipe_id):
+						pool.append(recipe_id)
+			if not pool.is_empty():
+				var granted = pool.pick_random()
+				found.recipes.append(granted)
+				PlayerRoster.delve_recipes.append(granted)
+				PlayerRoster.rooms_since_knowledge = 0
 
 	if room >= dungeon().length:
 		PlayerRoster.adventures_completed += 1

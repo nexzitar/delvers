@@ -39,6 +39,16 @@ func _ready():
 	img.save_png("%s/forge_tab.png" % out_dir)
 
 	loadout.hide_tooltip()
+	PlayerRoster.unlocked_dungeons = ["darkwood", "spider_nest"]
+	PlayerRoster.enemy_priority = ["venomous_spider", "web_weaver"]
+	for tabs in loadout.find_children("*", "TabContainer", true, false):
+		tabs.current_tab = 4
+	loadout._fill_tactics()
+	await get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	img = get_viewport().get_texture().get_image()
+	img.save_png("%s/tactics_tab.png" % out_dir)
+
 	for tabs in loadout.find_children("*", "TabContainer", true, false):
 		tabs.current_tab = 3
 	await get_tree().create_timer(0.3).timeout

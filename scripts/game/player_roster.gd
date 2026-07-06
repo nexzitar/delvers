@@ -56,6 +56,12 @@ var purchased_unlocks: Array = []
 ## Dungeons the guild holds maps for; delves target current_dungeon.
 var unlocked_dungeons: Array = ["darkwood"]
 var current_dungeon := "darkwood"
+## Party focus order (enemy_ids, first = kill first) for the
+## "priority" and "spread" tactics.
+var enemy_priority: Array = []
+## Cleared rooms since the last knowledge drop: three dry rooms
+## guarantee a recipe (short failed runs still make progress).
+var rooms_since_knowledge := 0
 ## One-shot camp line for arrivals ("You're not alone anymore.").
 var arrival_message := ""
 
@@ -298,6 +304,11 @@ func first_empty_bonus_skill_slot(hero_index: int) -> int:
 		if i >= hero.bonus_skills.size() or hero.bonus_skills[i] == null:
 			return i + 1
 	return -1
+
+func set_tactic(hero_index: int, tactic: String):
+	heroes[hero_index].tactic = tactic
+	if autosave:
+		RosterSave.save(self)
 
 func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
 	if slot < 1 or slot > bonus_skill_slots:

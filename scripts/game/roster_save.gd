@@ -107,6 +107,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 			"bonus_skills": hero.bonus_skills.map(
 				func(s): return s.skill_id if s is SkillDefinition else null
 			),
+			"tactic": hero.tactic,
 		})
 
 	var data := {
@@ -124,6 +125,8 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"purchased_unlocks": roster.purchased_unlocks,
 		"unlocked_dungeons": roster.unlocked_dungeons,
 		"current_dungeon": roster.current_dungeon,
+		"enemy_priority": roster.enemy_priority,
+		"rooms_since_knowledge": roster.rooms_since_knowledge,
 	}
 
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -202,6 +205,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	roster.current_dungeon = data.get("current_dungeon", "darkwood")
 	if not roster.unlocked_dungeons.has(roster.current_dungeon):
 		roster.current_dungeon = "darkwood"
+	roster.enemy_priority = []
+	for enemy_id in data.get("enemy_priority", []):
+		if not roster.enemy_priority.has(enemy_id):
+			roster.enemy_priority.append(enemy_id)
+	roster.rooms_since_knowledge = int(data.get("rooms_since_knowledge", 0))
 
 	# A pre-update save may already hold the first victory: the
 	# companion arrives the moment the camp loads.
@@ -225,6 +233,7 @@ static func _restore_hero(entry):
 	hero.bonus_skills = []
 	for skill_id in entry.get("bonus_skills", []):
 		hero.bonus_skills.append(_skill_from_id(skill_id))
+	hero.tactic = entry.get("tactic", "nearest")
 	return hero
 
 ## Unknown ids (e.g. content removed in an update) drop the item.

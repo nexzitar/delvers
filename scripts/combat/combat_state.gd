@@ -73,9 +73,61 @@ func validate_target(entity):
 		return
 
 	var current = entity_by_id(entity.target_id)
+	# "nearest" is sticky (classic brawl); the other tactics re-evaluate
+	# on a short cadence so lowest-health / focus-order stay honest.
 	if current and current.alive:
-		return
-	_set_target(entity, _nearest_opponent_id(entity))
+		if entity.tactic == "nearest":
+			return
+		if combat_time < entity.retarget_at:
+			return
+	entity.retarget_at = combat_time + 0.8
+	_set_target(entity, _pick_by_tactic(entity))
+
+## The party's focus order (enemy_ids, first = kill first), fed from
+## the roster at setup. Tactics score against it.
+var enemy_priority: Array = []
+
+func _priority_rank(target) -> int:
+	var idx = enemy_priority.find(target.template.enemy_id)
+	return idx if idx >= 0 else enemy_priority.size()
+
+## Scores living opponents under the entity's tactic; lower wins.
+## (Enemies without threat also route here and use "nearest".)
+func _pick_by_tactic(hero) -> int:
+	var best_id := -1
+	var best_key := []
+	var opponents = enemies if hero.team == CombatEntity.Team.HERO else heroes
+	for enemy in opponents:
+		if not enemy.alive:
+			continue
+		var dist = hero.position.distance_to(enemy.position)
+		var key := []
+		match hero.tactic:
+			"lowest":
+				key = [enemy.current_health, dist]
+			"priority":
+				key = [_priority_rank(enemy), dist]
+			"spread":
+				# Prefer foes not yet carrying this hero's poison.
+				var covered := 0
+				for status in enemy.statuses:
+					if status.kind == StatusEffect.Kind.POISON \
+							and status.source_id == hero.entity_id \
+							and status.remaining > 0.0:
+						covered = 1
+				key = [covered, _priority_rank(enemy), dist]
+			_:
+				key = [dist]
+		if best_id == -1 or _key_less(key, best_key):
+			best_id = enemy.entity_id
+			best_key = key
+	return best_id
+
+static func _key_less(a: Array, b: Array) -> bool:
+	for i in a.size():
+		if a[i] != b[i]:
+			return a[i] < b[i]
+	return false
 
 func _set_target(entity, new_target_id: int):
 	if entity.target_id == new_target_id:
@@ -479,6 +531,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		hero.attack_timer = hero.attack_interval
 		hero.off_attack_timer = hero.off_weapon.attack_speed if hero.off_weapon else 0.0
 
+		hero.tactic = hero_template.tactic
 		hero.skills = hero_template.starting_skills.duplicate()
 		# Loadout skill slots feed straight into combat.
 		for extra in hero_template.bonus_skills:

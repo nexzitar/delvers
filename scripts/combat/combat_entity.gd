@@ -41,6 +41,10 @@ var moving: bool = false
 var last_logged_facing: Vector2 = Vector2.RIGHT
 var target_id: int = -1
 var threat_table: Dictionary = {}
+## Hero targeting directive (see HeroTemplate.tactic) and the next
+## time it re-evaluates its choice.
+var tactic := "nearest"
+var retarget_at: float = 0.0
 var in_combat: bool = false
 var statuses: Array = []
 var is_casting: bool = false

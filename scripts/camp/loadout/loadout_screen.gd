@@ -54,6 +54,14 @@ var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus
 var _gear_grid: GridContainer
 var _forge_box: VBoxContainer
 var _library_box: VBoxContainer
+var _tactics_box: VBoxContainer
+
+const TACTICS := [
+	["nearest", "Nearest Foe", "Classic brawl: sticks to its target until it falls."],
+	["lowest", "Finish the Wounded", "Always strikes whoever has the least health left."],
+	["priority", "Focus Order", "Follows the party's focus order below."],
+	["spread", "Spread the Venom", "Poisons uncovered foes first, then follows the focus order."],
+]
 var _right_tabs: TabContainer
 ## Clicked recipe: its crafted-item preview stays pinned in the
 ## tooltip panels (no hovering needed).
@@ -334,6 +342,116 @@ func _build_right_tabs():
 	_library_box.custom_minimum_size = Vector2(500, 0)
 	_library_box.add_theme_constant_override("separation", 10)
 	library_tab.add_child(_library_box)
+
+	# Tactics tab: how this hero picks targets, and the party's focus
+	# order. First rung of the programmable-party ladder.
+	var tactics_tab = ScrollContainer.new()
+	tactics_tab.name = "Tactics"
+	tactics_tab.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(tactics_tab)
+	_tactics_box = VBoxContainer.new()
+	_tactics_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tactics_box.custom_minimum_size = Vector2(500, 0)
+	_tactics_box.add_theme_constant_override("separation", 10)
+	tactics_tab.add_child(_tactics_box)
+
+func _fill_tactics():
+	_clear(_tactics_box)
+	var hero = PlayerRoster.heroes[hero_index]
+
+	_tactics_box.add_child(_title("Targeting"))
+	var picker = OptionButton.new()
+	picker.add_theme_font_override("font", FONT)
+	picker.add_theme_font_size_override("font_size", 18)
+	var description = Label.new()
+	for i in TACTICS.size():
+		picker.add_item(TACTICS[i][1])
+		picker.set_item_metadata(i, TACTICS[i][0])
+		if TACTICS[i][0] == hero.tactic:
+			picker.select(i)
+			description.text = TACTICS[i][2]
+	picker.item_selected.connect(func(index):
+		PlayerRoster.set_tactic(hero_index, picker.get_item_metadata(index))
+		UiSounds.click()
+		_fill_tactics())
+	_tactics_box.add_child(picker)
+	description.add_theme_font_size_override("font_size", 14)
+	description.add_theme_color_override("font_color", DIM)
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tactics_box.add_child(description)
+
+	_tactics_box.add_child(_title("Focus Order"))
+	var hint = Label.new()
+	hint.text = "The party kills from the top down (Focus Order and Spread tactics)."
+	hint.add_theme_font_size_override("font_size", 13)
+	hint.add_theme_color_override("font_color", DIM)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tactics_box.add_child(hint)
+	var order = _known_enemy_order()
+	for i in order.size():
+		_tactics_box.add_child(_priority_row(order, i))
+
+## The saved focus order first, then any enemies from unlocked
+## dungeons the list doesn't know yet.
+func _known_enemy_order() -> Array:
+	var order: Array = PlayerRoster.enemy_priority.duplicate()
+	for dungeon_id in PlayerRoster.unlocked_dungeons:
+		var dungeon = load(RosterSave.DUNGEON_PATHS[dungeon_id])
+		var pools = Array(dungeon.pool_core) + Array(dungeon.pool_deep) \
+			+ Array(dungeon.boss_pack)
+		for template in pools:
+			if not order.has(template.enemy_id):
+				order.append(template.enemy_id)
+	return order
+
+func _priority_row(order: Array, index: int) -> Control:
+	var enemy_id: String = order[index]
+	var enemy_name := enemy_id.capitalize()
+	for path in LootTable.ENEMY_PATHS:
+		var template = load(path)
+		if template.enemy_id == enemy_id:
+			enemy_name = template.enemy_name
+
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
+
+	var rank = Label.new()
+	rank.text = "%d." % (index + 1)
+	rank.add_theme_font_override("font", FONT)
+	rank.add_theme_font_size_override("font_size", 18)
+	rank.add_theme_color_override("font_color", GOLD if index == 0 else DIM)
+	rank.custom_minimum_size = Vector2(30, 0)
+	row.add_child(rank)
+
+	var name_label = Label.new()
+	name_label.text = enemy_name
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.add_theme_color_override("font_color", PARCHMENT)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_label)
+
+	for move in [[-1, "^"], [1, "v"]]:
+		var btn = Button.new()
+		btn.text = move[1]
+		btn.custom_minimum_size = Vector2(38, 34)
+		btn.disabled = (index + move[0] < 0 or index + move[0] >= order.size())
+		var delta: int = move[0]
+		btn.pressed.connect(func():
+			var new_order = _known_enemy_order()
+			var j = new_order.find(enemy_id)
+			new_order.remove_at(j)
+			new_order.insert(j + delta, enemy_id)
+			PlayerRoster.enemy_priority = new_order
+			if PlayerRoster.autosave:
+				RosterSave.save(PlayerRoster)
+			UiSounds.click()
+			_fill_tactics())
+		row.add_child(btn)
+	return panel
 
 func _fill_library():
 	_clear(_library_box)
@@ -716,6 +834,7 @@ func refresh():
 	_fill_gear_grid()
 	_fill_forge()
 	_fill_library()
+	_fill_tactics()
 	_update_preview()
 
 func _role_text() -> String:
