@@ -77,6 +77,9 @@ enum HeadStyle {
 @export var crit_rating: float = 0.0
 ## Boosts heals (and future spells). Healer identity.
 @export var spell_power: int = 0
+## Fraction (0-1) shaved off poison damage-over-time. Armor stops
+## steel; this stops venom — the Nest's answer.
+@export var poison_resist: float = 0.0
 
 func effective_reach() -> float:
 	if reach > 0.0:

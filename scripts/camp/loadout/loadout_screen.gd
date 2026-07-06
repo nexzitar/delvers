@@ -1159,6 +1159,9 @@ func _tooltip_gear(gear: GearDefinition):
 		_tip_line("%d%% Crit" % roundi(gear.crit_rating * 100), PARCHMENT, 18, 1)
 	if gear.spell_power != 0:
 		_tip_line("+%d Spell Power" % gear.spell_power, PARCHMENT, 18, 1)
+	if gear.poison_resist > 0.0:
+		_tip_line("%d%% Poison Resist" % roundi(gear.poison_resist * 100),
+			Color(0.7, 0.5, 0.85), 18, 1)
 
 	if gear.affix_id != "" and RosterSave.AFFIX_PATHS.has(gear.affix_id):
 		var affix = load(RosterSave.AFFIX_PATHS[gear.affix_id])

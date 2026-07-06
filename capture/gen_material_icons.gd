@@ -25,6 +25,10 @@ func _init():
 	_save(_boots(), "res://art/gear/iron_shod_boots.png")
 	_save(_gauntlets(), "res://art/gear/goblin_work_gauntlets.png")
 	_save(_belt(), "res://art/gear/studded_belt.png")
+	_save(_greaves(), "res://art/gear/iron_greaves.png")
+	_save(_pauldrons(), "res://art/gear/wardens_pauldrons.png")
+	_save(_bracers(), "res://art/gear/silk_bracers.png")
+	_save(_cloak(), "res://art/gear/weavers_cloak.png")
 	print("material icons written")
 	quit()
 
@@ -217,4 +221,46 @@ func _belt() -> Image:
 			if absf(x - C) < 10.0:
 				return false
 			return p.distance_to(Vector2(x, 33)) < 2.2, Color("c7ced6"))
+	return img
+
+func _greaves() -> Image:
+	var img = _tile(Color("2c2c30"), Color("1a1a20"))
+	for side in [-1, 1]:
+		_paint(img, func(p):
+			return absf(p.x - C - side * 9.0) < 5.0 and p.y >= 14.0 and p.y <= 46.0,
+			Color("8a939d"))
+		_paint(img, func(p):
+			return absf(p.x - C - side * 9.0) < 6.0 and p.y >= 42.0 and p.y <= 48.0,
+			Color("6a7078"))
+	return img
+
+func _pauldrons() -> Image:
+	var img = _tile(Color("30302a"), Color("1c1c18"))
+	for side in [-1, 1]:
+		_paint(img, func(p):
+			var center = Vector2(C + side * 11.0, 26)
+			return p.distance_to(center) < 10.0 and p.y <= 28.0,
+			Color("9aa3ad"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 7.0 and absf(p.y - 30.0) < 4.0, Color("6e4f2e"))
+	return img
+
+func _bracers() -> Image:
+	var img = _tile(Color("34302a"), Color("201e18"))
+	for side in [-1, 1]:
+		_paint(img, func(p):
+			if absf(p.x - C - side * 9.0) > 5.0 or p.y < 18.0 or p.y > 44.0:
+				return false
+			return int(p.y) % 6 < 4, Color("ded2ae"))
+	return img
+
+func _cloak() -> Image:
+	var img = _tile(Color("2e2a34"), Color("1a1820"))
+	_paint(img, func(p):
+		if p.y < 12.0 or p.y > 50.0:
+			return false
+		var half = 6.0 + (p.y - 12.0) * 0.28
+		return absf(p.x - C) < half, Color("b8b2c8"))
+	_paint(img, func(p):
+		return absf(p.y - 14.0) < 2.0 and absf(p.x - C) < 8.0, Color("d8c684"))
 	return img

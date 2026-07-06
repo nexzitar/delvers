@@ -18,3 +18,6 @@ class_name RecipeDefinition
 @export var result_quality: ItemQuality.Tier = ItemQuality.Tier.UNCOMMON
 ## material_id -> count consumed per craft.
 @export var costs: Dictionary = {}
+## Lowest dungeon tier whose delves can teach this recipe. Higher
+## tiers unlock coverage (more slots of the dungeon's trait).
+@export var min_tier: int = 1

@@ -4,11 +4,12 @@
 
 [resource]
 script = ExtResource("1_recipe")
-recipe_id = "chitin_shield"
-recipe_name = "Chitin Shield"
-tome_name = "Sketches of a Carapace"
-tome_lore = "Nothing pierced it. We checked."
-result_gear_id = "chitin_shield"
+recipe_id = "weavers_cloak"
+recipe_name = "Weaver's Cloak"
+tome_name = "Pattern of the Gray Weave"
+tome_lore = "Venom beads and rolls off the gray weave like rain."
+result_gear_id = "weavers_cloak"
 result_item_level = 14
 result_quality = 1
-costs = {"chitin_plate": 3, "silk_thread": 1}
+costs = {"silk_thread": 4, "chitin_plate": 2}
+min_tier = 3

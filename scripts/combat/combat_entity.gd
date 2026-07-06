@@ -26,6 +26,7 @@ var block_chance: float = 0.0
 var dodge_chance: float = 0.0
 var crit_chance: float = 0.0
 var spell_power: int = 0
+var poison_resist: float = 0.0
 var gear := []
 var equipped := {}
 
@@ -94,7 +95,7 @@ func tick_statuses(delta, combat_state):
 	for s in statuses:
 		s.remaining -= delta
 		if s.kind == StatusEffect.Kind.POISON and alive:
-			s.accum += s.magnitude * delta
+			s.accum += s.magnitude * delta * (1.0 - clampf(poison_resist, 0.0, 0.9))
 			if s.accum >= 1.0:
 				var dmg = int(s.accum)
 				s.accum -= dmg

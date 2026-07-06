@@ -11,10 +11,16 @@ Notable changes per pull request. Newest first.
   the Broodmother. Kill the spawner first or drown: focus order and
   AoE are the curriculum.
 - **Difficulty tiers** (per dungeon, clearing tier N unlocks N+1, up
-  to V): higher tiers raise enemy levels AND the spoils — loot band
-  +4 item levels per tier, better rarity odds, bigger material hauls.
-  Old dungeons never go stale; the picker chooses the tier, the room
-  banner wears it (The Darkwood III).
+  to V): higher tiers raise enemy levels and pay in materials, rarity
+  odds, and **tier-gated recipes** — never in raw item level. Power
+  comes from covering more slots with the dungeon's answer.
+- **Every dungeon has an answer, found inside it**: the Darkwood's
+  threat is steel and its gear is armor; the Nest's poison ignores
+  armor, so nest gear carries the new **Poison Resist** stat
+  (Silk-Lined Hood, Chitin Shield/Armor get their own bases). Higher
+  tiers teach more coverage: Iron Greaves (Darkwood II), Warden's
+  Pauldrons (III), Silk-Wrapped Bracers (Nest II), Weaver's Cloak
+  (III) — four new slots come alive.
 - **The multi-enemy toolkit** (playtest: "5–6 enemies and no way to
   deal with it"): five new skills — **Cleave** (carries into two foes
   beside the target), **Whirlwind** (hits everything around you; holds

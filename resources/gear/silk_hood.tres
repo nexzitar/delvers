@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GearDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/starter_helmet.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_gear")
+gear_id = "silk_hood"
+gear_name = "Silk-Lined Hood"
+slot = 0
+icon = ExtResource("2_tex")
+health_bonus = 6
+poison_resist = 0.15

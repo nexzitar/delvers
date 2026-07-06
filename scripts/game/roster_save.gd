@@ -35,6 +35,10 @@ const RECIPE_PATHS := {
 	"iron_shod_boots": "res://resources/recipes/iron_shod_boots.tres",
 	"goblin_work_gauntlets": "res://resources/recipes/goblin_work_gauntlets.tres",
 	"studded_belt": "res://resources/recipes/studded_belt.tres",
+	"iron_greaves": "res://resources/recipes/iron_greaves.tres",
+	"wardens_pauldrons": "res://resources/recipes/wardens_pauldrons.tres",
+	"silk_bracers": "res://resources/recipes/silk_bracers.tres",
+	"weavers_cloak": "res://resources/recipes/weavers_cloak.tres",
 }
 
 const AFFIX_PATHS := {
@@ -78,6 +82,13 @@ const GEAR_PATHS := {
 	"iron_shod_boots": "res://resources/gear/iron_shod_boots.tres",
 	"goblin_work_gauntlets": "res://resources/gear/goblin_work_gauntlets.tres",
 	"studded_belt": "res://resources/gear/studded_belt.tres",
+	"silk_hood": "res://resources/gear/silk_hood.tres",
+	"chitin_shield": "res://resources/gear/chitin_shield.tres",
+	"chitin_armor": "res://resources/gear/chitin_armor.tres",
+	"iron_greaves": "res://resources/gear/iron_greaves.tres",
+	"wardens_pauldrons": "res://resources/gear/wardens_pauldrons.tres",
+	"silk_bracers": "res://resources/gear/silk_bracers.tres",
+	"weavers_cloak": "res://resources/gear/weavers_cloak.tres",
 }
 
 const SKILL_PATHS := {

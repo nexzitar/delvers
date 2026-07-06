@@ -84,9 +84,10 @@ static func roll_enemy_drops(
 ) -> Dictionary:
 	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [],
 		"lore": [], "maps": []}
-	# Difficulty pays: deeper tiers raise the loot band, the rarity
-	# odds, and the material haul.
-	var item_level = room + (dungeon.level_offset if dungeon else 0) + (tier - 1) * 4
+	# Difficulty pays in materials, rarity odds, and tier-gated
+	# knowledge — never in raw item level. Power comes from covering
+	# more slots with the dungeon's answer, not bigger numbers.
+	var item_level = room + (dungeon.level_offset if dungeon else 0)
 	var rare_chance = (dungeon.rare_chance if dungeon else 0.01) + 0.03 * (tier - 1)
 	var epic_chance = (dungeon.boss_epic_chance if dungeon else 0.03) + 0.03 * (tier - 1)
 	var lore_series = dungeon.lore_ids if dungeon else RosterSave.LORE_PATHS.keys()
@@ -106,7 +107,11 @@ static func roll_enemy_drops(
 		# whenever anything remains unlearned).
 		if randf() <= template.recipe_drop_chance:
 			var unknown = template.recipe_loot.filter(
-				func(id): return not seen.has(id)
+				func(id):
+					if seen.has(id):
+						return false
+					var recipe = load(RosterSave.RECIPE_PATHS[id])
+					return recipe.min_tier <= tier
 			)
 			if not unknown.is_empty():
 				var recipe_id = unknown.pick_random()

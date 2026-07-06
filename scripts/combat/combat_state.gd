@@ -587,6 +587,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			hero.dodge_chance += item.dodge_rating
 			hero.crit_chance += item.crit_rating
 			hero.spell_power += item.spell_power
+			hero.poison_resist += item.poison_resist
 
 		# Main-hand weapon speed sets the interval; unarmed falls back.
 		hero.attack_interval = (

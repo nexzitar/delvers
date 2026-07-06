@@ -111,7 +111,7 @@ func _ready():
 	assert(tier_roster.current_tier == 2, "clearing opens the next tier")
 	var deep_drops = LootTable.roll_enemy_drops(
 		[crawler], 4, [], [], [], nest, [], 3)
-	assert(deep_drops.gear[0].item_level == 22, "tier raises the loot band")
+	assert(deep_drops.gear[0].item_level == 14, "tiers never inflate item level")
 	var pile = LootTable.roll_enemy_drops(
 		[load("res://resources/enemies/goblin_warrior.tres")], 2, [], [], [], darkwood, [], 3)
 	var total := 0
@@ -127,6 +127,42 @@ func _ready():
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(tier_path))
 	tier_roster.free()
 	tier_restored.free()
+
+	# The Nest's answer: poison resist shaves the DoT that armor can't.
+	var armored = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	armored.equipped = {
+		Equip.Position.HEAD: LootTable.materialize("silk_hood", 14, 1),
+		Equip.Position.CHEST: LootTable.materialize("chitin_armor", 14, 1),
+		Equip.Position.WRIST: LootTable.materialize("silk_bracers", 14, 1),
+		Equip.Position.BACK: LootTable.materialize("weavers_cloak", 14, 1),
+	}
+	var combat_resist = CombatState.new()
+	combat_resist.setup_combat([armored], [spiderling])
+	var warded = combat_resist.heroes[0]
+	assert(warded.poison_resist > 0.7, "nest set stacks resist")
+	combat_resist.apply_status(warded, StatusEffect.Kind.POISON, 10.0, 2.0, "p", -1)
+	var hp_start = warded.current_health
+	for i in 50:
+		warded.tick_statuses(0.1, combat_resist)
+	var warded_loss = hp_start - warded.current_health
+	assert(warded_loss <= 4, "resist shaves the venom (took %d)" % warded_loss)
+
+	# Tier-gated knowledge: tier 1 never teaches tier-2 recipes.
+	var teacher = load("res://resources/enemies/web_weaver.tres").duplicate()
+	teacher.recipe_drop_chance = 1.0
+	for i in 60:
+		var lesson = LootTable.roll_enemy_drops([teacher], 3,
+			["silk_hood", "chitin_shield"], [], [], nest, [], 1)
+		for rid in lesson.recipes:
+			assert(load(RosterSave.RECIPE_PATHS[rid]).min_tier <= 1,
+				"tier 1 keeps its secrets")
+	var taught := false
+	for i in 60:
+		var lesson2 = LootTable.roll_enemy_drops([teacher], 3,
+			["silk_hood", "chitin_shield"], [], [], nest, [], 2)
+		if lesson2.recipes.has("silk_bracers"):
+			taught = true
+	assert(taught, "tier 2 teaches the bracers")
 
 	# Web Shot roots; the sim runs a nest pack to completion.
 	var WebShot = load("res://scripts/combat/skills/web_shot.gd")

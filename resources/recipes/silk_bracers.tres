@@ -4,11 +4,12 @@
 
 [resource]
 script = ExtResource("1_recipe")
-recipe_id = "silk_hood"
-recipe_name = "Silk-Lined Hood"
-tome_name = "Weaver's Pattern Cards"
-tome_lore = "The thread refused to fray, even in acid."
-result_gear_id = "silk_hood"
+recipe_id = "silk_bracers"
+recipe_name = "Silk-Wrapped Bracers"
+tome_name = "Bindings of the Third Scout"
+tome_lore = "She wrapped her arms before reaching into the webs. She kept her arms."
+result_gear_id = "silk_bracers"
 result_item_level = 14
 result_quality = 1
 costs = {"silk_thread": 3, "leather": 1}
+min_tier = 2
