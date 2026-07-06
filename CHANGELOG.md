@@ -58,6 +58,10 @@ Notable changes per pull request. Newest first.
   rows with color-coded costs; the full bill with hunting grounds
   lives in the pinned selection tooltip.
 - Overlapping floating combat texts fan out into side lanes.
+- Renew visibly casts (healer raises hands, a soft green ring blooms
+  on the target); the Whirlwind spin and Thunderclap shockwave cues
+  actually fire (the timeline patch had silently missed); the Forge
+  no longer clips Craft buttons or the material shelf.
 - Nest loot band: item levels +10; rare unlocked from normals (4%);
   boss epic at 6%.
 
@@ -80,6 +84,11 @@ Notable changes per pull request. Newest first.
   regression test.
 
 ### Balanced
+- **The Spider Nest tuned for a real party** (playtest: post-Darkwood
+  duo with double Virulent one-shot it): nest enemies harder across
+  the board (Broodmother 260 HP / 8 attack / 3 armor), packs run one
+  body deeper, and the boss brings a second spiderling — clearing it
+  should now want nest-tier gear and the second skill slot.
 - Standing separation spread brawls out (packed warriors all reach
   the front line).
 - **Material flow rebalanced** (playtest: 92 iron vs 3 gel): every

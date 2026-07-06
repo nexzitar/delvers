@@ -9,8 +9,8 @@
 script = ExtResource("1_enemy")
 enemy_id = "web_weaver"
 enemy_name = "Web Weaver"
-base_health = 26
-base_attack = 4
+base_health = 38
+base_attack = 5
 base_attack_interval = 2.8
 move_speed = 95.0
 skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_web")])

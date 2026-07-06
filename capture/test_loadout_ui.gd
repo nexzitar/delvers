@@ -4,6 +4,11 @@ func _ok(label, cond):
 	print(("PASS " if cond else "FAIL ") + label)
 
 func _ready():
+	# Own state: never depend on whatever save the machine carries.
+	PlayerRoster.autosave = false
+	PlayerRoster._build_heroes()
+	PlayerRoster._build_stash()
+	PlayerRoster.bonus_skill_slots = 1
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
 	add_child(camp)
 	await get_tree().process_frame

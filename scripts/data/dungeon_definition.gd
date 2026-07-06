@@ -28,6 +28,10 @@ class_name DungeonDefinition
 @export var rare_chance: float = 0.01
 @export var boss_epic_chance: float = 0.03
 
+## Extra bodies per room beyond the standard curve (deeper dungeons
+## assume a bigger, better-armed party).
+@export var pack_bonus: int = 0
+
 ## Theater dressing: "forest" (moonlit firs) or "nest" (webbed cavern).
 @export var theme: String = "forest"
 

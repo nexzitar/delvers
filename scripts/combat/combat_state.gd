@@ -161,6 +161,7 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	event.type = CombatEvent.EventType.BUFF_APPLIED
 	event.time = combat_time
 	event.entity_id = target.entity_id
+	event.source_id = source_id
 	event.target_id = target.entity_id
 	event.target_name = target.entity_name
 	event.status_id = status_id

@@ -157,8 +157,8 @@ func roll_encounter(room: int) -> Array:
 	var pool = d.pool_core.duplicate()
 	if room >= d.deep_from:
 		pool.append_array(d.pool_deep)
-	var low = clampi(2 + (room - 1) / 4, 2, 4)
-	var high = clampi(3 + (room - 1) / 2, 3, 6)
+	var low = clampi(2 + (room - 1) / 4, 2, 4) + d.pack_bonus
+	var high = clampi(3 + (room - 1) / 2, 3, 6) + d.pack_bonus
 	var encounter = d.guaranteed.duplicate()
 	var size = maxi(randi_range(low, high), encounter.size())
 	for i in range(size - encounter.size()):
@@ -200,6 +200,7 @@ func _build_timeline(log):
 				and event.team == CombatEntity.Team.ENEMY:
 			is_slime[event.entity_id] = event.template.enemy_id in ["green_slime", "slime_king", "venomous_spider"]
 
+	var burst_keys := {}
 	var events: Array = log.events
 	for i in events.size():
 		var event = events[i]
@@ -207,6 +208,17 @@ func _build_timeline(log):
 		match event.type:
 			CombatEvent.EventType.DAMAGE:
 				if event.dot:
+					continue
+				# AoE bursts get one distinctive cue, not a swing per victim.
+				if event.skill_name in ["Whirlwind", "Thunderclap"]:
+					var burst_key = "%d:%s:%.2f" % [event.source_id, event.skill_name, event.time]
+					if not burst_keys.has(burst_key):
+						burst_keys[burst_key] = true
+						_timeline.append({
+							"time": maxf(0.0, event.time - 0.3),
+							"kind": "spin" if event.skill_name == "Whirlwind" else "clap",
+							"id": event.source_id,
+						})
 					continue
 				if event.skill == null or event.skill.delivery_type == SkillDefinition.DeliveryType.MELEE:
 					var lead = SLIME_LEAD if is_slime.get(event.source_id, false) else SWING_LEAD
@@ -442,6 +454,16 @@ func _play_buff(event):
 			1.0, event.target_id
 		)
 	_add_badge(target, event.status_id)
+	# Renew shows its cast: the healer raises hands, the target gets a
+	# soft green ring.
+	if event.status_id == "renew_hot":
+		var caster = actors.get(event.source_id)
+		if caster and caster.mode == "idle" \
+				and caster.rig.has_method("pose_shoot"):
+			caster.mode = "shoot"
+			caster.anim_t = 0.0
+			caster.anim_speed = 1.8
+		_spawn_shockwave(target.rig.position, Color(0.5, 0.9, 0.45, 0.7), 2.2)
 
 func _play_buff_expired(event):
 	var target = actors.get(event.target_id)
@@ -593,8 +615,8 @@ func _yaw_of(facing: Vector2) -> float:
 ## climbing a half-step per full ring so long bursts stack upward.
 var _float_lanes := {}
 
-## Thunderclap's expanding ground ring.
-func _spawn_shockwave(at: Vector3):
+## An expanding ground ring: thunder gold by default, renew green.
+func _spawn_shockwave(at: Vector3, tint := Color(1.0, 0.9, 0.5, 0.8), max_scale := 5.6):
 	var ring := MeshInstance3D.new()
 	var torus := TorusMesh.new()
 	torus.inner_radius = 0.42
@@ -603,7 +625,7 @@ func _spawn_shockwave(at: Vector3):
 	torus.ring_segments = 6
 	ring.mesh = torus
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(1.0, 0.9, 0.5, 0.8)
+	mat.albedo_color = tint
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ring.material_override = mat
@@ -612,7 +634,7 @@ func _spawn_shockwave(at: Vector3):
 	add_child(ring)
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(ring, "scale", Vector3(5.6, 0.12, 5.6), 0.45) \
+	tween.tween_property(ring, "scale", Vector3(max_scale, 0.12, max_scale), 0.45) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.45)
 	tween.chain().tween_callback(ring.queue_free)

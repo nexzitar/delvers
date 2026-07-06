@@ -5,6 +5,9 @@ extends Node
 ## home iron.
 
 func _ready():
+	# Own state: the machine's save may point anywhere.
+	PlayerRoster.autosave = false
+	PlayerRoster.current_dungeon = "darkwood"
 	var controller = TheaterController3D.new()
 	var delver = load("res://resources/heroes/default_delver.tres").duplicate(true)
 	# A representative delver (a few runs in, heal slotted), not a

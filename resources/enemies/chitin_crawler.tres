@@ -8,8 +8,8 @@
 script = ExtResource("1_enemy")
 enemy_id = "chitin_crawler"
 enemy_name = "Chitin Crawler"
-base_health = 44
-base_attack = 5
+base_health = 64
+base_attack = 6
 base_attack_interval = 3.0
 move_speed = 70.0
 skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
@@ -19,4 +19,4 @@ recipe_loot = Array[String](["chitin_shield", "chitin_armor"])
 affix_loot = Array[String](["guarding"])
 loot_ids = Array[String](["starter_shield", "starter_armor"])
 preferred_row = 0
-armor = 3
+armor = 4

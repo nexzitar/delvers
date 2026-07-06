@@ -96,10 +96,15 @@ func _ready():
 	var combat2 = CombatState.new()
 	var strong = delver.duplicate(true)
 	strong.equipped = {
-		Equip.Position.MAIN_HAND: LootTable.materialize("starter_sword", 14, 2),
+		Equip.Position.MAIN_HAND: LootTable.materialize("starter_sword", 14, 2, "virulent"),
 		Equip.Position.OFF_HAND: LootTable.materialize("starter_shield", 14, 2),
+		Equip.Position.CHEST: LootTable.materialize("starter_armor", 14, 2),
 	}
-	combat2.setup_combat([strong], [brood_template,
+	var partner = delver.duplicate(true)
+	partner.equipped = {
+		Equip.Position.MAIN_HAND: LootTable.materialize("starter_bow", 14, 2, "virulent"),
+	}
+	combat2.setup_combat([strong, partner], [brood_template,
 		load("res://resources/enemies/nest_spiderling.tres")])
 	var steps := 0
 	while not combat2.combat_over and steps < 3000:

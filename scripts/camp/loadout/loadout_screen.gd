@@ -698,8 +698,10 @@ func _material_chip(material_id: String, count: int) -> Control:
 	row.add_child(icon)
 	var label = Label.new()
 	label.text = "%s x%d" % [material.material_name, count]
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.custom_minimum_size = Vector2(0, 0)
 	label.add_theme_font_override("font", FONT)
-	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_font_size_override("font_size", 14)
 	label.add_theme_color_override("font_color", ItemQuality.color(material.tier))
 	row.add_child(label)
 	return row
@@ -778,6 +780,7 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	# Known compatible affixes: pick one to enchant the craft.
 	if not affixes.is_empty():
 		var picker = OptionButton.new()
+		picker.fit_to_longest_item = false
 		picker.add_theme_font_override("font", FONT)
 		picker.add_theme_font_size_override("font_size", 14)
 		picker.add_item("No affix")
@@ -796,9 +799,9 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	var craft = Button.new()
 	craft.text = "Craft"
 	craft.add_theme_font_override("font", FONT)
-	craft.add_theme_font_size_override("font_size", 18)
+	craft.add_theme_font_size_override("font_size", 16)
 	craft.disabled = not PlayerRoster.can_craft(recipe, chosen)
-	craft.custom_minimum_size = Vector2(92, 40)
+	craft.custom_minimum_size = Vector2(70, 38)
 	craft.pressed.connect(func():
 		if PlayerRoster.craft(recipe, chosen) != null:
 			UiSounds.click()
