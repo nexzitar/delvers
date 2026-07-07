@@ -2,6 +2,20 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #11 — The Doctrine Editor *(open)*
+
+### Added
+- **The Doctrine Editor** (Phase 3 of the long tutorial): invisible
+  until the guild recovers its first Battlefield Doctrine tome, then
+  a rule builder in the Tactics tab — WHEN [condition, with numeric
+  parameters] THEN [target selector or cast] — with a live node
+  counter against the guild's recovered capacity, reordering,
+  deletion, and instant persistence. Target selectors are the
+  recovered tactics; castable actions are what the hero can actually
+  field (mastery kit + slotted techniques). The editor writes the
+  same behaviour trees the built-in tactics are made of — Scratch
+  and the Engineer's Python will simply be richer faces over this.
+
 ## PR #10 — Mastery: identity through practice *(open)*
 
 ### Added
