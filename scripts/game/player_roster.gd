@@ -62,6 +62,16 @@ var known_lore: Array = []
 ## Battlefield doctrines recovered (tactic ids). A fresh guild knows
 ## only how to strike the nearest foe.
 var known_tactics: Array = ["nearest"]
+## Engineering knowledge (doctrine capacity tiers, future Engineer's
+## Notebooks). No capacity, no custom doctrine: zero nodes.
+var known_engineering: Array = []
+
+func doctrine_capacity() -> int:
+	var nodes := 0
+	for entry_id in known_engineering:
+		if Doctrines.CAPACITY.has(entry_id):
+			nodes = maxi(nodes, int(Doctrines.CAPACITY[entry_id].nodes))
+	return nodes
 ## Guild restoration purchases (see GuildUnlocks). The "restoration"
 ## marker records the free first-victory companion.
 var purchased_unlocks: Array = []
@@ -154,7 +164,10 @@ func bank_delve_loot():
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
 	for doctrine_id in delve_doctrines:
-		if not known_tactics.has(doctrine_id):
+		if Doctrines.CAPACITY.has(doctrine_id):
+			if not known_engineering.has(doctrine_id):
+				known_engineering.append(doctrine_id)
+		elif not known_tactics.has(doctrine_id):
 			known_tactics.append(doctrine_id)
 	# Rust: what this delve didn't practice, fades a little. The best
 	# mark never moves.

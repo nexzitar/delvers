@@ -31,3 +31,23 @@ const ALL := {
 		"lore": "Strike the one who is not looking at you, until every one of them is.",
 	},
 }
+
+## Doctrine complexity: how many nodes a custom battlefield doctrine
+## may hold. Recovered knowledge, like everything else.
+const CAPACITY := {
+	"doctrine_capacity_1": {
+		"nodes": 4,
+		"tome": "Battlefield Doctrine I",
+		"lore": "Four marks on the field slate. The old guild started every recruit here.",
+	},
+	"doctrine_capacity_2": {
+		"nodes": 8,
+		"tome": "Battlefield Doctrine II",
+		"lore": "Eight marks. Enough for a plan with a second thought in it.",
+	},
+	"doctrine_capacity_3": {
+		"nodes": 16,
+		"tome": "Battlefield Doctrine III",
+		"lore": "Sixteen marks, annotated in three hands. The war room remembered everything.",
+	},
+}

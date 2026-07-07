@@ -135,6 +135,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 			),
 			"tactic": hero.tactic,
 			"mastery": hero.mastery,
+			"custom_tree": hero.custom_tree,
 		})
 
 	var data := {
@@ -150,6 +151,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"known_affixes": roster.known_affixes,
 		"known_lore": roster.known_lore,
 		"known_tactics": roster.known_tactics,
+		"known_engineering": roster.known_engineering,
 		"purchased_unlocks": roster.purchased_unlocks,
 		"unlocked_dungeons": roster.unlocked_dungeons,
 		"current_dungeon": roster.current_dungeon,
@@ -227,6 +229,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	for tactic_id in data.get("known_tactics", []):
 		if not roster.known_tactics.has(tactic_id):
 			roster.known_tactics.append(tactic_id)
+	roster.known_engineering = []
+	for entry_id in data.get("known_engineering", []):
+		if Doctrines.CAPACITY.has(entry_id) and not roster.known_engineering.has(entry_id):
+			roster.known_engineering.append(entry_id)
+
 	# Veterans predate doctrines: what they have fought with, they keep.
 	if not data.has("known_tactics") and roster.battles_fought > 0:
 		for doctrine_id in Doctrines.ALL:
@@ -301,6 +308,7 @@ static func _restore_hero(entry):
 	for skill_id in entry.get("bonus_skills", []):
 		hero.bonus_skills.append(_skill_from_id(skill_id))
 	hero.tactic = entry.get("tactic", "nearest")
+	hero.custom_tree = entry.get("custom_tree", []) if entry.get("custom_tree", []) is Array else []
 	hero.mastery = {}
 	var mastery = entry.get("mastery", {})
 	for discipline in mastery:

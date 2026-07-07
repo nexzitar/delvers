@@ -859,6 +859,14 @@ func _finish_battle():
 func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = [], star_ups: Array = [], doctrines: Array = []) -> Array:
 	var entries := []
 	for doctrine_id in doctrines:
+		if Doctrines.CAPACITY.has(doctrine_id):
+			var capacity = Doctrines.CAPACITY[doctrine_id]
+			entries.append({
+				"texture": preload("res://art/tomes/tome_journal.png"),
+				"text": "%s\nDoctrine: %d nodes" % [capacity.tome, capacity.nodes],
+				"color": Color(0.55, 0.75, 1.0),
+			})
+			continue
 		var doctrine = Doctrines.ALL[doctrine_id]
 		entries.append({
 			"texture": preload("res://art/tomes/tome_journal.png"),

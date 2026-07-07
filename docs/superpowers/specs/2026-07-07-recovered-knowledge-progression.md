@@ -86,7 +86,15 @@ than you.
   v1: enemy_count_gte, health_below, mana_gte, enemies_within,
   healer_threatened. **Protect the Healer** shipped as the first
   composite tree (a real doctrine, taught by the Brood Tender).
-- **Deferred**: Phase 3 (the Scratch editor over this engine), Phase 4
-  (Python parser + View Code bridge), Engineer's Notebooks gating the
-  condition/selector vocabulary, tree complexity budget enforcing the
-  no-raw-power pillar.
+- **2026-07-07 (complexity)**: **Doctrine Complexity is knowledge**
+  (owner design): trees are measured in nodes (one per rule, one per
+  condition), and capacity is recovered — Battlefield Doctrine I (4
+  nodes, taught by the Slime King), II (8, the Broodmother), III (16,
+  reserved for a future teacher), the Engineer's Notebook eventually
+  unbounded. A fresh guild has zero capacity (no custom doctrine at
+  all); over-budget doctrine falls back to the pre-authored tactic at
+  combat setup. Custom trees persist per hero in the save.
+- **Deferred**: Phase 3 (the Scratch/doctrine editor over this
+  engine), Phase 4 (Python parser + View Code bridge), Engineer's
+  Notebooks gating the condition/selector vocabulary, Battlefield
+  Doctrine III's teacher.

@@ -572,6 +572,12 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		)
 
 		hero.tactic = hero_template.tactic
+		# Custom doctrine runs only within the guild's recovered
+		# complexity budget; over it, the pre-authored tactic holds.
+		if not hero_template.custom_tree.is_empty() \
+				and BehaviorTree.node_count(hero_template.custom_tree) \
+					<= PlayerRoster.doctrine_capacity():
+			hero.behavior_tree = hero_template.custom_tree.duplicate(true)
 		hero.skills = hero_template.starting_skills.duplicate()
 		# Loadout skill slots feed straight into combat.
 		for extra in hero_template.bonus_skills:

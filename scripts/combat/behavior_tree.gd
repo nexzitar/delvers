@@ -23,6 +23,16 @@ const TACTIC_TREES := {
 	],
 }
 
+## Doctrine complexity: a tree's size in nodes — one per rule, one
+## per condition. Capacity is recovered knowledge (Battlefield
+## Doctrine I/II/III, the Engineer's Notebook): a veteran guild
+## literally holds more sophisticated doctrine than a fresh one.
+static func node_count(tree: Array) -> int:
+	var nodes := 0
+	for rule in tree:
+		nodes += 1 + rule.get("when", []).size()
+	return nodes
+
 static func tree_for(entity) -> Array:
 	if not entity.behavior_tree.is_empty():
 		return entity.behavior_tree

@@ -544,6 +544,16 @@ func _fill_library():
 	for doctrine_id in PlayerRoster.known_tactics:
 		if Doctrines.ALL.has(doctrine_id):
 			recovered_doctrines.append(doctrine_id)
+	for entry_id in PlayerRoster.known_engineering:
+		if Doctrines.CAPACITY.has(entry_id):
+			var capacity = Doctrines.CAPACITY[entry_id]
+			_library_box.add_child(_make_tome_row({
+				"icon": preload("res://art/tomes/tome_journal.png"),
+				"name": capacity.tome,
+				"teaches": "Doctrine capacity: %d nodes" % capacity.nodes,
+				"lore": capacity.lore,
+				"color": Color(0.55, 0.75, 1.0),
+			}))
 	if not recovered_doctrines.is_empty():
 		_library_box.add_child(_title("Doctrines"))
 		for doctrine_id in recovered_doctrines:

@@ -5,6 +5,13 @@ Notable changes per pull request. Newest first.
 ## PR #10 — Mastery: identity through practice *(open)*
 
 ### Added
+- **Doctrine Complexity is knowledge**: custom doctrine is measured
+  in nodes (one per rule, one per condition) and capacity is
+  recovered like everything else — Battlefield Doctrine I (4 nodes,
+  the Slime King teaches it), II (8, the Broodmother). A fresh guild
+  holds zero capacity; over-budget doctrine falls back to the
+  pre-authored tactic. A veteran guild literally thinks in longer
+  plans.
 - **The shared behaviour-tree engine** (`BehaviorTree`): built-in
   tactics are now pre-authored trees — plain JSON rule lists with a
   targeting channel and a casting channel ("IF enemy count >= 4 THEN
