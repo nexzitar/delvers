@@ -781,7 +781,8 @@ func _finish_battle():
 		PlayerRoster.known_lore + PlayerRoster.delve_lore,
 		dungeon(),
 		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps,
-		PlayerRoster.current_tier
+		PlayerRoster.current_tier,
+		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -793,6 +794,7 @@ func _finish_battle():
 	PlayerRoster.delve_affixes.append_array(found.affixes)
 	PlayerRoster.delve_lore.append_array(found.lore)
 	PlayerRoster.delve_maps.append_array(found.maps)
+	PlayerRoster.delve_doctrines.append_array(found.doctrines)
 
 	# Practice: the fielded party trains its disciplines room by room.
 	var alive_indices := []
@@ -806,7 +808,8 @@ func _finish_battle():
 	# Knowledge pity: three dry rooms guarantee a recipe from the slain
 	# enemies' pools. Short failed runs still make progress.
 	var learned_something = not (found.recipes.is_empty() and found.affixes.is_empty()
-		and found.lore.is_empty() and found.maps.is_empty())
+		and found.lore.is_empty() and found.maps.is_empty()
+		and found.doctrines.is_empty())
 	if learned_something:
 		PlayerRoster.rooms_since_knowledge = 0
 	else:
@@ -846,15 +849,22 @@ func _finish_battle():
 
 	if PlayerRoster.autosave:
 		RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps, star_ups))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps, star_ups, found.doctrines))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
 ## crown jewels — newly learned recipes and affixes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = [], star_ups: Array = []) -> Array:
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = [], star_ups: Array = [], doctrines: Array = []) -> Array:
 	var entries := []
+	for doctrine_id in doctrines:
+		var doctrine = Doctrines.ALL[doctrine_id]
+		entries.append({
+			"texture": preload("res://art/tomes/tome_journal.png"),
+			"text": "%s\nTactic: %s" % [doctrine.tome, doctrine.name],
+			"color": Color(0.55, 0.75, 1.0),
+		})
 	for gain in star_ups:
 		entries.append({
 			"texture": preload("res://art/status/status_stun.png"),

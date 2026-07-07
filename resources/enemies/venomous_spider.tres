@@ -17,6 +17,7 @@ skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_v
 material_loot = Array[String](["poison_sac", "poison_sac", "bow_string"])
 recipe_loot = Array[String](["leather_hood", "iron_shod_boots"])
 affix_loot = Array[String](["virulent"])
+doctrine_loot = Array[String](["spread"])
 loot_ids = Array[String](["fast_dagger"])
 preferred_row = 0
 dodge_rating = 0.15

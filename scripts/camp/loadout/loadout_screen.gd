@@ -402,12 +402,16 @@ func _fill_tactics():
 	picker.add_theme_font_override("font", FONT)
 	picker.add_theme_font_size_override("font_size", 18)
 	var description = Label.new()
+	var idx := 0
 	for i in TACTICS.size():
+		if not PlayerRoster.known_tactics.has(TACTICS[i][0]):
+			continue
 		picker.add_item(TACTICS[i][1])
-		picker.set_item_metadata(i, TACTICS[i][0])
+		picker.set_item_metadata(idx, TACTICS[i][0])
 		if TACTICS[i][0] == hero.tactic:
-			picker.select(i)
+			picker.select(idx)
 			description.text = TACTICS[i][2]
+		idx += 1
 	picker.item_selected.connect(func(index):
 		PlayerRoster.set_tactic(hero_index, picker.get_item_metadata(index))
 		UiSounds.click()
@@ -417,6 +421,16 @@ func _fill_tactics():
 	description.add_theme_color_override("font_color", DIM)
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tactics_box.add_child(description)
+
+	# Doctrines still buried: the guild knows what it has recovered.
+	for doctrine_id in Doctrines.ALL:
+		if PlayerRoster.known_tactics.has(doctrine_id):
+			continue
+		var hint = Label.new()
+		hint.text = "?????  -  recover the %s" % Doctrines.ALL[doctrine_id].tome
+		hint.add_theme_font_size_override("font_size", 13)
+		hint.add_theme_color_override("font_color", DIM)
+		_tactics_box.add_child(hint)
 
 	_tactics_box.add_child(_title("Focus Order"))
 	var hint = Label.new()
@@ -524,6 +538,21 @@ func _fill_library():
 		_library_box.add_child(bare)
 	for tome in tomes:
 		_library_box.add_child(_make_tome_row(tome))
+
+	var recovered_doctrines := []
+	for doctrine_id in PlayerRoster.known_tactics:
+		if Doctrines.ALL.has(doctrine_id):
+			recovered_doctrines.append(doctrine_id)
+	if not recovered_doctrines.is_empty():
+		_library_box.add_child(_title("Doctrines"))
+		for doctrine_id in recovered_doctrines:
+			var doctrine = Doctrines.ALL[doctrine_id]
+			_library_box.add_child(_make_tome_row({
+				"icon": preload("res://art/tomes/tome_journal.png"),
+				"name": doctrine.tome, "teaches": doctrine.name,
+				"lore": doctrine.lore,
+				"color": Color(0.55, 0.75, 1.0),
+			}))
 
 	var logs := []
 	for lore_id in RosterSave.LORE_PATHS:

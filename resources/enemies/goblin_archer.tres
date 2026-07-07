@@ -20,5 +20,6 @@ skills = Array[ExtResource("3_skill")]([ExtResource("4_arrow")])
 material_loot = Array[String](["ash_wood", "ash_wood", "bow_string"])
 recipe_loot = Array[String](["hunter_bow", "goblin_work_gauntlets"])
 affix_loot = Array[String](["quick"])
+doctrine_loot = Array[String](["lowest"])
 loot_ids = Array[String](["starter_bow", "fast_dagger", "starter_helmet", "starter_armor"])
 preferred_row = 1

@@ -96,6 +96,8 @@ func _ready():
 	roster.autosave = false
 	roster._build_heroes()
 	roster._build_stash()
+	# Doctrines recovered (their gating is test_doctrines' business).
+	roster.known_tactics = ["nearest", "lowest", "priority", "spread", "guard"]
 	roster.set_tactic(0, "spread")
 	roster.enemy_priority = ["venomous_spider", "goblin_archer"]
 	roster.rooms_since_knowledge = 2

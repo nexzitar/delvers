@@ -17,6 +17,7 @@ material_loot = Array[String](["iron_scrap", "iron_scrap", "iron_scrap", "leathe
 material_drop_chance = 1.0
 recipe_loot = Array[String](["reinforced_shield", "iron_helm", "studded_belt", "iron_greaves", "wardens_pauldrons"])
 affix_loot = Array[String](["guarding"])
+doctrine_loot = Array[String](["guard"])
 loot_ids = Array[String](["starter_sword", "starter_shield", "starter_armor"])
 preferred_row = 0
 armor = 1

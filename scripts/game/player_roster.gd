@@ -59,6 +59,9 @@ var known_affixes: Array = []
 ## Recovered history (expedition logs etc.) — pure memory, shelved in
 ## the camp library.
 var known_lore: Array = []
+## Battlefield doctrines recovered (tactic ids). A fresh guild knows
+## only how to strike the nearest foe.
+var known_tactics: Array = ["nearest"]
 ## Guild restoration purchases (see GuildUnlocks). The "restoration"
 ## marker records the free first-victory companion.
 var purchased_unlocks: Array = []
@@ -115,6 +118,7 @@ var delve_recipes: Array = []
 var delve_affixes: Array = []
 var delve_lore: Array = []
 var delve_maps: Array = []
+var delve_doctrines: Array = []
 ## Disciplines practiced this delve (rust skips them at banking).
 var delve_trained := {}
 var delve_health := {}
@@ -130,6 +134,7 @@ func start_delve(dungeon_id := "", tier := 1):
 	delve_affixes = []
 	delve_lore = []
 	delve_maps = []
+	delve_doctrines = []
 	delve_trained = {}
 	delve_health = {}
 
@@ -148,6 +153,9 @@ func bank_delve_loot():
 	for lore_id in delve_lore:
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
+	for doctrine_id in delve_doctrines:
+		if not known_tactics.has(doctrine_id):
+			known_tactics.append(doctrine_id)
 	# Rust: what this delve didn't practice, fades a little. The best
 	# mark never moves.
 	for hero in heroes:
@@ -164,6 +172,7 @@ func bank_delve_loot():
 	delve_affixes = []
 	delve_lore = []
 	delve_maps = []
+	delve_doctrines = []
 	delve_room = 0
 	sort_gear_stash()
 	check_milestones()
@@ -405,6 +414,8 @@ func record_seen(enemy_ids: Array):
 		RosterSave.save(self)
 
 func set_tactic(hero_index: int, tactic: String):
+	if not known_tactics.has(tactic):
+		return
 	heroes[hero_index].tactic = tactic
 	if autosave:
 		RosterSave.save(self)

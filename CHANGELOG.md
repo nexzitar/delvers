@@ -5,6 +5,15 @@ Notable changes per pull request. Newest first.
 ## PR #10 — Mastery: identity through practice *(open)*
 
 ### Added
+- **Battlefield Doctrines** (first slice of the recovered-knowledge
+  progression, spec: 2026-07-07-recovered-knowledge-progression.md):
+  tactics are knowledge now, not menu options. A fresh guild knows
+  only Nearest Foe; the rest drop as doctrine tomes from their
+  practitioners — warriors teach the Shield-Line (Guard), archers the
+  Culling Shot (Finish the Wounded), spiders the Creeping Venom
+  (Spread), bosses the Marked Prey (Focus Order). Doctrines shelve in
+  the Library with their lore; unrecovered ones show as hints in the
+  Tactics tab; veteran saves keep everything.
 - **Discipline Mastery** (design: docs/superpowers/specs/
   2026-07-06-mastery-identity-training.md): no classes — the worn
   loadout decides what trains (Sword, Shield, Bow; slotted healing

@@ -149,6 +149,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"known_recipes": roster.known_recipes,
 		"known_affixes": roster.known_affixes,
 		"known_lore": roster.known_lore,
+		"known_tactics": roster.known_tactics,
 		"purchased_unlocks": roster.purchased_unlocks,
 		"unlocked_dungeons": roster.unlocked_dungeons,
 		"current_dungeon": roster.current_dungeon,
@@ -221,6 +222,16 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 	for lore_id in data.get("known_lore", []):
 		if LORE_PATHS.has(lore_id) and not roster.known_lore.has(lore_id):
 			roster.known_lore.append(lore_id)
+
+	roster.known_tactics = ["nearest"]
+	for tactic_id in data.get("known_tactics", []):
+		if not roster.known_tactics.has(tactic_id):
+			roster.known_tactics.append(tactic_id)
+	# Veterans predate doctrines: what they have fought with, they keep.
+	if not data.has("known_tactics") and roster.battles_fought > 0:
+		for doctrine_id in Doctrines.ALL:
+			if not roster.known_tactics.has(doctrine_id):
+				roster.known_tactics.append(doctrine_id)
 
 	roster.purchased_unlocks = []
 	for unlock_id in data.get("purchased_unlocks", []):

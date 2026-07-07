@@ -32,6 +32,9 @@ class_name EnemyDefinition
 ## Affix knowledge this enemy can teach (rarer than base recipes).
 @export var affix_loot: Array[String] = []
 @export var affix_drop_chance: float = 0.03
+## Battlefield doctrines (tactics) this enemy can teach.
+@export var doctrine_loot: Array[String] = []
+@export var doctrine_drop_chance: float = 0.04
 @export var loot_ids: Array[String] = []
 @export var drop_chance: float = 0.0
 @export var is_boss: bool = false
