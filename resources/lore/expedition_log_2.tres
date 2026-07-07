@@ -6,5 +6,5 @@
 script = ExtResource("1_lore")
 lore_id = "expedition_log_2"
 title = "Expedition Log, Second Fragment"
-body = "Day 23. The archers keep the webs off us, but iron runs short and the goblin camps will not trade with us any longer. Something has them frightened."
+body = "Day 23. Iron runs short and the goblin camps will not trade with us any longer. When their warband came, Captain Aldric shouted something they called the Shield-Line. I never learned what it meant."
 order = 2

@@ -58,6 +58,26 @@ var _salvage_label: Label
 var _library_box: VBoxContainer
 var _tactics_box: VBoxContainer
 
+## Doctrine editor vocabulary: UI label -> engine data. Conditions
+## carry an optional numeric parameter; actions are target selectors
+## (one per recovered tactic) or casts (what the hero can field).
+const DOCTRINE_CONDITIONS := [
+	["always", "Always", "", 0],
+	["enemy_count_gte", "Enemy count at least", "n", 4],
+	["health_below", "Health below %", "pct", 50],
+	["mana_gte", "Mana at least", "n", 4],
+	["enemies_within", "Foes in reach at least", "n", 2],
+	["healer_threatened", "Healer threatened", "", 0],
+]
+const TACTIC_SELECTOR := {
+	"nearest": ["nearest", "Nearest Foe"],
+	"lowest": ["lowest", "Finish the Wounded"],
+	"priority": ["priority", "Focus Order"],
+	"spread": ["spread", "Spread the Venom"],
+	"guard": ["least_threat", "Guard the Line"],
+	"protect": ["healer_attacker", "Healer's Attacker"],
+}
+
 const TACTICS := [
 	["nearest", "Nearest Foe", "Classic brawl: sticks to its target until it falls."],
 	["lowest", "Finish the Wounded", "Always strikes whoever has the least health left."],
@@ -423,15 +443,8 @@ func _fill_tactics():
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tactics_box.add_child(description)
 
-	# Doctrines still buried: the guild knows what it has recovered.
-	for doctrine_id in Doctrines.ALL:
-		if PlayerRoster.known_tactics.has(doctrine_id):
-			continue
-		var hint = Label.new()
-		hint.text = "?????  -  recover the %s" % Doctrines.ALL[doctrine_id].tome
-		hint.add_theme_font_size_override("font_size", 13)
-		hint.add_theme_color_override("font_color", DIM)
-		_tactics_box.add_child(hint)
+	_fill_doctrine_editor(hero)
+
 
 	_tactics_box.add_child(_title("Focus Order"))
 	var hint = Label.new()
@@ -449,6 +462,162 @@ func _fill_tactics():
 		_tactics_box.add_child(none)
 	for i in order.size():
 		_tactics_box.add_child(_priority_row(order, i))
+
+## The Doctrine Editor (Phase 3): invisible until the guild recovers
+## its first Battlefield Doctrine tome, then rule rows over the same
+## trees the built-in tactics use. Combat enforces the node budget.
+func _fill_doctrine_editor(hero):
+	var capacity = PlayerRoster.doctrine_capacity()
+	if capacity <= 0:
+		return
+	var used = BehaviorTree.node_count(hero.custom_tree)
+
+	_tactics_box.add_child(_title("Custom Doctrine"))
+	var counter = Label.new()
+	counter.text = "%d/%d nodes%s" % [used, capacity,
+		"" if not hero.custom_tree.is_empty() else "  -  the tactic above leads until doctrine is written"]
+	counter.add_theme_font_size_override("font_size", 13)
+	counter.add_theme_color_override("font_color",
+		DIM if used <= capacity else Color(0.75, 0.4, 0.35))
+	_tactics_box.add_child(counter)
+
+	for i in hero.custom_tree.size():
+		_tactics_box.add_child(_doctrine_rule_row(hero, i))
+
+	var buttons = HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 8)
+	_tactics_box.add_child(buttons)
+	var add = Button.new()
+	add.text = "+ Rule"
+	add.add_theme_font_override("font", FONT)
+	add.add_theme_font_size_override("font_size", 15)
+	add.disabled = used + 1 > capacity
+	add.pressed.connect(func():
+		hero.custom_tree.append({"when": [], "target": "nearest"})
+		_save_doctrine()
+		_fill_tactics())
+	buttons.add_child(add)
+	if not hero.custom_tree.is_empty():
+		var clear = Button.new()
+		clear.text = "Clear"
+		clear.add_theme_font_override("font", FONT)
+		clear.add_theme_font_size_override("font_size", 15)
+		clear.pressed.connect(func():
+			hero.custom_tree = []
+			_save_doctrine()
+			_fill_tactics())
+		buttons.add_child(clear)
+
+func _save_doctrine():
+	if PlayerRoster.autosave:
+		RosterSave.save(PlayerRoster)
+
+func _doctrine_rule_row(hero, index: int) -> Control:
+	var rule = hero.custom_tree[index]
+	var capacity = PlayerRoster.doctrine_capacity()
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _slot_style())
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+
+	# WHEN: one condition per rule in the editor (the engine takes more).
+	var when_pick = OptionButton.new()
+	when_pick.fit_to_longest_item = false
+	when_pick.add_theme_font_size_override("font_size", 13)
+	var current_cond = "always"
+	if not rule.get("when", []).is_empty():
+		current_cond = rule.when[0].get("cond", "always")
+	for c in DOCTRINE_CONDITIONS.size():
+		when_pick.add_item(DOCTRINE_CONDITIONS[c][1])
+		when_pick.set_item_metadata(c, DOCTRINE_CONDITIONS[c][0])
+		if DOCTRINE_CONDITIONS[c][0] == current_cond:
+			when_pick.select(c)
+	when_pick.item_selected.connect(func(sel):
+		var cond_id = when_pick.get_item_metadata(sel)
+		var def = DOCTRINE_CONDITIONS[sel]
+		if cond_id == "always":
+			rule["when"] = []
+		else:
+			var adding = rule.get("when", []).is_empty()
+			if adding and BehaviorTree.node_count(hero.custom_tree) + 1 > capacity:
+				_fill_tactics()
+				return
+			var condition = {"cond": cond_id}
+			if def[2] != "":
+				condition[def[2]] = (def[3] / 100.0) if def[2] == "pct" else def[3]
+			rule["when"] = [condition]
+		_save_doctrine()
+		_fill_tactics())
+	row.add_child(when_pick)
+
+	# Numeric parameter, where the condition takes one.
+	if not rule.get("when", []).is_empty():
+		var condition = rule.when[0]
+		for def in DOCTRINE_CONDITIONS:
+			if def[0] == condition.get("cond", "") and def[2] != "":
+				var spin = SpinBox.new()
+				spin.min_value = 1
+				spin.max_value = 100 if def[2] == "pct" else 12
+				spin.value = condition.get(def[2], def[3]) * (100.0 if def[2] == "pct" else 1.0)
+				spin.value_changed.connect(func(v):
+					condition[def[2]] = (v / 100.0) if def[2] == "pct" else int(v)
+					_save_doctrine())
+				row.add_child(spin)
+
+	# THEN: a target selector (recovered tactics only) or a cast.
+	var then_pick = OptionButton.new()
+	then_pick.fit_to_longest_item = false
+	then_pick.add_theme_font_size_override("font_size", 13)
+	var options := []
+	for tactic_id in PlayerRoster.known_tactics:
+		if TACTIC_SELECTOR.has(tactic_id):
+			options.append(["target", TACTIC_SELECTOR[tactic_id][0],
+				"Target: " + TACTIC_SELECTOR[tactic_id][1]])
+	var kit = Mastery.kit(hero)
+	var castable = kit.skills.duplicate()
+	for skill in hero.bonus_skills:
+		if skill is SkillDefinition and not castable.has(skill.skill_id):
+			castable.append(skill.skill_id)
+	for skill_id in castable:
+		var skill = load(RosterSave.SKILL_PATHS[skill_id])
+		options.append(["cast", skill_id, "Cast: " + skill.skill_name])
+	for o in options.size():
+		then_pick.add_item(options[o][2])
+		then_pick.set_item_metadata(o, options[o])
+		if rule.get(options[o][0], "") == options[o][1]:
+			then_pick.select(o)
+	then_pick.item_selected.connect(func(sel):
+		var chosen = then_pick.get_item_metadata(sel)
+		rule.erase("target")
+		rule.erase("cast")
+		rule[chosen[0]] = chosen[1]
+		_save_doctrine()
+		_fill_tactics())
+	then_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(then_pick)
+
+	for move in [[-1, "^"], [1, "v"]]:
+		var btn = Button.new()
+		btn.text = move[1]
+		btn.custom_minimum_size = Vector2(32, 30)
+		btn.disabled = index + move[0] < 0 or index + move[0] >= hero.custom_tree.size()
+		var delta: int = move[0]
+		btn.pressed.connect(func():
+			var moved = hero.custom_tree.pop_at(index)
+			hero.custom_tree.insert(index + delta, moved)
+			_save_doctrine()
+			_fill_tactics())
+		row.add_child(btn)
+	var remove = Button.new()
+	remove.text = "x"
+	remove.custom_minimum_size = Vector2(32, 30)
+	remove.pressed.connect(func():
+		hero.custom_tree.remove_at(index)
+		_save_doctrine()
+		_fill_tactics())
+	row.add_child(remove)
+	return panel
 
 ## The saved focus order first, then any newly-seen enemies. Only
 ## what the guild has actually faced — no spoilers.

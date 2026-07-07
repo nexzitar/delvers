@@ -3,6 +3,30 @@ extends Node
 func _ok(label, cond):
 	print(("PASS " if cond else "FAIL ") + label)
 
+func _doctrine_checks(camp):
+	var loadout = camp.loadout
+	# No capacity: the editor does not exist (steady discovery).
+	loadout._fill_tactics()
+	var texts := []
+	for child in loadout._tactics_box.get_children():
+		if child is Label:
+			texts.append(child.text)
+	_ok("editor hidden without capacity",
+		not texts.any(func(t): return "nodes" in t))
+	# Capacity + a written doctrine: rows and an honest counter.
+	PlayerRoster.known_engineering = ["doctrine_capacity_1"]
+	PlayerRoster.known_tactics = ["nearest", "guard", "protect"]
+	PlayerRoster.heroes[0].custom_tree = [
+		{"when": [{"cond": "healer_threatened"}], "target": "healer_attacker"},
+		{"when": [], "target": "nearest"},
+	]
+	loadout._fill_tactics()
+	var counter := ""
+	for child in loadout._tactics_box.get_children():
+		if child is Label and "nodes" in child.text:
+			counter = child.text
+	_ok("node counter reads 3/4", counter.begins_with("3/4"))
+
 func _ready():
 	# Own state: never depend on whatever save the machine carries.
 	PlayerRoster.autosave = false
@@ -21,4 +45,5 @@ func _ready():
 	_ok("main hand slot exists",
 		loadout._equip_slots.has(Equip.Position.MAIN_HAND))
 	_ok("hero name shown", loadout._name_edit.text != "")
+	_doctrine_checks(camp)
 	get_tree().quit()

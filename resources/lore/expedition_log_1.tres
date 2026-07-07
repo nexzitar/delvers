@@ -6,5 +6,5 @@
 script = ExtResource("1_lore")
 lore_id = "expedition_log_1"
 title = "Expedition Log, First Fragment"
-body = "Day 12. The warrens go deeper than the old maps claimed. Morale is high. Aldric says the gel burns well enough to spare our torches."
+body = "Day 12. The warrens go deeper than the old maps claimed. Morale is high. Aldric says the gel burns well enough to spare our torches, and our fletcher keeps preaching her culling shot - loose at the weakest, always the weakest."
 order = 1

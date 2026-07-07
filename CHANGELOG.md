@@ -2,6 +2,29 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #11 — The Doctrine Editor *(open)*
+
+### Added
+- Undiscovered doctrines are truly hidden now (the "?????  recover
+  the..." hints were spoilers) — instead, the expedition logs
+  foreshadow them: *"Captain Aldric shouted something they called the
+  Shield-Line. I never learned what it meant."* Recover the doctrine
+  later and remember where you heard the name.
+- **Reset Save** in the settings panel: two clicks (the second one
+  honest — "Really? Everything is lost!", disarming after four
+  seconds), then the ledger burns: save deleted, guild returned to
+  its founding day, back to the main menu.
+- **The Doctrine Editor** (Phase 3 of the long tutorial): invisible
+  until the guild recovers its first Battlefield Doctrine tome, then
+  a rule builder in the Tactics tab — WHEN [condition, with numeric
+  parameters] THEN [target selector or cast] — with a live node
+  counter against the guild's recovered capacity, reordering,
+  deletion, and instant persistence. Target selectors are the
+  recovered tactics; castable actions are what the hero can actually
+  field (mastery kit + slotted techniques). The editor writes the
+  same behaviour trees the built-in tactics are made of — Scratch
+  and the Engineer's Python will simply be richer faces over this.
+
 ## PR #10 — Mastery: identity through practice *(open)*
 
 ### Added

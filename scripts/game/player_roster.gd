@@ -400,6 +400,45 @@ func first_empty_bonus_skill_slot(hero_index: int) -> int:
 			return i + 1
 	return -1
 
+## Burn the ledger: delete the save and return the guild to its
+## founding day. The camp reloads around the lone delver.
+func reset_save():
+	var path = ProjectSettings.globalize_path(RosterSave.SAVE_PATH)
+	if FileAccess.file_exists(RosterSave.SAVE_PATH):
+		DirAccess.remove_absolute(path)
+	battles_fought = 0
+	adventures_completed = 0
+	last_battle_won = false
+	bonus_skill_slots = 1
+	gear_stash = []
+	material_stash = {}
+	known_recipes = ["iron_sword"]
+	known_affixes = []
+	known_lore = []
+	known_tactics = ["nearest"]
+	known_engineering = []
+	purchased_unlocks = []
+	unlocked_dungeons = ["darkwood"]
+	current_dungeon = "darkwood"
+	current_tier = 1
+	dungeon_progress = {}
+	enemy_priority = []
+	seen_enemies = []
+	rooms_since_knowledge = 0
+	arrival_message = ""
+	delve_room = 0
+	delve_loot = []
+	delve_materials = {}
+	delve_recipes = []
+	delve_affixes = []
+	delve_lore = []
+	delve_maps = []
+	delve_doctrines = []
+	delve_trained = {}
+	delve_health = {}
+	_build_heroes()
+	_build_stash()
+
 ## Practice: every cleared room trains each fielded hero's active
 ## disciplines. Returns star-up announcements for the spoils toast.
 func train_party(hero_indices: Array, amount: int) -> Array:

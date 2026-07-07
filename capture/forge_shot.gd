@@ -15,6 +15,17 @@ func _ready():
 	PlayerRoster.known_recipes = ["iron_sword", "hunter_bow", "reinforced_shield", "iron_helm", "leather_hood", "silk_hood", "chitin_shield", "chitin_armor"]
 	PlayerRoster.known_affixes = ["virulent", "frostforged", "guarding"]
 	PlayerRoster.known_lore = ["expedition_log_1", "expedition_log_2"]
+	PlayerRoster.known_tactics = ["nearest", "lowest", "priority", "spread", "guard", "protect"]
+	PlayerRoster.known_engineering = ["doctrine_capacity_2"]
+	PlayerRoster.heroes[0].mastery = {
+		"sword": {"xp": 140, "best_xp": 140},
+		"shield": {"xp": 90, "best_xp": 90},
+	}
+	PlayerRoster.heroes[0].custom_tree = [
+		{"when": [{"cond": "healer_threatened"}], "target": "healer_attacker"},
+		{"when": [{"cond": "enemy_count_gte", "n": 4}], "cast": "thunderclap"},
+		{"when": [], "target": "least_threat"},
+	]
 	PlayerRoster.material_stash["corrosion_core"] = 2
 
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
@@ -45,6 +56,7 @@ func _ready():
 	for tabs in loadout.find_children("*", "TabContainer", true, false):
 		tabs.current_tab = 4
 	loadout._fill_tactics()
+	loadout.hide_tooltip()
 	await get_tree().create_timer(0.3).timeout
 	await RenderingServer.frame_post_draw
 	img = get_viewport().get_texture().get_image()
