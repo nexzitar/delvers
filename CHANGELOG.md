@@ -5,6 +5,10 @@ Notable changes per pull request. Newest first.
 ## PR #11 — The Doctrine Editor *(open)*
 
 ### Added
+- **Reset Save** in the settings panel: two clicks (the second one
+  honest — "Really? Everything is lost!", disarming after four
+  seconds), then the ledger burns: save deleted, guild returned to
+  its founding day, back to the main menu.
 - **The Doctrine Editor** (Phase 3 of the long tutorial): invisible
   until the guild recovers its first Battlefield Doctrine tome, then
   a rule builder in the Tactics tab — WHEN [condition, with numeric
