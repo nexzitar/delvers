@@ -445,15 +445,6 @@ func _fill_tactics():
 
 	_fill_doctrine_editor(hero)
 
-	# Doctrines still buried: the guild knows what it has recovered.
-	for doctrine_id in Doctrines.ALL:
-		if PlayerRoster.known_tactics.has(doctrine_id):
-			continue
-		var hint = Label.new()
-		hint.text = "?????  -  recover the %s" % Doctrines.ALL[doctrine_id].tome
-		hint.add_theme_font_size_override("font_size", 13)
-		hint.add_theme_color_override("font_color", DIM)
-		_tactics_box.add_child(hint)
 
 	_tactics_box.add_child(_title("Focus Order"))
 	var hint = Label.new()

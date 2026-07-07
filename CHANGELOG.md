@@ -5,6 +5,11 @@ Notable changes per pull request. Newest first.
 ## PR #11 — The Doctrine Editor *(open)*
 
 ### Added
+- Undiscovered doctrines are truly hidden now (the "?????  recover
+  the..." hints were spoilers) — instead, the expedition logs
+  foreshadow them: *"Captain Aldric shouted something they called the
+  Shield-Line. I never learned what it meant."* Recover the doctrine
+  later and remember where you heard the name.
 - **Reset Save** in the settings panel: two clicks (the second one
   honest — "Really? Everything is lost!", disarming after four
   seconds), then the ledger burns: save deleted, guild returned to

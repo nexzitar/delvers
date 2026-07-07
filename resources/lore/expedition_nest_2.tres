@@ -6,5 +6,5 @@
 script = ExtResource("1_lore")
 lore_id = "expedition_nest_2"
 title = "Nest Expedition, Second Fragment"
-body = "Kessa's torch showed eggs. Thousands. We should not have lit the torch."
+body = "Kessa's torch showed eggs. Thousands. We should not have lit the torch. Aldric kept what he called the warding hand over our mender all that night."
 order = 2
