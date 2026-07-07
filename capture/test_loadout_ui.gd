@@ -26,6 +26,16 @@ func _doctrine_checks(camp):
 		if child is Label and "nodes" in child.text:
 			counter = child.text
 	_ok("node counter reads 3/4", counter.begins_with("3/4"))
+	# With the Slate and Annotations recovered: blocks + View Code.
+	PlayerRoster.known_engineering = ["doctrine_capacity_1",
+		"engineers_slate", "engineers_annotations"]
+	loadout._fill_tactics()
+	var has_view_code := false
+	for child in loadout._tactics_box.get_children():
+		for sub in child.get_children() if child is HBoxContainer else []:
+			if sub is Button and sub.text == "View Code":
+				has_view_code = true
+	_ok("View Code appears with the Annotations", has_view_code)
 
 func _ready():
 	# Own state: never depend on whatever save the machine carries.

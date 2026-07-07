@@ -51,3 +51,18 @@ const CAPACITY := {
 		"lore": "Sixteen marks, annotated in three hands. The war room remembered everything.",
 	},
 }
+
+## Guild engineering tools: the Slate turns the doctrine editor into
+## snap-together blocks; the Annotations reveal the code the blocks
+## have been writing all along. Their teachers wait in dungeons not
+## yet mapped.
+const TOOLS := {
+	"engineers_slate": {
+		"tome": "The Engineer's Slate",
+		"lore": "The old guild's engineers drew their doctrine as fitted blocks. The slate still remembers the shapes.",
+	},
+	"engineers_annotations": {
+		"tome": "The Engineer's Annotations",
+		"lore": "In the margins, the same doctrine again - written as the machine reads it. The blocks were always words.",
+	},
+}

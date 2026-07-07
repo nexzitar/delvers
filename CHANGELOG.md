@@ -2,6 +2,18 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
+
+### Added
+- **The Engineer's Slate** (recovered knowledge, data-complete): turns
+  the Doctrine Editor into snap-together colored blocks — gold WHEN
+  blocks, blue target blocks, violet cast blocks — the same trees
+  underneath.
+- **The Engineer's Annotations** (recovered knowledge, data-complete):
+  adds the **View Code** button — the doctrine shown as the Python it
+  always was ("The blocks were always words."). Its teacher waits in
+  a dungeon not yet mapped.
+
 ## PR #11 — The Doctrine Editor *(open)*
 
 ### Added
