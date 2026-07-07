@@ -20,17 +20,19 @@ Fifty-six seconds, captured entirely from the live game: the abandoned camp, the
 
 ![Combat theater](docs/screenshots/battle.png)
 
-| Hero loadout | Item tooltip |
-|--------------|--------------|
-| ![Hero loadout](docs/screenshots/loadout_open.png) | ![Item tooltip](docs/screenshots/loadout_tooltip.png) |
+![The Spider Nest](docs/screenshots/battle_nest.png)
 
-| Two-handed weapon blocks the off-hand | Dual-wield |
-|---------------------------------------|------------|
-| ![Bow equipped](docs/screenshots/loadout_equipped_bow.png) | ![Dual-wield](docs/screenshots/loadout_dualwield.png) |
+| Hero loadout & mastery | The Forge |
+|------------------------|-----------|
+| ![Hero loadout](docs/screenshots/loadout_open.png) | ![The Forge](docs/screenshots/forge.png) |
 
-| Click-to-carry an item |
-|------------------------|
-| ![Carrying an item](docs/screenshots/loadout_carry.png) |
+| The Library | Tactics & the Doctrine Editor |
+|-------------|-------------------------------|
+| ![The Library](docs/screenshots/library.png) | ![Tactics](docs/screenshots/tactics.png) |
+
+| The Guild |
+|-----------|
+| ![The Guild](docs/screenshots/guild.png) |
 
 ## In Motion
 
@@ -44,19 +46,38 @@ Fifty-six seconds, captured entirely from the live game: the abandoned camp, the
 
 ## Meet the Cast
 
-| Default Delver (melee) | Default Delver (archer) | Goblin Archer | Goblin Warrior | Green Slime | Venomous Spider | Slime King |
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| <img src="docs/screenshots/cast_delver.png" height="170" alt="Default Delver melee"> | <img src="docs/screenshots/cast_delver_archer.png" height="170" alt="Default Delver archer"> | <img src="docs/screenshots/cast_goblin_archer.png" height="150" alt="Goblin Archer"> | <img src="docs/screenshots/cast_goblin_warrior.png" height="150" alt="Goblin Warrior"> | <img src="docs/screenshots/cast_green_slime.png" height="110" alt="Green Slime"> | <img src="docs/screenshots/cast_venomous_spider.png" height="110" alt="Venomous Spider"> | <img src="docs/screenshots/cast_slime_king.png" height="150" alt="Slime King"> |
-| Sword-and-board melee | Bow-wielding ranged | Owns wood & strings | Owns iron & leather | Owns gel & ooze | Owns poison; its bite envenoms | Boss of the first delve |
+| Fresh recruit (melee) | Fresh recruit (archer) | Veteran, fully kitted |
+|:--:|:--:|:--:|
+| <img src="docs/screenshots/cast_delver.png" height="170" alt="Delver, melee"> | <img src="docs/screenshots/cast_delver_archer.png" height="170" alt="Delver, archer"> | <img src="docs/screenshots/cast_delver_kitted.png" height="170" alt="Kitted delver"> |
+| One sword, one recipe | Wren arrives after the banner rises | Every worn slot renders on the body |
+
+**The Darkwood** — its threat is steel; its gear is armor:
+
+| Goblin Archer | Goblin Warrior | Green Slime | Venomous Spider | Slime King |
+|:--:|:--:|:--:|:--:|:--:|
+| <img src="docs/screenshots/cast_goblin_archer.png" height="140" alt="Goblin Archer"> | <img src="docs/screenshots/cast_goblin_warrior.png" height="140" alt="Goblin Warrior"> | <img src="docs/screenshots/cast_green_slime.png" height="100" alt="Green Slime"> | <img src="docs/screenshots/cast_venomous_spider.png" height="100" alt="Venomous Spider"> | <img src="docs/screenshots/cast_slime_king.png" height="140" alt="Slime King"> |
+| Owns wood & strings | Owns iron & leather | Owns gel & ooze | Owns poison | Boss; guards the map below |
+
+**The Spider Nest** — its poison ignores armor; its gear resists it. Its lesson: kill the spawner or drown:
+
+| Nest Spiderling | Web Weaver | Chitin Crawler | Brood Tender | The Broodmother |
+|:--:|:--:|:--:|:--:|:--:|
+| <img src="docs/screenshots/cast_nest_spiderling.png" height="90" alt="Nest Spiderling"> | <img src="docs/screenshots/cast_web_weaver.png" height="110" alt="Web Weaver"> | <img src="docs/screenshots/cast_chitin_crawler.png" height="120" alt="Chitin Crawler"> | <img src="docs/screenshots/cast_brood_tender.png" height="120" alt="Brood Tender"> | <img src="docs/screenshots/cast_broodmother.png" height="140" alt="The Broodmother"> |
+| The swarm | Its silk roots you | Armored; owns chitin | Births spiderlings mid-fight | Boss of the deep |
 
 ## Features
 
 - **Spatial combat simulation** — Heroes and enemies fight on a tile-based battlefield: units path toward their targets (A* + soft separation), attacks are gated on weapon/skill range and line of sight, ranged attacks wind up standing still, and enemies pick targets from threat tables. Combat runs headlessly and produces a full event log.
 - **3D theater playback** — Combat results replay in a low-poly 3D battle scene built entirely from procedural primitive-mesh rigs: units walk (or hop) along their logged paths, melee swings land on the damage beat, archers draw and loose visible arrows, deaths crumple into corpses, and target arrows + floating damage numbers keep it readable. A camera follows the fight.
 - **Battle UI** — Side panels show each team's units (portrait, name, health and mana) plus a live damage/DPS meter, keeping the battlefield itself free of floating nameplates.
-- **Data-driven units** — Heroes and enemies are defined as Godot resources (`.tres`) with stats, skills, and linked actor scenes.
+- **Data-driven everything** — Heroes, enemies, gear, skills, recipes, affixes, materials, and whole dungeons are Godot resources (`.tres`); the procedural rigs dress themselves from the data.
+- **Discipline Mastery** — No classes: the worn loadout trains its disciplines (Sword, Shield, Bow, Restoration) one room at a time. Stars unlock core techniques (Cleave, Whirlwind, Multishot, Shield Wall...) that join combat automatically, plus small passives. Unpracticed disciplines rust — but the highest star ever earned never fades, and relearning is three times faster. Every delver's history is readable in their star rows.
+- **Tactics & Battlefield Doctrines** — Per-hero targeting directives (Nearest Foe, Finish the Wounded, Focus Order, Spread the Venom, Guard the Line, Protect the Healer) recovered as doctrine tomes from the enemies that practice them, plus a party-wide sortable focus order listing only enemies the guild has faced. Once a Battlefield Doctrine tome grants node capacity, the **Doctrine Editor** opens: WHEN/THEN rules over the same behaviour-tree engine the built-in tactics run on — the seed of future visual-block and scripting interfaces.
+- **Crafting & the knowledge economy** — Monsters drop resources and knowledge, never useful equipment: per-enemy material identities, recipes and affixes as named tomes with provenance and lore, expedition logs recovered in story order, and salvaging that teaches unknown enchantments. Boss trophies always carry an affix — wield it, or break it to learn it.
+- **Dungeons with lessons** — Each dungeon has a threat, an answer found inside it, and a lesson: the Darkwood's steel is answered by armor; the Nest's armor-ignoring poison by resist gear, its Brood Tenders by focus fire and AoE. Difficulty tiers (unlocked by clearing) raise foes and spoils — materials, rarity odds, tier-gated recipes — never raw item level.
+- **The Guild** — First victory raises the banner and the first companion sits down at the fire. Material-funded restoration unlocks skill slots and delvers; the camp itself visibly rebuilds (banner, anvil, training dummy) as the guild earns it.
 - **Full game loop** — Main menu → camp → battle → back to camp. The camp and menu share a campfire stage where your unlocked heroes sit at random seats around a smoldering, animated fire that grows with the party's deeds. Soft ground shadows sit under every actor at camp and in battle. Entering camp from the menu plays a zoom-and-fade transition, and the party keeps their seats across it.
-- **Hero loadout** — Hover a hero at camp for a golden outline and nameplate, then click to open their loadout: a live paper-doll preview with flanking equipment columns, a weapon row, and a skill row; tabbed gear and skill catalogs; and a shared stash sorted by slot and rarity. Head gear layers cleanly — full helms hide the hero's hair, open pieces like circlets leave it visible. Off-hand weapons render on a mirrored pivot beside the body (separate from the main-hand arm). Move items by drag-and-drop or click-to-carry (handy on a trackpad). Dropping gear on the hero panel auto-equips it; right-click equips from the stash or unequips worn gear. Weapons show a damage range, swing speed, and average DPS in a two-column tooltip, with equipped-gear comparison in a separate panel. Dual-wielding a one-handed weapon in each hand adds off-hand swings at 50% damage. A bow or two-hander blocks the off-hand slot with a dimmed ghost. Equipping a bow turns a hero into a back-row archer; melee weapons keep them in the front row — changes that carry straight into the next battle — and persist to disk.
+- **Hero loadout** — Click a hero at camp for their five-tab screen: Gear (live 3D preview, drag-and-drop or click-to-carry, tooltips with equipped comparison, a salvage bin), Skills (mastery-owned cores shown dimmed with their star requirements; guild techniques slot freely), Forge, Library, and Tactics. Worn gear renders on the body — pauldrons, cloak, plate, greaves, and the rest. Equipping a bow makes a back-row archer; dual-wielding staggers alternating swings; everything persists to disk.
 - **Sound** — Procedurally synthesized placeholder audio: looping menu and combat themes, fire-crackle ambience, a creaking sign, UI hover/click feedback, and combat hits, swings, and bow shots. Mixed through Master/Music/SFX/Ambience buses.
 - **Settings** — Fullscreen toggle and four volume sliders, persisted to disk and applied on startup.
 
@@ -74,7 +95,7 @@ Delvers is a party-based dungeon crawler where you send heroes — your *delvers
 4. **Theater** — Results play back as a staged battle scene.
 5. **Rewards** — Collect loot, experience, and progress deeper.
 
-The loop is playable: you start with a single delver (one bonus skill slot — more through future meta progression) and embark on a **delve of ten escalating rooms** ending at the **Slime King's lair**, health carrying between rooms, each room flowing into the next automatically. **Monsters drop resources and knowledge, not equipment**: every enemy has a material identity (goblins carry ash wood and bow strings, slimes ooze gel and acid), recipes drop rarely as permanent unlocks, and finished gear is a memorable fluke — or a boss trophy. Back at camp, the **Forge** turns materials plus known recipes into intentional equipment (item level and quality set by the recipe). Materials are consumed; knowledge is permanent. Everything persists to disk.
+The loop is playable across **two dungeons and five difficulty tiers each**: found the guild with one delver and one recipe, delve the Darkwood's ten rooms to the Slime King, recover the map he guards, and descend into the Spider Nest — where the Broodmother waits behind swarms only focus fire and AoE survive. **Monsters drop resources and knowledge, never equipment**; the Forge turns them into the exact gear each dungeon demands; mastery grows in whatever your delvers practice; doctrines, affixes, expedition logs, and even tactical complexity itself are recovered, one tome at a time. The whole game is one long tutorial of a lost guild's knowledge — steady discovery, never a menu of futures. Everything persists to disk (and Settings can burn the ledger for a fresh founding day).
 
 ### Combat Design
 
@@ -83,11 +104,11 @@ Combat is **auto-battler** style: units act on attack timers rather than player 
 - **Health and mana** — Base stats from their template resource; health carries between delve rooms (attrition).
 - **Attack interval** — How often they swing. For heroes, the main-hand weapon's swing speed sets this interval when equipped.
 - **Position and movement** — A spot on the battle grid; units path toward targets with A* and soft separation, and stop at striking distance.
-- **Skills** — Data-driven abilities with ranges, cooldowns, status effects, and behavior scripts (Frost Nova roots, Hamstring slows, Charge gap-closes, Heal mends).
+- **Skills** — Fifteen data-driven techniques with ranges, cooldowns, mana, statuses, and behavior scripts — from Cleave and Whirlwind through Thunderclap (AoE daze + triple threat), Renew, Shield Wall, Multishot, Piercing Shot, Battle Shout, and Rally. Core techniques are earned through mastery; guild techniques slot freely.
 
 Damage is rolled as `base_attack + random(skill.min_damage, skill.max_damage)` for skills, plus a per-swing weapon damage roll for equipped weapons. Combat ends when one side is wiped out.
 
-**Spatial targeting** — Attacks are gated on weapon/skill range and line of sight: melee closes in before swinging, archers stop and wind up in place, and nobody shoots through pillars. Enemies pick targets from **threat tables** (damage and heals generate threat; a rooted enemy falls through to whoever is in range), while heroes engage the nearest foe.
+**Spatial targeting** — Attacks are gated on weapon/skill range and line of sight: melee closes in before swinging, archers stop and wind up in place, and nobody shoots through pillars. Enemies pick targets from **threat tables** (damage and heals generate threat; a rooted enemy falls through to whoever is in range), while heroes follow their tactic — or their hand-written doctrine.
 
 **The delve** — Ten rooms of escalating packs and enemy levels across an arena pool (open field, pillared hall, choke-point wall, scattered rocks), ending at the Slime King. Every enemy rolls a level that scales its health and attack, shown in its name (e.g. *Green Slime Lv 2*). Rooms flow into each other automatically; death or triumph banks the spoils either way.
 
@@ -105,33 +126,29 @@ This lets combat run instantly in the background (useful for fast-forward, AI te
 
 ### Content Pipeline
 
-New units and abilities are added without code changes:
+New content is data plus (sometimes) a small behavior script:
 
-1. Create an **actor scene** in `scenes/theater/actors/` (sprite, animations, HP bar).
-2. Define a **template resource** in `resources/heroes/` or `resources/enemies/` (stats, skills, actor link).
-3. Define **skills** in `resources/skills/` (damage, targeting, behavior script).
-4. Reference them in combat setup or future dungeon encounter tables.
-
-The `SkillDefinition` class already supports attack/spell/support types, cast times, AoE targeting, cooldowns, and custom behavior scripts — most of these are wired up for future skills beyond the current auto-attack.
+1. **Enemies** — a template `.tres` (stats, skills, material/recipe/affix/doctrine loot identities) plus a rig mapping in the actor factory (most reuse the delver/slime/spider rig families with palette options).
+2. **Skills** — a `.tres` plus a `static func try_use(state, caster, skill)` behavior script.
+3. **Gear, recipes, affixes, materials, lore** — pure `.tres`, registered by id.
+4. **Dungeons** — a single `DungeonDefinition` resource: pools, guaranteed farmable anchors, boss pack, loot band, theme, and lore series. A new dungeon is a data file and a handful of enemies.
 
 ### Current State vs. Roadmap
 
 | Area | Status |
 |------|--------|
-| Spatial combat simulation (movement, range/LoS, threat, skills) | Working |
-| 3D theater playback (procedural low-poly rigs) | Working |
-| ~~Formation slots~~ | Replaced by spatial positioning |
-| Game loop (menu → camp → battle → camp) | Working |
-| Hero loadout (equipment, skills, naming) | Working (session-only, no save yet) |
-| Camp upgrades / recruiting | Not started |
-| Delve (10 escalating rooms, arena variety) | Working |
-| Loot drops + spoils screen | Working |
-| Save / persistence | Working |
-| Crafting (materials, recipes, the Forge) | Working (slice 1 — affixes and salvaging planned) |
-| Dungeon boss (Slime King) | Working |
-| Skills (root/slow/charge/heal + auto-attacks) | Working, equippable via loadout |
-| Sound | Procedural placeholder audio with settings (no composed music yet) |
-| Settings | Fullscreen + volume sliders working |
+| Spatial combat (movement, range/LoS, threat, reinforcements) | Working |
+| 3D theater (procedural rigs, worn gear, status badges, skill showpieces) | Working |
+| Two dungeons with lessons, bosses, and difficulty tiers I–V | Working |
+| Crafting: materials, recipes, affixes, salvaging, provenance | Working |
+| Discipline Mastery (practice, rust, star-gated techniques) | Working |
+| Tactics, doctrines-as-loot, the Doctrine Editor | Working |
+| Guild restoration (companions, skill slots, camp rebuilding) | Working |
+| Save / persistence (+ Reset Save) | Working |
+| Scratch-style block editor + "View Code" | Planned (engine ready) |
+| Engineer's Notebooks (scripting as recovered knowledge) | Planned |
+| Dungeon 3 (threat/answer/lesson pending design) | Planned |
+| Sound | Procedural placeholder audio (no composed music yet) |
 
 ## Requirements
 
@@ -157,7 +174,9 @@ The `SkillDefinition` class already supports attack/spell/support types, cast ti
 |-------|------|--------------|
 | Combat simulation | `scenes/combat/combat_simulation.tscn` | Runs a headless fight and prints the combat log |
 | Battle theater | `scenes/theater/battle_theater_3d.tscn` | Simulates a fight and plays it back in the 3D battle scene |
-| Screenshot capture | `capture/shots.tscn`, `capture/cast.tscn`, `capture/loadout_shot.tscn` | Regenerates the README screenshots and unit renders into `docs/screenshots/` |
+| Screenshot capture | `capture/readme_shots.tscn`, `capture/cast3d_shot.tscn` | Regenerates the README screenshots and cast renders into `docs/screenshots/` |
+| Trailer | `capture/trailer_shot.tscn` + `capture/make_trailer.sh` | Re-renders the Chapter One trailer (Movie Maker mode, 30 fps + audio) |
+| Test suite | `capture/test_*.tscn` (35+ scenes) | Sim, economy, mastery, doctrine, and UI regression tests |
 
 ## Project Structure
 
@@ -192,27 +211,17 @@ Combat is split into two layers:
 
 ## Current Content
 
-| Type   | ID             | Name           | Stats |
-|--------|----------------|----------------|-------|
-| Hero   | Default Delver | Default Delver | 100 HP, 10 mana, 1 ATK; weapon speed sets interval; front or back row by loadout |
-| Enemy  | green_slime    | Green Slime    | 25 HP, 1 ATK, 4.0s interval, front row |
-| Enemy  | goblin_archer  | Goblin Archer  | 20 HP, 2 ATK, 3.5s interval, back row, ranged |
-| Skill  | auto_attack    | Slash          | 0–9 bonus damage, melee |
-| Skill  | arrow_shot     | Arrow Shot     | 1–7 bonus damage, projectile |
-| Skill  | frost_nova     | Frost Nova     | Roots everything within 96px for 3s, 10s cooldown |
-| Skill  | hamstring      | Hamstring      | Melee strike, slows 50% for 6s, 8s cooldown |
-| Skill  | charge         | Charge         | Gap-closer up to 400px, stuns 1.5s, 12s cooldown |
-| Skill  | heal           | Heal           | Restores 8–12 to the most injured ally in sight, 6s cooldown |
-| Gear   | starter_sword  | Starter Sword  | Main hand, one-handed, 1–3 dmg, 2.6s speed |
-| Gear   | starter_bow    | Starter Bow    | Main hand, bow, 1–4 dmg, 2.8s speed |
-| Gear   | fast_dagger    | Fast Dagger    | Main hand, one-handed, 1–2 dmg, 1.5s speed |
-| Gear   | heavy_axe      | Heavy Axe      | Main hand, two-handed, 4–9 dmg, 3.4s speed |
-| Gear   | starter_shield | Starter Shield | Off hand, +10 HP |
-| Gear   | starter_helmet | Starter Helmet | Head, +5 HP |
-| Gear   | starter_armor  | Starter Armor  | Chest, +15 HP |
-| Enemy  | goblin_warrior | Goblin Warrior | Melee bruiser; drops iron scrap and leather |
-| Enemy  | venomous_spider | Venomous Spider | Fast skitterer from room 3; venom bite poisons, drops poison sacs |
-| Enemy  | slime_king     | Slime King     | Boss of room 10: crowned, royal purple, always drops rare |
+| Kind | Count | Notes |
+|------|-------|-------|
+| Dungeons | 2 | The Darkwood, The Spider Nest — five difficulty tiers each |
+| Enemies | 9 | incl. two bosses (Slime King, The Broodmother) and the spawning Brood Tender |
+| Techniques | 15 | 9 mastery-owned cores + guild techniques (Charge, Heal, Battle Shout, Rally) |
+| Disciplines | 4 | Sword, Shield, Bow, Restoration — five stars each |
+| Recipes | 15 | every gear slot craftable, tier-gated coverage per dungeon |
+| Affixes | 5 | Virulent, Frostforged, Flaming, Quick, Guarding — learnable, salvage-studied |
+| Materials | 12 | each owned by an enemy; bosses drop the royal ones |
+| Doctrines | 6 tactics + 3 capacity tiers | recovered, never listed before they're found |
+| Lore | 8 expedition-log fragments | the Black Hollow's trail, foreshadowing what's still buried |
 
 ## License
 
