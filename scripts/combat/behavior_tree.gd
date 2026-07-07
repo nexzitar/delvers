@@ -162,3 +162,45 @@ static func _healer_attacker(state, hero) -> int:
 			best_dist = dist
 			best_id = foe.entity_id
 	return best_id
+
+## The Engineer's Annotations: the same doctrine, written as the
+## machine reads it. Scratch was Python all along.
+const _COND_CODE := {
+	"always": "True",
+	"enemy_count_gte": "enemy_count() >= {n}",
+	"health_below": "self.health < self.max_health * {pct}",
+	"mana_gte": "self.mana >= {n}",
+	"enemies_within": "enemies_within(reach={range}) >= {n}",
+	"healer_threatened": "healer_threatened()",
+}
+const _SELECTOR_CODE := {
+	"nearest": "nearest_enemy()",
+	"lowest": "lowest_health_enemy()",
+	"priority": "focus_order_enemy()",
+	"spread": "unpoisoned_enemy()",
+	"least_threat": "least_threat_enemy()",
+	"healer_attacker": "healer_attacker()",
+}
+
+static func to_code(tree: Array) -> String:
+	var lines := ["def doctrine(self):"]
+	if tree.is_empty():
+		lines.append("    pass  # the chosen tactic leads")
+		return "\n".join(lines)
+	for rule in tree:
+		var conditions = rule.get("when", [])
+		var tests := []
+		for condition in conditions:
+			var template = _COND_CODE.get(condition.get("cond", "always"), "True")
+			tests.append(template.format(condition))
+		var body := ""
+		if rule.has("cast"):
+			body = "cast(\"%s\")" % rule.cast
+		else:
+			body = "return target(%s)" % _SELECTOR_CODE.get(rule.get("target", "nearest"), "nearest_enemy()")
+		if tests.is_empty():
+			lines.append("    " + body)
+		else:
+			lines.append("    if " + " and ".join(tests) + ":")
+			lines.append("        " + body)
+	return "\n".join(lines)

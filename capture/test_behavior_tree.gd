@@ -122,5 +122,31 @@ func _ready():
 	roster.free()
 	restored.free()
 
+	# The Annotations: blocks were always words.
+	var code = BehaviorTree.to_code([
+		{"when": [{"cond": "healer_threatened"}], "target": "healer_attacker"},
+		{"when": [{"cond": "enemy_count_gte", "n": 4}], "cast": "thunderclap"},
+		{"when": [], "target": "least_threat"},
+	])
+	assert("def doctrine(self):" in code, "it reads as a function")
+	assert("if healer_threatened():" in code, "conditions read")
+	assert("enemy_count() >= 4" in code, "parameters carry through")
+	assert("cast(\"thunderclap\")" in code, "casts read")
+	assert("return target(least_threat_enemy())" in code, "selectors read")
+	assert("pass" in BehaviorTree.to_code([]), "empty doctrine reads too")
+
+	# Engineering tools route to engineering knowledge on banking.
+	var tool_roster = load("res://scripts/game/player_roster.gd").new()
+	tool_roster.autosave = false
+	tool_roster._build_heroes()
+	tool_roster._build_stash()
+	tool_roster.start_delve()
+	tool_roster.delve_doctrines = ["engineers_slate"]
+	tool_roster.bank_delve_loot()
+	assert(tool_roster.has_tool("engineers_slate"), "the slate is kept")
+	assert(not tool_roster.known_tactics.has("engineers_slate"),
+		"tools are not tactics")
+	tool_roster.free()
+
 	print("PASS behavior tree")
 	get_tree().quit()

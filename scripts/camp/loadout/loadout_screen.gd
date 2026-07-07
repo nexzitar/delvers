@@ -61,6 +61,11 @@ var _tactics_box: VBoxContainer
 ## Doctrine editor vocabulary: UI label -> engine data. Conditions
 ## carry an optional numeric parameter; actions are target selectors
 ## (one per recovered tactic) or casts (what the hero can field).
+## The Engineer's Slate: block colors for the snap-together skin.
+const BLOCK_WHEN := Color(0.72, 0.6, 0.2)
+const BLOCK_TARGET := Color(0.3, 0.5, 0.75)
+const BLOCK_CAST := Color(0.55, 0.38, 0.7)
+
 const DOCTRINE_CONDITIONS := [
 	["always", "Always", "", 0],
 	["enemy_count_gte", "Enemy count at least", "n", 4],
@@ -487,6 +492,13 @@ func _fill_doctrine_editor(hero):
 	var buttons = HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
 	_tactics_box.add_child(buttons)
+	if PlayerRoster.has_tool("engineers_annotations"):
+		var view_code = Button.new()
+		view_code.text = "View Code"
+		view_code.add_theme_font_override("font", FONT)
+		view_code.add_theme_font_size_override("font_size", 15)
+		view_code.pressed.connect(func(): _show_doctrine_code(hero))
+		buttons.add_child(view_code)
 	var add = Button.new()
 	add.text = "+ Rule"
 	add.add_theme_font_override("font", FONT)
@@ -512,11 +524,29 @@ func _save_doctrine():
 	if PlayerRoster.autosave:
 		RosterSave.save(PlayerRoster)
 
+func _block_style(tint: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(tint.r, tint.g, tint.b, 0.28)
+	style.border_color = tint
+	style.set_border_width_all(2)
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 10
+	style.set_content_margin_all(6)
+	return style
+
 func _doctrine_rule_row(hero, index: int) -> Control:
 	var rule = hero.custom_tree[index]
 	var capacity = PlayerRoster.doctrine_capacity()
+	var blocks: bool = PlayerRoster.has_tool("engineers_slate")
 	var panel = PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _slot_style())
+	if blocks:
+		var action_tint = BLOCK_CAST if rule.has("cast") else BLOCK_TARGET
+		panel.add_theme_stylebox_override("panel",
+			_block_style(BLOCK_WHEN if not rule.get("when", []).is_empty() else action_tint))
+	else:
+		panel.add_theme_stylebox_override("panel", _slot_style())
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	panel.add_child(row)
@@ -618,6 +648,61 @@ func _doctrine_rule_row(hero, index: int) -> Control:
 		_fill_tactics())
 	row.add_child(remove)
 	return panel
+
+## The Annotations' reveal: the blocks have been writing this all
+## along.
+func _show_doctrine_code(hero):
+	var layer := CanvasLayer.new()
+	layer.layer = 30
+	add_child(layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(dim)
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.06, 0.07, 0.09, 0.98)
+	style.border_color = Color(0.35, 0.45, 0.3)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(20)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -320
+	panel.offset_right = 320
+	panel.offset_top = -200
+	panel.offset_bottom = 200
+	layer.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	panel.add_child(box)
+	var title := Label.new()
+	title.text = "The Engineer's Annotations"
+	title.add_theme_font_override("font", FONT)
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", GOLD)
+	box.add_child(title)
+	var code := Label.new()
+	code.text = BehaviorTree.to_code(hero.custom_tree)
+	code.add_theme_font_size_override("font_size", 16)
+	code.add_theme_color_override("font_color", Color(0.75, 0.9, 0.7))
+	var mono := SystemFont.new()
+	mono.font_names = ["Menlo", "Consolas", "monospace"]
+	code.add_theme_font_override("font", mono)
+	box.add_child(code)
+	var note := Label.new()
+	note.text = "The blocks were always words."
+	note.add_theme_font_size_override("font_size", 13)
+	note.add_theme_color_override("font_color", DIM)
+	box.add_child(note)
+	var close := Button.new()
+	close.text = "Close"
+	close.add_theme_font_override("font", FONT)
+	close.pressed.connect(layer.queue_free)
+	box.add_child(close)
 
 ## The saved focus order first, then any newly-seen enemies. Only
 ## what the guild has actually faced — no spoilers.

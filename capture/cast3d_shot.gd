@@ -74,6 +74,10 @@ func _run():
 	), "cast_chitin_crawler", 0.95)
 
 	await _shoot(ActorFactory3D.build_enemy(
+		load("res://resources/enemies/brood_tender.tres")
+	), "cast_brood_tender", 0.9)
+
+	await _shoot(ActorFactory3D.build_enemy(
 		load("res://resources/enemies/broodmother.tres")
 	), "cast_broodmother", 1.5)
 

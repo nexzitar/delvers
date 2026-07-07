@@ -231,7 +231,8 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 			roster.known_tactics.append(tactic_id)
 	roster.known_engineering = []
 	for entry_id in data.get("known_engineering", []):
-		if Doctrines.CAPACITY.has(entry_id) and not roster.known_engineering.has(entry_id):
+		if (Doctrines.CAPACITY.has(entry_id) or Doctrines.TOOLS.has(entry_id)) \
+				and not roster.known_engineering.has(entry_id):
 			roster.known_engineering.append(entry_id)
 
 	# Veterans predate doctrines: what they have fought with, they keep.

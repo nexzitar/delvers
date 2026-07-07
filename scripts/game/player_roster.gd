@@ -66,6 +66,9 @@ var known_tactics: Array = ["nearest"]
 ## Notebooks). No capacity, no custom doctrine: zero nodes.
 var known_engineering: Array = []
 
+func has_tool(tool_id: String) -> bool:
+	return known_engineering.has(tool_id)
+
 func doctrine_capacity() -> int:
 	var nodes := 0
 	for entry_id in known_engineering:
@@ -164,7 +167,7 @@ func bank_delve_loot():
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
 	for doctrine_id in delve_doctrines:
-		if Doctrines.CAPACITY.has(doctrine_id):
+		if Doctrines.CAPACITY.has(doctrine_id) or Doctrines.TOOLS.has(doctrine_id):
 			if not known_engineering.has(doctrine_id):
 				known_engineering.append(doctrine_id)
 		elif not known_tactics.has(doctrine_id):
