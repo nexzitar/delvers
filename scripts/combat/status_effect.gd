@@ -1,6 +1,6 @@
 class_name StatusEffect
 
-enum Kind { ROOT, SLOW, STUN, POISON, REGEN, SLUGGISH, FORTIFY }
+enum Kind { ROOT, SLOW, STUN, POISON, REGEN, SLUGGISH, FORTIFY, EMPOWER }
 
 var kind: Kind
 var remaining: float

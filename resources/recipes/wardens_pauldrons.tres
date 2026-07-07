@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "wardens_pauldrons"
+recipe_name = "Warden's Pauldrons"
+tome_name = "The Watchtower Warden's Fitting Guide"
+tome_lore = "The tower fell. The warden walked out of the rubble."
+result_gear_id = "wardens_pauldrons"
+result_item_level = 6
+result_quality = 1
+costs = {"iron_scrap": 4, "leather": 2, "gel": 2}
+min_tier = 3

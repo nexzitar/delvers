@@ -27,6 +27,20 @@ func _run():
 		Equip.Position.MAIN_HAND: bow,
 	}), "cast_delver_archer", 1.35)
 
+	await _shoot(ActorFactory3D.build_hero({
+		Equip.Position.MAIN_HAND: sword,
+		Equip.Position.OFF_HAND: LootTable.materialize("chitin_shield", 14, 1),
+		Equip.Position.HEAD: LootTable.materialize("silk_hood", 14, 1),
+		Equip.Position.CHEST: LootTable.materialize("chitin_armor", 14, 1),
+		Equip.Position.SHOULDER: LootTable.materialize("wardens_pauldrons", 6, 1),
+		Equip.Position.BACK: LootTable.materialize("weavers_cloak", 14, 1),
+		Equip.Position.LEGS: LootTable.materialize("iron_greaves", 6, 1),
+		Equip.Position.FEET: LootTable.materialize("iron_shod_boots", 5, 1),
+		Equip.Position.HANDS: LootTable.materialize("goblin_work_gauntlets", 5, 1),
+		Equip.Position.WAIST: LootTable.materialize("studded_belt", 5, 1),
+		Equip.Position.WRIST: LootTable.materialize("silk_bracers", 14, 1),
+	}), "cast_delver_kitted", 1.4)
+
 	await _shoot(ActorFactory3D.build_enemy(
 		load("res://resources/enemies/goblin_archer.tres")
 	), "cast_goblin_archer", 1.2)

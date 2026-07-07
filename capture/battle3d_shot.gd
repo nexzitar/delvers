@@ -17,9 +17,11 @@ func _ready():
 		Equip.Position.CHEST: LootTable.materialize("starter_armor", 12, 1),
 	}
 	PlayerRoster._sync_role(PlayerRoster.heroes[0])
-	PlayerRoster.bonus_skill_slots = 2
-	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/thunderclap.tres"), 1)
-	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/whirlwind.tres"), 2)
+	PlayerRoster.equip_bonus_skill(0, load("res://resources/skills/heal.tres"), 1)
+	PlayerRoster.heroes[0].mastery = {
+		"sword": {"xp": 140, "best_xp": 140},
+		"shield": {"xp": 90, "best_xp": 90},
+	}
 	var scene = load("res://scenes/theater/battle_theater_3d.tscn").instantiate()
 	add_child(scene)
 	_run()

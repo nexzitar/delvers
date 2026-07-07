@@ -76,6 +76,94 @@ func _ready():
 	assert(darkwood.guaranteed.size() == guaranteed_before, "anchors stay pristine")
 	controller.free()
 
+	# The Nest's lesson: the Brood Tender births spiderlings mid-fight
+	# (through real SPAWN events), capped so the swarm never runs away.
+	var SpawnBrood = load("res://scripts/combat/skills/spawn_brood.gd")
+	var tender_template = load("res://resources/enemies/brood_tender.tres")
+	var lesson_delver = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	var combat_brood = CombatState.new()
+	combat_brood.setup_combat([lesson_delver], [tender_template])
+	var tender = combat_brood.enemies[0]
+	tender.in_combat = true
+	var before_spawn = combat_brood.enemies.size()
+	assert(SpawnBrood.try_use(combat_brood, tender, tender.skills[1]), "brood spawns")
+	assert(combat_brood.enemies.size() == before_spawn + 2, "two spiderlings join")
+	var spawn_events = combat_brood.combat_log.events.filter(
+		func(e): return e.type == CombatEvent.EventType.SPAWN
+	)
+	assert(spawn_events.size() == before_spawn + 1 + 2, "late spawns hit the log")
+	assert(combat_brood.enemies[-1].spawned_by == tender.entity_id, "brood remembers mother")
+	assert(SpawnBrood.try_use(combat_brood, tender, tender.skills[1]), "second wave")
+	assert(not SpawnBrood.try_use(combat_brood, tender, tender.skills[1]),
+		"the brood is capped")
+	assert(nest.guaranteed.any(func(t): return t.enemy_id == "brood_tender"),
+		"a tender anchors every nest room")
+
+	# Difficulty tiers: gated, scaling, and never stale.
+	var tier_roster = load("res://scripts/game/player_roster.gd").new()
+	tier_roster.autosave = false
+	tier_roster._build_heroes()
+	tier_roster._build_stash()
+	tier_roster.start_delve("darkwood", 3)
+	assert(tier_roster.current_tier == 1, "uncleaned tiers clamp to one")
+	tier_roster.record_clear("darkwood", 1)
+	tier_roster.start_delve("darkwood", 2)
+	assert(tier_roster.current_tier == 2, "clearing opens the next tier")
+	var deep_drops = LootTable.roll_enemy_drops(
+		[crawler], 4, [], [], [], nest, [], 3)
+	assert(deep_drops.gear[0].item_level == 14, "tiers never inflate item level")
+	var pile = LootTable.roll_enemy_drops(
+		[load("res://resources/enemies/goblin_warrior.tres")], 2, [], [], [], darkwood, [], 3)
+	var total := 0
+	for mid in pile.materials:
+		total += pile.materials[mid]
+	assert(total >= 3, "tier hauls more materials")
+	var tier_path := "user://test_tier_save.json"
+	RosterSave.save(tier_roster, tier_path)
+	var tier_restored = load("res://scripts/game/player_roster.gd").new()
+	tier_restored.autosave = false
+	assert(RosterSave.load_into(tier_restored, tier_path), "save loads")
+	assert(tier_restored.highest_cleared("darkwood") == 1, "progress persists")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(tier_path))
+	tier_roster.free()
+	tier_restored.free()
+
+	# The Nest's answer: poison resist shaves the DoT that armor can't.
+	var armored = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	armored.equipped = {
+		Equip.Position.HEAD: LootTable.materialize("silk_hood", 14, 1),
+		Equip.Position.CHEST: LootTable.materialize("chitin_armor", 14, 1),
+		Equip.Position.WRIST: LootTable.materialize("silk_bracers", 14, 1),
+		Equip.Position.BACK: LootTable.materialize("weavers_cloak", 14, 1),
+	}
+	var combat_resist = CombatState.new()
+	combat_resist.setup_combat([armored], [spiderling])
+	var warded = combat_resist.heroes[0]
+	assert(warded.poison_resist > 0.7, "nest set stacks resist")
+	combat_resist.apply_status(warded, StatusEffect.Kind.POISON, 10.0, 2.0, "p", -1)
+	var hp_start = warded.current_health
+	for i in 50:
+		warded.tick_statuses(0.1, combat_resist)
+	var warded_loss = hp_start - warded.current_health
+	assert(warded_loss <= 4, "resist shaves the venom (took %d)" % warded_loss)
+
+	# Tier-gated knowledge: tier 1 never teaches tier-2 recipes.
+	var teacher = load("res://resources/enemies/web_weaver.tres").duplicate()
+	teacher.recipe_drop_chance = 1.0
+	for i in 60:
+		var lesson = LootTable.roll_enemy_drops([teacher], 3,
+			["silk_hood", "chitin_shield"], [], [], nest, [], 1)
+		for rid in lesson.recipes:
+			assert(load(RosterSave.RECIPE_PATHS[rid]).min_tier <= 1,
+				"tier 1 keeps its secrets")
+	var taught := false
+	for i in 60:
+		var lesson2 = LootTable.roll_enemy_drops([teacher], 3,
+			["silk_hood", "chitin_shield"], [], [], nest, [], 2)
+		if lesson2.recipes.has("silk_bracers"):
+			taught = true
+	assert(taught, "tier 2 teaches the bracers")
+
 	# Web Shot roots; the sim runs a nest pack to completion.
 	var WebShot = load("res://scripts/combat/skills/web_shot.gd")
 	var delver = load("res://resources/heroes/default_delver.tres").duplicate(true)

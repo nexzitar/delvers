@@ -65,5 +65,18 @@ func _ready():
 	assert(caster.arm_l.rotation.x < -0.5, "spellcast raises the arms")
 	caster.free()
 
+	# Worn gear reaches the rig: shoulders and cloak show up as opts.
+	var kitted = ActorFactory3D.hero_opts({
+		Equip.Position.SHOULDER: LootTable.materialize("wardens_pauldrons", 6, 1),
+		Equip.Position.BACK: LootTable.materialize("weavers_cloak", 14, 1),
+		Equip.Position.LEGS: LootTable.materialize("iron_greaves", 6, 1),
+	})
+	assert(kitted.has("shoulders"), "pauldrons show")
+	assert(kitted.has("cloak"), "the cloak shows")
+	assert(kitted.has("greaves"), "greaves show")
+	var dressed = load("res://scripts/theater3d/delver_rig.gd").new(kitted)
+	dressed.pose_walk(0.5)
+	dressed.free()
+
 	print("PASS actor factory 3d")
 	get_tree().quit()

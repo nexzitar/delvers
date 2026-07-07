@@ -81,53 +81,14 @@ func validate_target(entity):
 		if combat_time < entity.retarget_at:
 			return
 	entity.retarget_at = combat_time + 0.8
-	_set_target(entity, _pick_by_tactic(entity))
+	_set_target(entity, BehaviorTree.pick_target(self, entity))
 
 ## The party's focus order (enemy_ids, first = kill first), fed from
 ## the roster at setup. Tactics score against it.
 var enemy_priority: Array = []
+## Monotonic entity ids: setup starts at 1, reinforcements continue.
+var _next_entity_id := 1
 
-func _priority_rank(target) -> int:
-	var idx = enemy_priority.find(target.template.enemy_id)
-	return idx if idx >= 0 else enemy_priority.size()
-
-## Scores living opponents under the entity's tactic; lower wins.
-## (Enemies without threat also route here and use "nearest".)
-func _pick_by_tactic(hero) -> int:
-	var best_id := -1
-	var best_key := []
-	var opponents = enemies if hero.team == CombatEntity.Team.HERO else heroes
-	for enemy in opponents:
-		if not enemy.alive:
-			continue
-		var dist = hero.position.distance_to(enemy.position)
-		var key := []
-		match hero.tactic:
-			"lowest":
-				key = [enemy.current_health, dist]
-			"priority":
-				key = [_priority_rank(enemy), dist]
-			"spread":
-				# Prefer foes not yet carrying this hero's poison.
-				var covered := 0
-				for status in enemy.statuses:
-					if status.kind == StatusEffect.Kind.POISON \
-							and status.source_id == hero.entity_id \
-							and status.remaining > 0.0:
-						covered = 1
-				key = [covered, _priority_rank(enemy), dist]
-			_:
-				key = [dist]
-		if best_id == -1 or _key_less(key, best_key):
-			best_id = enemy.entity_id
-			best_key = key
-	return best_id
-
-static func _key_less(a: Array, b: Array) -> bool:
-	for i in a.size():
-		if a[i] != b[i]:
-			return a[i] < b[i]
-	return false
 
 func _set_target(entity, new_target_id: int):
 	if entity.target_id == new_target_id:
@@ -145,7 +106,10 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	for existing in target.statuses:
 		if existing.id == status_id:
 			existing.remaining = maxf(existing.remaining, duration)
-			existing.magnitude = maxf(existing.magnitude, magnitude)
+			# EMPOWER mutates attack_power on apply; a refresh keeps the
+			# original magnitude to avoid double-stacking the buff.
+			if kind != StatusEffect.Kind.EMPOWER:
+				existing.magnitude = maxf(existing.magnitude, magnitude)
 			existing.source_id = source_id
 			return
 
@@ -155,6 +119,9 @@ func apply_status(target, kind, duration: float, magnitude: float, status_id: St
 	status.magnitude = magnitude
 	status.id = status_id
 	status.source_id = source_id
+	if kind == StatusEffect.Kind.EMPOWER:
+		target.attack_power += int(magnitude)
+		target.base_attack_power += int(magnitude)
 	target.statuses.append(status)
 
 	var event = CombatEvent.new()
@@ -438,6 +405,42 @@ func _log_move(entity, force := false):
 			CombatEvent.create_face(entity.entity_id, combat_time, entity.facing)
 		)
 
+## Mid-combat reinforcements (the Brood Tender's spawn): the newcomer
+## enters through a SPAWN event, so the theater builds it a body and a
+## sidebar row like anyone rolled at setup.
+func spawn_reinforcement(template, level: int, near: Vector2, spawned_by := -1):
+	var enemy = CombatEntity.new()
+	enemy.entity_id = _next_entity_id
+	_next_entity_id += 1
+	enemy.team = CombatEntity.Team.ENEMY
+	enemy.level = maxi(1, level)
+	enemy.entity_name = "%s Lv %d" % [template.enemy_name, enemy.level]
+	enemy.template = template
+	var power = level_power(enemy.level)
+	enemy.max_health = maxi(1, roundi(template.base_health * power))
+	enemy.attack_power = maxi(1, roundi(template.base_attack * power))
+	enemy.current_health = enemy.max_health
+	enemy.current_mana = template.base_mana
+	enemy.max_mana = template.base_mana
+	enemy.armor = template.armor
+	enemy.block_chance = template.block_rating
+	enemy.dodge_chance = template.dodge_rating
+	enemy.crit_chance = template.crit_rating
+	enemy.attack_interval = template.base_attack_interval
+	enemy.attack_timer = enemy.attack_interval
+	enemy.move_speed = template.move_speed
+	enemy.skills = template.skills.duplicate()
+	enemy.position = grid.clamp_world(near + Vector2(
+		randf_range(-40.0, 40.0), randf_range(-40.0, 40.0)
+	))
+	enemy.facing = Vector2.LEFT
+	enemy.in_combat = true
+	enemy.spawned_by = spawned_by
+	enemies.append(enemy)
+	entities_by_id[enemy.entity_id] = enemy
+	combat_log.add_event(CombatEvent.create_spawn(enemy))
+	return enemy
+
 func check_victory():
 
 	var heroes_alive = false
@@ -494,15 +497,15 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 	grid = BattleGrid.new(arena)
 	pathfinder = GridPathfinder.new(grid)
 
-	var next_entity_id = 1
+	_next_entity_id = 1
 	var used_names = {}
 
 	for hero_template in hero_templates:
 
 		var hero = CombatEntity.new()
 
-		hero.entity_id = next_entity_id
-		next_entity_id += 1
+		hero.entity_id = _next_entity_id
+		_next_entity_id += 1
 
 
 		hero.team = CombatEntity.Team.HERO
@@ -549,6 +552,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 			hero.dodge_chance += item.dodge_rating
 			hero.crit_chance += item.crit_rating
 			hero.spell_power += item.spell_power
+			hero.poison_resist += item.poison_resist
 
 		# Main-hand weapon speed sets the interval; unarmed falls back.
 		hero.attack_interval = (
@@ -568,11 +572,33 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		)
 
 		hero.tactic = hero_template.tactic
+		# Custom doctrine runs only within the guild's recovered
+		# complexity budget; over it, the pre-authored tactic holds.
+		if not hero_template.custom_tree.is_empty() \
+				and BehaviorTree.node_count(hero_template.custom_tree) \
+					<= PlayerRoster.doctrine_capacity():
+			hero.behavior_tree = hero_template.custom_tree.duplicate(true)
 		hero.skills = hero_template.starting_skills.duplicate()
 		# Loadout skill slots feed straight into combat.
 		for extra in hero_template.bonus_skills:
 			if extra is SkillDefinition:
 				hero.skills.append(extra)
+
+		# Mastery: practiced disciplines bring their core techniques
+		# (no slot cost) and their passives.
+		var mastery_kit = Mastery.kit(hero_template)
+		var slotted = hero.skills.map(
+			func(s): return s.skill_id if s is SkillDefinition else ""
+		)
+		for skill_id in mastery_kit.skills:
+			if not slotted.has(skill_id):
+				hero.skills.append(load(RosterSave.SKILL_PATHS[skill_id]))
+				slotted.append(skill_id)
+		hero.crit_chance += mastery_kit.passives.crit_add
+		hero.block_chance += mastery_kit.passives.block_add
+		hero.armor += mastery_kit.passives.armor_add
+		hero.spell_power += mastery_kit.passives.spell_power_add
+		hero.attack_interval *= mastery_kit.passives.attack_speed_mult
 
 		hero.position = _spawn_position(
 			arena.hero_spawn_center, heroes.size(),
@@ -588,8 +614,8 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		var enemy = CombatEntity.new()
 
-		enemy.entity_id = next_entity_id
-		next_entity_id += 1
+		enemy.entity_id = _next_entity_id
+		_next_entity_id += 1
 
 		enemy.team = CombatEntity.Team.ENEMY
 		enemy.level = roll_enemy_level()

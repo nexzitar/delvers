@@ -45,6 +45,7 @@ const STATUS_ICON := {
 	"slow_frostforged": "res://art/status/status_chill.png",
 	"renew_hot": "res://art/status/status_renew.png",
 	"shield_wall": "res://art/status/status_fortify.png",
+	"battle_shout": "res://art/status/status_empower.png",
 }
 
 const STATUS_TEXT := {
@@ -58,6 +59,7 @@ const STATUS_TEXT := {
 	"renew_hot": "Renewed!",
 	"shield_wall": "Shield Wall!",
 	"thunderclap_daze": "Dazed!",
+	"battle_shout": "Emboldened!",
 }
 
 var actors := {}
@@ -123,8 +125,8 @@ func _ready():
 
 	var combat = CombatState.new()
 	combat.enemy_priority = PlayerRoster.enemy_priority.duplicate()
-	# Rooms deepen: bigger packs, higher enemy levels.
-	combat.enemy_level_bonus = (room - 1) / 4
+	# Rooms deepen and tiers bite: higher enemy levels on both axes.
+	combat.enemy_level_bonus = (room - 1) / 4 + (PlayerRoster.current_tier - 1) * 2
 	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
 	while not combat.combat_over:
 		combat.update(0.1)
@@ -209,6 +211,21 @@ func _build_timeline(log):
 			CombatEvent.EventType.DAMAGE:
 				if event.dot:
 					continue
+				# Archer behaviors: a quick draw cue plus an arrow
+				# streak per victim at impact.
+				if event.skill_name in ["Multishot", "Piercing Shot"]:
+					var draw_key = "%d:%.2f:draw" % [event.source_id, event.time]
+					if not burst_keys.has(draw_key):
+						burst_keys[draw_key] = true
+						_timeline.append({
+							"time": maxf(0.0, event.time - 0.35),
+							"kind": "quickdraw", "id": event.source_id,
+						})
+					_timeline.append({
+						"time": event.time, "kind": "streak",
+						"from": event.source_id, "to": event.target_id,
+					})
+					continue
 				# AoE bursts get one distinctive cue, not a swing per victim.
 				if event.skill_name in ["Whirlwind", "Thunderclap"]:
 					var burst_key = "%d:%s:%.2f" % [event.source_id, event.skill_name, event.time]
@@ -251,6 +268,22 @@ func _dispatch(item):
 		if state and state.mode != "dead" and state.rig.has_method("pose_spin"):
 			state.mode = "spin"
 			state.anim_t = 0.0
+		return
+	if item.kind == "quickdraw":
+		var state = actors.get(item.id)
+		if state and state.mode != "dead" and state.rig.has_method("pose_shoot"):
+			state.mode = "shoot"
+			state.anim_t = 0.0
+			state.anim_speed = 2.4
+		return
+	if item.kind == "streak":
+		var from_state = actors.get(item.from)
+		var to_state = actors.get(item.to)
+		if from_state and to_state:
+			_spawn_arrow_streak(
+				from_state.rig.position + Vector3(0, 1.0, 0),
+				to_state.rig.position + Vector3(0, 0.7, 0)
+			)
 		return
 	if item.kind == "clap":
 		var state = actors.get(item.id)
@@ -615,6 +648,26 @@ func _yaw_of(facing: Vector2) -> float:
 ## climbing a half-step per full ring so long bursts stack upward.
 var _float_lanes := {}
 
+## A fast arrow flying point to point (archer behavior skills).
+func _spawn_arrow_streak(from: Vector3, to: Vector3):
+	var streak := MeshInstance3D.new()
+	var shaft := CylinderMesh.new()
+	shaft.top_radius = 0.015
+	shaft.bottom_radius = 0.015
+	shaft.height = 0.5
+	streak.mesh = shaft
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.9, 0.85, 0.7)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	streak.material_override = mat
+	add_child(streak)
+	streak.position = from
+	streak.look_at_from_position(from, to)
+	streak.rotate_object_local(Vector3.RIGHT, PI / 2)
+	var tween := create_tween()
+	tween.tween_property(streak, "position", to, 0.12)
+	tween.tween_callback(streak.queue_free)
+
 ## An expanding ground ring: thunder gold by default, renew green.
 func _spawn_shockwave(at: Vector3, tint := Color(1.0, 0.9, 0.5, 0.8), max_scale := 5.6):
 	var ring := MeshInstance3D.new()
@@ -676,7 +729,11 @@ func _show_room_banner(room: int):
 	layer.layer = 11
 	add_child(layer)
 	var label := Label.new()
-	label.text = "%s  -  Room %d of %d" % [dungeon().dungeon_name, room, dungeon().length]
+	var tier_tag = ""
+	if PlayerRoster.current_tier > 1:
+		tier_tag = " " + ["", "", "II", "III", "IV", "V"][PlayerRoster.current_tier]
+	label.text = "%s%s  -  Room %d of %d" % [
+		dungeon().dungeon_name, tier_tag, room, dungeon().length]
 	label.anchor_left = 0.0
 	label.anchor_right = 1.0
 	label.offset_top = 40
@@ -723,7 +780,9 @@ func _finish_battle():
 		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
 		PlayerRoster.known_lore + PlayerRoster.delve_lore,
 		dungeon(),
-		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps
+		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps,
+		PlayerRoster.current_tier,
+		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -735,11 +794,22 @@ func _finish_battle():
 	PlayerRoster.delve_affixes.append_array(found.affixes)
 	PlayerRoster.delve_lore.append_array(found.lore)
 	PlayerRoster.delve_maps.append_array(found.maps)
+	PlayerRoster.delve_doctrines.append_array(found.doctrines)
+
+	# Practice: the fielded party trains its disciplines room by room.
+	var alive_indices := []
+	for k in combat_result.heroes.size():
+		if combat_result.heroes[k].alive:
+			alive_indices.append(_party_indices[k])
+	var star_ups = PlayerRoster.train_party(
+		alive_indices, 4 if room >= dungeon().length else 1
+	)
 
 	# Knowledge pity: three dry rooms guarantee a recipe from the slain
 	# enemies' pools. Short failed runs still make progress.
 	var learned_something = not (found.recipes.is_empty() and found.affixes.is_empty()
-		and found.lore.is_empty() and found.maps.is_empty())
+		and found.lore.is_empty() and found.maps.is_empty()
+		and found.doctrines.is_empty())
 	if learned_something:
 		PlayerRoster.rooms_since_knowledge = 0
 	else:
@@ -749,8 +819,13 @@ func _finish_battle():
 			var pool := []
 			for template in slain:
 				for recipe_id in template.recipe_loot:
-					if not known.has(recipe_id) and not pool.has(recipe_id):
-						pool.append(recipe_id)
+					if known.has(recipe_id) or pool.has(recipe_id):
+						continue
+					# Pity honors tier gates like any other drop.
+					var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+					if recipe.min_tier > PlayerRoster.current_tier:
+						continue
+					pool.append(recipe_id)
 			if not pool.is_empty():
 				var granted = pool.pick_random()
 				found.recipes.append(granted)
@@ -759,6 +834,7 @@ func _finish_battle():
 
 	if room >= dungeon().length:
 		PlayerRoster.adventures_completed += 1
+		PlayerRoster.record_clear(dungeon().dungeon_id, PlayerRoster.current_tier)
 		if PlayerRoster.autosave:
 			RosterSave.save(PlayerRoster)
 		await _show_battle_result(true)
@@ -773,15 +849,39 @@ func _finish_battle():
 
 	if PlayerRoster.autosave:
 		RosterSave.save(PlayerRoster)
-	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps))
+	_show_room_toast(room, _drop_entries(found.gear, found.materials, found.recipes, found.affixes, found.lore, found.maps, star_ups, found.doctrines))
 	await get_tree().create_timer(2.6).timeout
 	PlayerRoster.delve_room += 1
 	SceneFlow.change_scene("res://scenes/theater/battle_theater_3d.tscn")
 
 ## Display entries for spoils: gear, materials with counts, and the
 ## crown jewels — newly learned recipes and affixes.
-func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = []) -> Array:
+func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: Array = [], lore: Array = [], maps: Array = [], star_ups: Array = [], doctrines: Array = []) -> Array:
 	var entries := []
+	for doctrine_id in doctrines:
+		if Doctrines.CAPACITY.has(doctrine_id):
+			var capacity = Doctrines.CAPACITY[doctrine_id]
+			entries.append({
+				"texture": preload("res://art/tomes/tome_journal.png"),
+				"text": "%s\nDoctrine: %d nodes" % [capacity.tome, capacity.nodes],
+				"color": Color(0.55, 0.75, 1.0),
+			})
+			continue
+		var doctrine = Doctrines.ALL[doctrine_id]
+		entries.append({
+			"texture": preload("res://art/tomes/tome_journal.png"),
+			"text": "%s\nTactic: %s" % [doctrine.tome, doctrine.name],
+			"color": Color(0.55, 0.75, 1.0),
+		})
+	for gain in star_ups:
+		entries.append({
+			"texture": preload("res://art/status/status_stun.png"),
+			"text": "%s: %s %s\n%s" % [
+				gain.hero, Mastery.DISCIPLINES[gain.discipline].name,
+				"★".repeat(gain.star), gain.label,
+			],
+			"color": Color(0.95, 0.8, 0.35),
+		})
 	for dungeon_id in maps:
 		var mapped = load(RosterSave.DUNGEON_PATHS[dungeon_id])
 		entries.append({

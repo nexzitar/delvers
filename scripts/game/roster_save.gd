@@ -35,6 +35,10 @@ const RECIPE_PATHS := {
 	"iron_shod_boots": "res://resources/recipes/iron_shod_boots.tres",
 	"goblin_work_gauntlets": "res://resources/recipes/goblin_work_gauntlets.tres",
 	"studded_belt": "res://resources/recipes/studded_belt.tres",
+	"iron_greaves": "res://resources/recipes/iron_greaves.tres",
+	"wardens_pauldrons": "res://resources/recipes/wardens_pauldrons.tres",
+	"silk_bracers": "res://resources/recipes/silk_bracers.tres",
+	"weavers_cloak": "res://resources/recipes/weavers_cloak.tres",
 }
 
 const AFFIX_PATHS := {
@@ -78,6 +82,13 @@ const GEAR_PATHS := {
 	"iron_shod_boots": "res://resources/gear/iron_shod_boots.tres",
 	"goblin_work_gauntlets": "res://resources/gear/goblin_work_gauntlets.tres",
 	"studded_belt": "res://resources/gear/studded_belt.tres",
+	"silk_hood": "res://resources/gear/silk_hood.tres",
+	"chitin_shield": "res://resources/gear/chitin_shield.tres",
+	"chitin_armor": "res://resources/gear/chitin_armor.tres",
+	"iron_greaves": "res://resources/gear/iron_greaves.tres",
+	"wardens_pauldrons": "res://resources/gear/wardens_pauldrons.tres",
+	"silk_bracers": "res://resources/gear/silk_bracers.tres",
+	"weavers_cloak": "res://resources/gear/weavers_cloak.tres",
 }
 
 const SKILL_PATHS := {
@@ -92,6 +103,10 @@ const SKILL_PATHS := {
 	"renew": "res://resources/skills/renew.tres",
 	"shield_wall": "res://resources/skills/shield_wall.tres",
 	"thunderclap": "res://resources/skills/thunderclap.tres",
+	"multishot": "res://resources/skills/multishot.tres",
+	"piercing_shot": "res://resources/skills/piercing_shot.tres",
+	"battle_shout": "res://resources/skills/battle_shout.tres",
+	"rally": "res://resources/skills/rally.tres",
 }
 
 ## Items serialize as {id, level, quality} and rebuild deterministically
@@ -119,6 +134,8 @@ static func save(roster, path := SAVE_PATH) -> void:
 				func(s): return s.skill_id if s is SkillDefinition else null
 			),
 			"tactic": hero.tactic,
+			"mastery": hero.mastery,
+			"custom_tree": hero.custom_tree,
 		})
 
 	var data := {
@@ -133,10 +150,13 @@ static func save(roster, path := SAVE_PATH) -> void:
 		"known_recipes": roster.known_recipes,
 		"known_affixes": roster.known_affixes,
 		"known_lore": roster.known_lore,
+		"known_tactics": roster.known_tactics,
+		"known_engineering": roster.known_engineering,
 		"purchased_unlocks": roster.purchased_unlocks,
 		"unlocked_dungeons": roster.unlocked_dungeons,
 		"current_dungeon": roster.current_dungeon,
 		"enemy_priority": roster.enemy_priority,
+		"dungeon_progress": roster.dungeon_progress,
 		"rooms_since_knowledge": roster.rooms_since_knowledge,
 		"seen_enemies": roster.seen_enemies,
 	}
@@ -205,6 +225,21 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		if LORE_PATHS.has(lore_id) and not roster.known_lore.has(lore_id):
 			roster.known_lore.append(lore_id)
 
+	roster.known_tactics = ["nearest"]
+	for tactic_id in data.get("known_tactics", []):
+		if not roster.known_tactics.has(tactic_id):
+			roster.known_tactics.append(tactic_id)
+	roster.known_engineering = []
+	for entry_id in data.get("known_engineering", []):
+		if Doctrines.CAPACITY.has(entry_id) and not roster.known_engineering.has(entry_id):
+			roster.known_engineering.append(entry_id)
+
+	# Veterans predate doctrines: what they have fought with, they keep.
+	if not data.has("known_tactics") and roster.battles_fought > 0:
+		for doctrine_id in Doctrines.ALL:
+			if not roster.known_tactics.has(doctrine_id):
+				roster.known_tactics.append(doctrine_id)
+
 	roster.purchased_unlocks = []
 	for unlock_id in data.get("purchased_unlocks", []):
 		if not roster.purchased_unlocks.has(unlock_id):
@@ -222,6 +257,11 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		if not roster.enemy_priority.has(enemy_id):
 			roster.enemy_priority.append(enemy_id)
 	roster.rooms_since_knowledge = int(data.get("rooms_since_knowledge", 0))
+	roster.dungeon_progress = {}
+	var progress = data.get("dungeon_progress", {})
+	for dungeon_id in progress:
+		if DUNGEON_PATHS.has(dungeon_id):
+			roster.dungeon_progress[dungeon_id] = int(progress[dungeon_id])
 
 	roster.seen_enemies = []
 	for enemy_id in data.get("seen_enemies", []):
@@ -235,6 +275,15 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		elif roster.battles_fought > 0:
 			roster.seen_enemies = ["green_slime", "goblin_archer",
 				"goblin_warrior"]
+
+	# Veterans predate mastery: seasoned delvers start two stars deep
+	# in whatever they are carrying right now.
+	if roster.battles_fought > 0:
+		for hero in roster.heroes:
+			if not hero.mastery.is_empty():
+				continue
+			for discipline in Mastery.active_disciplines(hero):
+				hero.mastery[discipline] = {"xp": 24, "best_xp": 24}
 
 	# A pre-update save may already hold the first victory: the
 	# companion arrives the moment the camp loads.
@@ -259,6 +308,14 @@ static func _restore_hero(entry):
 	for skill_id in entry.get("bonus_skills", []):
 		hero.bonus_skills.append(_skill_from_id(skill_id))
 	hero.tactic = entry.get("tactic", "nearest")
+	hero.custom_tree = entry.get("custom_tree", []) if entry.get("custom_tree", []) is Array else []
+	hero.mastery = {}
+	var mastery = entry.get("mastery", {})
+	for discipline in mastery:
+		hero.mastery[discipline] = {
+			"xp": int(mastery[discipline].get("xp", 0)),
+			"best_xp": int(mastery[discipline].get("best_xp", 0)),
+		}
 	return hero
 
 ## Unknown ids (e.g. content removed in an update) drop the item.
@@ -280,6 +337,9 @@ static func _gear_from_entry(entry):
 
 static func _skill_from_id(skill_id):
 	if skill_id == null:
+		return null
+	# Older saves slotted core techniques; mastery owns them now.
+	if Mastery.is_core(skill_id):
 		return null
 	var path = SKILL_PATHS.get(skill_id)
 	return load(path) if path else null

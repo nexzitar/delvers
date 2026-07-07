@@ -80,12 +80,17 @@ static func roll_enemy_drops(
 		enemy_templates: Array, room: int,
 		known_recipes := [], known_affixes := [], known_lore := [],
 		dungeon: DungeonDefinition = null, unlocked_dungeons := [],
+		tier := 1, known_doctrines := [],
 ) -> Dictionary:
 	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [],
-		"lore": [], "maps": []}
+		"lore": [], "maps": [], "doctrines": []}
+	var seen_doctrines: Array = known_doctrines.duplicate()
+	# Difficulty pays in materials, rarity odds, and tier-gated
+	# knowledge — never in raw item level. Power comes from covering
+	# more slots with the dungeon's answer, not bigger numbers.
 	var item_level = room + (dungeon.level_offset if dungeon else 0)
-	var rare_chance = dungeon.rare_chance if dungeon else 0.01
-	var epic_chance = dungeon.boss_epic_chance if dungeon else 0.03
+	var rare_chance = (dungeon.rare_chance if dungeon else 0.01) + 0.03 * (tier - 1)
+	var epic_chance = (dungeon.boss_epic_chance if dungeon else 0.03) + 0.03 * (tier - 1)
 	var lore_series = dungeon.lore_ids if dungeon else RosterSave.LORE_PATHS.keys()
 	var seen: Array = known_recipes.duplicate()
 	var seen_affixes: Array = known_affixes.duplicate()
@@ -95,14 +100,19 @@ static func roll_enemy_drops(
 		if not template.material_loot.is_empty() \
 				and randf() <= template.material_drop_chance:
 			var material_id = template.material_loot.pick_random()
-			var count = template.material_drop_count + (1 if randf() < 0.25 else 0)
+			var count = template.material_drop_count + (tier - 1) \
+				+ (1 if randf() < 0.25 else 0)
 			drops.materials[material_id] = drops.materials.get(material_id, 0) + count
 
 		# Recipes: rare permanent knowledge (bosses teach something new
 		# whenever anything remains unlearned).
 		if randf() <= template.recipe_drop_chance:
 			var unknown = template.recipe_loot.filter(
-				func(id): return not seen.has(id)
+				func(id):
+					if seen.has(id):
+						return false
+					var recipe = load(RosterSave.RECIPE_PATHS[id])
+					return recipe.min_tier <= tier
 			)
 			if not unknown.is_empty():
 				var recipe_id = unknown.pick_random()
@@ -118,6 +128,16 @@ static func roll_enemy_drops(
 				var affix_id = unknown_affixes.pick_random()
 				drops.affixes.append(affix_id)
 				seen_affixes.append(affix_id)
+
+		# Doctrines: battlefield knowledge, taught by its practitioners.
+		if randf() <= template.doctrine_drop_chance:
+			var unknown_doctrines = template.doctrine_loot.filter(
+				func(id): return not seen_doctrines.has(id)
+			)
+			if not unknown_doctrines.is_empty():
+				var doctrine_id = unknown_doctrines.pick_random()
+				drops.doctrines.append(doctrine_id)
+				seen_doctrines.append(doctrine_id)
 
 		# History: the next unrecovered fragment of THIS dungeon's
 		# expedition, in order — evidence assembles the way a trail would.

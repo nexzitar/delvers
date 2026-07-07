@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/spawn_brood.tres" id="4_brood"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "brood_tender"
+enemy_name = "Brood Tender"
+base_health = 46
+base_attack = 3
+base_attack_interval = 3.6
+move_speed = 60.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_brood")])
+material_loot = Array[String](["silk_thread", "silk_thread", "poison_sac"])
+recipe_loot = Array[String](["silk_hood", "chitin_armor"])
+affix_loot = Array[String](["virulent"])
+doctrine_loot = Array[String](["protect"])
+preferred_row = 1
+armor = 1

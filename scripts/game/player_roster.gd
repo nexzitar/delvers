@@ -45,6 +45,10 @@ var skill_catalog: Array = [
 	preload("res://resources/skills/renew.tres"),
 	preload("res://resources/skills/shield_wall.tres"),
 	preload("res://resources/skills/thunderclap.tres"),
+	preload("res://resources/skills/multishot.tres"),
+	preload("res://resources/skills/piercing_shot.tres"),
+	preload("res://resources/skills/battle_shout.tres"),
+	preload("res://resources/skills/rally.tres"),
 ]
 
 ## Materials are consumed; knowledge is permanent. The camp grows more
@@ -55,12 +59,42 @@ var known_affixes: Array = []
 ## Recovered history (expedition logs etc.) — pure memory, shelved in
 ## the camp library.
 var known_lore: Array = []
+## Battlefield doctrines recovered (tactic ids). A fresh guild knows
+## only how to strike the nearest foe.
+var known_tactics: Array = ["nearest"]
+## Engineering knowledge (doctrine capacity tiers, future Engineer's
+## Notebooks). No capacity, no custom doctrine: zero nodes.
+var known_engineering: Array = []
+
+func doctrine_capacity() -> int:
+	var nodes := 0
+	for entry_id in known_engineering:
+		if Doctrines.CAPACITY.has(entry_id):
+			nodes = maxi(nodes, int(Doctrines.CAPACITY[entry_id].nodes))
+	return nodes
 ## Guild restoration purchases (see GuildUnlocks). The "restoration"
 ## marker records the free first-victory companion.
 var purchased_unlocks: Array = []
 ## Dungeons the guild holds maps for; delves target current_dungeon.
 var unlocked_dungeons: Array = ["darkwood"]
 var current_dungeon := "darkwood"
+## Chosen difficulty for the current delve, and the highest tier
+## cleared per dungeon (clearing tier N unlocks N+1, up to MAX_TIER).
+## Old dungeons never go stale: higher tiers scale foes AND spoils.
+var current_tier := 1
+var dungeon_progress := {}
+
+const MAX_TIER := 5
+
+func highest_cleared(dungeon_id: String) -> int:
+	return int(dungeon_progress.get(dungeon_id, 0))
+
+func available_tier(dungeon_id: String) -> int:
+	return mini(highest_cleared(dungeon_id) + 1, MAX_TIER)
+
+func record_clear(dungeon_id: String, tier: int):
+	if tier > highest_cleared(dungeon_id):
+		dungeon_progress[dungeon_id] = tier
 ## Party focus order (enemy_ids, first = kill first) for the
 ## "priority" and "spread" tactics.
 var enemy_priority: Array = []
@@ -94,11 +128,15 @@ var delve_recipes: Array = []
 var delve_affixes: Array = []
 var delve_lore: Array = []
 var delve_maps: Array = []
+var delve_doctrines: Array = []
+## Disciplines practiced this delve (rust skips them at banking).
+var delve_trained := {}
 var delve_health := {}
 
-func start_delve(dungeon_id := ""):
+func start_delve(dungeon_id := "", tier := 1):
 	if dungeon_id != "" and unlocked_dungeons.has(dungeon_id):
 		current_dungeon = dungeon_id
+	current_tier = clampi(tier, 1, available_tier(current_dungeon))
 	delve_room = 1
 	delve_loot = []
 	delve_materials = {}
@@ -106,6 +144,8 @@ func start_delve(dungeon_id := ""):
 	delve_affixes = []
 	delve_lore = []
 	delve_maps = []
+	delve_doctrines = []
+	delve_trained = {}
 	delve_health = {}
 
 func bank_delve_loot():
@@ -123,6 +163,16 @@ func bank_delve_loot():
 	for lore_id in delve_lore:
 		if not known_lore.has(lore_id):
 			known_lore.append(lore_id)
+	for doctrine_id in delve_doctrines:
+		if Doctrines.CAPACITY.has(doctrine_id):
+			if not known_engineering.has(doctrine_id):
+				known_engineering.append(doctrine_id)
+		elif not known_tactics.has(doctrine_id):
+			known_tactics.append(doctrine_id)
+	# Rust: what this delve didn't practice, fades a little. The best
+	# mark never moves.
+	for hero in heroes:
+		Mastery.rust(hero, delve_trained.keys())
 	for dungeon_id in delve_maps:
 		if RosterSave.DUNGEON_PATHS.has(dungeon_id) \
 				and not unlocked_dungeons.has(dungeon_id):
@@ -135,6 +185,7 @@ func bank_delve_loot():
 	delve_affixes = []
 	delve_lore = []
 	delve_maps = []
+	delve_doctrines = []
 	delve_room = 0
 	sort_gear_stash()
 	check_milestones()
@@ -349,6 +400,21 @@ func first_empty_bonus_skill_slot(hero_index: int) -> int:
 			return i + 1
 	return -1
 
+## Practice: every cleared room trains each fielded hero's active
+## disciplines. Returns star-up announcements for the spoils toast.
+func train_party(hero_indices: Array, amount: int) -> Array:
+	var unlocked := []
+	for i in hero_indices:
+		var hero = heroes[i]
+		for discipline in Mastery.active_disciplines(hero):
+			delve_trained[discipline] = true
+			for gain in Mastery.train(hero, discipline, amount):
+				gain["hero"] = hero.hero_name
+				unlocked.append(gain)
+	if autosave:
+		RosterSave.save(self)
+	return unlocked
+
 ## Called when a battle begins: whatever walks out of the dark is
 ## seen, win or lose.
 func record_seen(enemy_ids: Array):
@@ -361,11 +427,24 @@ func record_seen(enemy_ids: Array):
 		RosterSave.save(self)
 
 func set_tactic(hero_index: int, tactic: String):
+	if not known_tactics.has(tactic):
+		return
 	heroes[hero_index].tactic = tactic
 	if autosave:
 		RosterSave.save(self)
 
 func equip_bonus_skill(hero_index: int, skill: SkillDefinition, slot: int) -> bool:
+	# Core techniques are owned by mastery: a whirlwind needs a sword
+	# in hand and the stars to back it, not a slot.
+	if skill != null and Mastery.is_core(skill.skill_id):
+		return false
+	# One technique, one slot: no doubling up on Heal.
+	if skill != null:
+		var hero = heroes[hero_index]
+		for i in hero.bonus_skills.size():
+			if i != slot and hero.bonus_skills[i] is SkillDefinition \
+					and hero.bonus_skills[i].skill_id == skill.skill_id:
+				return false
 	if slot < 1 or slot > bonus_skill_slots:
 		return false
 	var hero = heroes[hero_index]

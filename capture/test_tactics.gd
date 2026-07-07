@@ -82,11 +82,22 @@ func _ready():
 	sighted.free()
 	vet.free()
 
+	# Guard the Line: the tank strikes whoever heeds them least.
+	hero.tactic = "guard"
+	near_warrior.threat_table[hero.entity_id] = 50.0
+	far_spider.threat_table[hero.entity_id] = 2.0
+	combat.combat_time += 1.0
+	combat.validate_target(hero)
+	assert(hero.target_id == far_spider.entity_id,
+		"the tank teaches the inattentive")
+
 	# Tactic and focus order survive a save round trip.
 	var roster = load("res://scripts/game/player_roster.gd").new()
 	roster.autosave = false
 	roster._build_heroes()
 	roster._build_stash()
+	# Doctrines recovered (their gating is test_doctrines' business).
+	roster.known_tactics = ["nearest", "lowest", "priority", "spread", "guard"]
 	roster.set_tactic(0, "spread")
 	roster.enemy_priority = ["venomous_spider", "goblin_archer"]
 	roster.rooms_since_knowledge = 2

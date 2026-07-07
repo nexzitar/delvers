@@ -2,9 +2,86 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #10 — Mastery: identity through practice *(open)*
+
+### Added
+- **Doctrine Complexity is knowledge**: custom doctrine is measured
+  in nodes (one per rule, one per condition) and capacity is
+  recovered like everything else — Battlefield Doctrine I (4 nodes,
+  the Slime King teaches it), II (8, the Broodmother). A fresh guild
+  holds zero capacity; over-budget doctrine falls back to the
+  pre-authored tactic. A veteran guild literally thinks in longer
+  plans.
+- **The shared behaviour-tree engine** (`BehaviorTree`): built-in
+  tactics are now pre-authored trees — plain JSON rule lists with a
+  targeting channel and a casting channel ("IF enemy count >= 4 THEN
+  Thunderclap") — full parity with the old scorer, and entities carry
+  an optional custom tree: the exact data Scratch and the Engineer's
+  Python will write. **Protect the Healer** ships as the first
+  composite tree (hunts whatever hunts the mender), taught by the
+  Brood Tender.
+- **Battlefield Doctrines** (first slice of the recovered-knowledge
+  progression, spec: 2026-07-07-recovered-knowledge-progression.md):
+  tactics are knowledge now, not menu options. A fresh guild knows
+  only Nearest Foe; the rest drop as doctrine tomes from their
+  practitioners — warriors teach the Shield-Line (Guard), archers the
+  Culling Shot (Finish the Wounded), spiders the Creeping Venom
+  (Spread), bosses the Marked Prey (Focus Order). Doctrines shelve in
+  the Library with their lore; unrecovered ones show as hints in the
+  Tactics tab; veteran saves keep everything.
+- **Discipline Mastery** (design: docs/superpowers/specs/
+  2026-07-06-mastery-identity-training.md): no classes — the worn
+  loadout decides what trains (Sword, Shield, Bow; slotted healing
+  trains Restoration). Every cleared room is practice; the boss room
+  counts fourfold.
+- **Stars unlock techniques, not numbers**: Sword ★★ Cleave, ★★★
+  Weapon Familiarity, ★★★★ Hamstring, ★★★★★ Whirlwind (each
+  discipline has its track). Core techniques join combat
+  automatically — no slot cost; the Guild's Technique Slots remain
+  free customization on top.
+- **Rusty, not forgotten**: unpracticed disciplines fade a little per
+  delve, but the highest mastery ever earned never moves — and
+  relearning below your best is three times faster. The loadout shows
+  each delver's history: filled stars current, hollow gold dormant,
+  dim empty.
+- Star-ups announce themselves in the spoils toast ("Garrick: Sword
+  ★★ — Cleave!"). Veteran saves seed their current kit at two stars.
+- **Tanking tools**: Battle Shout is LOUD — it generates threat on
+  every engaged enemy (10 per ally emboldened, split across the
+  pack), making it Garrick's AoE aggro opener. And the new **Guard
+  the Line** tactic strikes whoever holds the least threat toward
+  this delver, so the tank actively keeps every eye on themselves.
+- **Guild techniques for everyone**: Battle Shout (the whole party
+  hits harder for a while — new EMPOWER status with a badge) and
+  Rally (a heartening cry that mends the whole party) join Charge and
+  Heal in the slot catalog — a back-row archer finally has real
+  choices. One technique, one slot: doubling up on Heal is refused.
+- **Mastery owns the core techniques**: Cleave, Whirlwind, Multishot,
+  Shield Wall and kin cannot be slotted — a whirlwind needs a sword
+  in hand and the stars to back it. Technique Slots hold guild
+  techniques (Charge, Heal); the catalog dims core entries and their
+  tooltips name the discipline and star that earn them. Old saves
+  that slotted core techniques come back clean.
+
 ## PR #9 — The Spider Nest, Tactics, and a sharper Forge *(open)*
 
 ### Added
+- **The Brood Tender** — the Nest's lesson made flesh: a swollen
+  spider that births spiderlings into the fight (real mid-combat
+  SPAWN events, capped brood), anchored in every nest room and beside
+  the Broodmother. Kill the spawner first or drown: focus order and
+  AoE are the curriculum.
+- **Difficulty tiers** (per dungeon, clearing tier N unlocks N+1, up
+  to V): higher tiers raise enemy levels and pay in materials, rarity
+  odds, and **tier-gated recipes** — never in raw item level. Power
+  comes from covering more slots with the dungeon's answer.
+- **Every dungeon has an answer, found inside it**: the Darkwood's
+  threat is steel and its gear is armor; the Nest's poison ignores
+  armor, so nest gear carries the new **Poison Resist** stat
+  (Silk-Lined Hood, Chitin Shield/Armor get their own bases). Higher
+  tiers teach more coverage: Iron Greaves (Darkwood II), Warden's
+  Pauldrons (III), Silk-Wrapped Bracers (Nest II), Weaver's Cloak
+  (III) — four new slots come alive.
 - **The multi-enemy toolkit** (playtest: "5–6 enemies and no way to
   deal with it"): five new skills — **Cleave** (carries into two foes
   beside the target), **Whirlwind** (hits everything around you; holds
@@ -16,6 +93,10 @@ Notable changes per pull request. Newest first.
 - Three gear slots come alive: craftable **Iron-Shod Boots**,
   **Goblin-Work Gauntlets**, and **Studded Belt** (new recipes with
   tomes, taught by spiders, archers, and warriors).
+- **The archer kit**: Multishot (a fan of arrows into the nearest
+  foes — held for 2+ targets) and Piercing Shot (a heavy arrow that
+  ignores armor — the answer to chitin walls), both scaling with bow
+  damage, with quick-draw animations and arrow streaks.
 - **Salvaging**: drag gear onto the salvage bin in the Gear tab —
   materials come back (about half the recipe bill, plus a rare-quality
   bonus), and **studying an unknown enchantment teaches that affix
@@ -47,6 +128,10 @@ Notable changes per pull request. Newest first.
   local settings file had master volume saved at 0).
 
 ### Changed
+- **Worn gear shows on the body**: shoulders, cloak, chest plate,
+  belt (with buckle), gauntlets, bracers, greaves, and boots all
+  render on the rig, colored by gear family — a kitted delver finally
+  looks the part (basic now, detailed later).
 - **Combat readability**: status badges (poison drop, daze spiral,
   stun star, web, snowflake, renew cross, shield) ride above heads
   while a status runs; damage numbers are team-colored (hits on your
@@ -76,6 +161,9 @@ Notable changes per pull request. Newest first.
   off-hand starts half a beat out of phase, so strikes alternate.
 - Theater victory saves respect `PlayerRoster.autosave` (capture
   harnesses can no longer clobber a real save).
+- Knowledge pity leaked tier-gated recipes at tier 1 (playtest:
+  greaves and pauldrons from a Darkwood I run) — pity honors
+  min_tier like every other drop now.
 - **Encounters ballooned within a session**: Array(typed) shares the
   resource buffer, so every encounter roll leaked its picks into the
   cached dungeon resource — rooms grew warrior-stuffed over a play

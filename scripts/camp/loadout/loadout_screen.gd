@@ -49,6 +49,7 @@ var hero_index := -1
 # Rebuilt containers kept around for refresh().
 var _name_edit: LineEdit
 var _role_label: Label
+var _mastery_box: VBoxContainer
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
 var _gear_grid: GridContainer
@@ -62,6 +63,8 @@ const TACTICS := [
 	["lowest", "Finish the Wounded", "Always strikes whoever has the least health left."],
 	["priority", "Focus Order", "Follows the party's focus order below."],
 	["spread", "Spread the Venom", "Poisons uncovered foes first, then follows the focus order."],
+	["guard", "Guard the Line", "Strikes whoever heeds this delver least - the tank keeps every eye on them."],
+	["protect", "Protect the Healer", "Hunts whatever hunts the mender; otherwise the nearest foe."],
 ]
 var _right_tabs: TabContainer
 ## Clicked recipe: its crafted-item preview stays pinned in the
@@ -225,6 +228,13 @@ func _build_left_panel():
 	_role_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_role_label)
 
+	# Mastery: the delver's history in stars — filled current, hollow
+	# gold dormant, dim empty.
+	_mastery_box = VBoxContainer.new()
+	_mastery_box.add_theme_constant_override("separation", 2)
+	_mastery_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(_mastery_box)
+
 	# Weapon row.
 	var weapons = HBoxContainer.new()
 	weapons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -341,7 +351,10 @@ func _build_right_tabs():
 	grid.columns = 4
 	skill_box.add_child(grid)
 	for skill in PlayerRoster.skill_catalog:
-		grid.add_child(_make_icon("skill", skill, "catalog"))
+		var icon = _make_icon("skill", skill, "catalog")
+		if Mastery.is_core(skill.skill_id):
+			icon.modulate = Color(0.55, 0.55, 0.55)
+		grid.add_child(icon)
 
 	# Forge tab: known recipes and the material stash. Materials are
 	# consumed; recipes are the camp's permanent knowledge.
@@ -390,12 +403,16 @@ func _fill_tactics():
 	picker.add_theme_font_override("font", FONT)
 	picker.add_theme_font_size_override("font_size", 18)
 	var description = Label.new()
+	var idx := 0
 	for i in TACTICS.size():
+		if not PlayerRoster.known_tactics.has(TACTICS[i][0]):
+			continue
 		picker.add_item(TACTICS[i][1])
-		picker.set_item_metadata(i, TACTICS[i][0])
+		picker.set_item_metadata(idx, TACTICS[i][0])
 		if TACTICS[i][0] == hero.tactic:
-			picker.select(i)
+			picker.select(idx)
 			description.text = TACTICS[i][2]
+		idx += 1
 	picker.item_selected.connect(func(index):
 		PlayerRoster.set_tactic(hero_index, picker.get_item_metadata(index))
 		UiSounds.click()
@@ -405,6 +422,16 @@ func _fill_tactics():
 	description.add_theme_color_override("font_color", DIM)
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tactics_box.add_child(description)
+
+	# Doctrines still buried: the guild knows what it has recovered.
+	for doctrine_id in Doctrines.ALL:
+		if PlayerRoster.known_tactics.has(doctrine_id):
+			continue
+		var hint = Label.new()
+		hint.text = "?????  -  recover the %s" % Doctrines.ALL[doctrine_id].tome
+		hint.add_theme_font_size_override("font_size", 13)
+		hint.add_theme_color_override("font_color", DIM)
+		_tactics_box.add_child(hint)
 
 	_tactics_box.add_child(_title("Focus Order"))
 	var hint = Label.new()
@@ -512,6 +539,31 @@ func _fill_library():
 		_library_box.add_child(bare)
 	for tome in tomes:
 		_library_box.add_child(_make_tome_row(tome))
+
+	var recovered_doctrines := []
+	for doctrine_id in PlayerRoster.known_tactics:
+		if Doctrines.ALL.has(doctrine_id):
+			recovered_doctrines.append(doctrine_id)
+	for entry_id in PlayerRoster.known_engineering:
+		if Doctrines.CAPACITY.has(entry_id):
+			var capacity = Doctrines.CAPACITY[entry_id]
+			_library_box.add_child(_make_tome_row({
+				"icon": preload("res://art/tomes/tome_journal.png"),
+				"name": capacity.tome,
+				"teaches": "Doctrine capacity: %d nodes" % capacity.nodes,
+				"lore": capacity.lore,
+				"color": Color(0.55, 0.75, 1.0),
+			}))
+	if not recovered_doctrines.is_empty():
+		_library_box.add_child(_title("Doctrines"))
+		for doctrine_id in recovered_doctrines:
+			var doctrine = Doctrines.ALL[doctrine_id]
+			_library_box.add_child(_make_tome_row({
+				"icon": preload("res://art/tomes/tome_journal.png"),
+				"name": doctrine.tome, "teaches": doctrine.name,
+				"lore": doctrine.lore,
+				"color": Color(0.55, 0.75, 1.0),
+			}))
 
 	var logs := []
 	for lore_id in RosterSave.LORE_PATHS:
@@ -885,11 +937,47 @@ func refresh():
 	for pos in _equip_slots.keys():
 		_fill_equip_slot(pos)
 	_fill_skill_slots()
+	_fill_mastery()
 	_fill_gear_grid()
 	_fill_forge()
 	_fill_library()
 	_fill_tactics()
 	_update_preview()
+
+func _fill_mastery():
+	_clear(_mastery_box)
+	var hero = PlayerRoster.heroes[hero_index]
+	var active = Mastery.active_disciplines(hero)
+	for discipline in Mastery.DISCIPLINES:
+		var current = Mastery.stars(hero, discipline)
+		var best = Mastery.best_stars(hero, discipline)
+		if best == 0 and not active.has(discipline):
+			continue
+		var row = HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 2)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var name_label = Label.new()
+		name_label.text = Mastery.DISCIPLINES[discipline].name
+		name_label.add_theme_font_override("font", FONT)
+		name_label.add_theme_font_size_override("font_size", 15)
+		name_label.add_theme_color_override("font_color",
+			GOLD if active.has(discipline) else DIM)
+		name_label.custom_minimum_size = Vector2(105, 0)
+		row.add_child(name_label)
+		for star in range(1, Mastery.MAX_STARS + 1):
+			var icon = TextureRect.new()
+			if star <= current:
+				icon.texture = preload("res://art/status/star_full.png")
+			elif star <= best:
+				icon.texture = preload("res://art/status/star_dormant.png")
+			else:
+				icon.texture = preload("res://art/status/star_empty.png")
+			icon.custom_minimum_size = Vector2(18, 18)
+			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(icon)
+		_mastery_box.add_child(row)
 
 func _role_text() -> String:
 	var ranged = PlayerRoster.is_ranged(hero_index)
@@ -1159,6 +1247,9 @@ func _tooltip_gear(gear: GearDefinition):
 		_tip_line("%d%% Crit" % roundi(gear.crit_rating * 100), PARCHMENT, 18, 1)
 	if gear.spell_power != 0:
 		_tip_line("+%d Spell Power" % gear.spell_power, PARCHMENT, 18, 1)
+	if gear.poison_resist > 0.0:
+		_tip_line("%d%% Poison Resist" % roundi(gear.poison_resist * 100),
+			Color(0.7, 0.5, 0.85), 18, 1)
 
 	if gear.affix_id != "" and RosterSave.AFFIX_PATHS.has(gear.affix_id):
 		var affix = load(RosterSave.AFFIX_PATHS[gear.affix_id])
@@ -1260,7 +1351,17 @@ func _tooltip_twohand(main: GearDefinition):
 		_tip_cmp("Equipped weapons", GOLD, 22)
 		_tip_cmp_line("Main hand", main, true)
 
+func _tooltip_skill_core_line(skill):
+	var req = Mastery.core_requirement(skill.skill_id)
+	if req == null:
+		return
+	_tip_line("Core technique: %s %s" % [
+		Mastery.DISCIPLINES[req.discipline].name, "*".repeat(req.star)
+	], Color(0.95, 0.8, 0.35), 15, 0)
+	_tip_line("Earned by practice, never slotted.", DIM, 13, 0)
+
 func _tooltip_skill(skill: SkillDefinition):
+	_tooltip_skill_core_line(skill)
 	_tip_line(skill.skill_name, ItemQuality.color(skill.quality), 26, 0)
 	_tip_line(ItemQuality.tier_name(skill.quality), ItemQuality.color(skill.quality), 16, 0)
 	var ranged = skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE

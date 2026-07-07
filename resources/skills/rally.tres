@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/rally.gd" id="2_behavior"]
+[ext_resource type="Texture2D" path="res://art/skills/skill_rally.png" id="3_icon"]
+
+[resource]
+resource_name = "Rally"
+script = ExtResource("1_skill")
+skill_id = "rally"
+skill_name = "Rally"
+icon = ExtResource("3_icon")
+behavior_script = ExtResource("2_behavior")
+skill_type = 2
+cooldown = 18.0
+mana_cost = 4
+base_min_damage = 4
+base_max_damage = 6

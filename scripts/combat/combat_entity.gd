@@ -26,6 +26,7 @@ var block_chance: float = 0.0
 var dodge_chance: float = 0.0
 var crit_chance: float = 0.0
 var spell_power: int = 0
+var poison_resist: float = 0.0
 var gear := []
 var equipped := {}
 
@@ -45,6 +46,11 @@ var threat_table: Dictionary = {}
 ## time it re-evaluates its choice.
 var tactic := "nearest"
 var retarget_at: float = 0.0
+## Custom behaviour tree (see BehaviorTree). Empty = the tactic's
+## pre-authored tree. This is what Scratch and Python will write.
+var behavior_tree: Array = []
+## Entity that summoned this one (Brood Tenders cap their brood).
+var spawned_by: int = -1
 var in_combat: bool = false
 var statuses: Array = []
 var is_casting: bool = false
@@ -92,7 +98,7 @@ func tick_statuses(delta, combat_state):
 	for s in statuses:
 		s.remaining -= delta
 		if s.kind == StatusEffect.Kind.POISON and alive:
-			s.accum += s.magnitude * delta
+			s.accum += s.magnitude * delta * (1.0 - clampf(poison_resist, 0.0, 0.9))
 			if s.accum >= 1.0:
 				var dmg = int(s.accum)
 				s.accum -= dmg
@@ -107,6 +113,9 @@ func tick_statuses(delta, combat_state):
 				current_health += mend
 				combat_state.log_hot(self, s, mend)
 		if s.remaining <= 0.0:
+			if s.kind == StatusEffect.Kind.EMPOWER:
+				attack_power -= int(s.magnitude)
+				base_attack_power -= int(s.magnitude)
 			combat_state.log_buff_expired(self, s)
 	statuses = statuses.filter(func(s): return s.remaining > 0.0)
 
@@ -207,6 +216,8 @@ func _try_special_skills(combat_state) -> bool:
 			continue
 		if combat_state.combat_time < skill_ready_at.get(skill.skill_id, 0.0):
 			continue
+		if not BehaviorTree.allows_cast(combat_state, self, skill.skill_id):
+			continue
 		if skill.behavior_script.try_use(combat_state, self, skill):
 			skill_ready_at[skill.skill_id] = combat_state.combat_time + skill.cooldown
 			return true
@@ -272,7 +283,7 @@ func perform_off_hand_attack(combat_state, target):
 	var damage = maxi(1, floori(OFF_HAND_FACTOR * raw))
 	_strike(combat_state, skills[0], target, damage, true)
 
-func _strike(combat_state, skill, target, damage, off_hand := false):
+func _strike(combat_state, skill, target, damage, off_hand := false, pierce := false):
 	if target == null:
 		return
 
@@ -287,7 +298,8 @@ func _strike(combat_state, skill, target, damage, off_hand := false):
 		blocked = (randf() < target.block_chance)
 		if blocked:
 			damage = maxi(1, ceili(damage * 0.5))
-		damage = maxi(1, damage - target.armor)
+		if not pierce:
+			damage = maxi(1, damage - target.armor)
 		# Shield Wall and its kin shave what remains.
 		damage = maxi(1, roundi(damage * target.damage_taken_multiplier()))
 	else:

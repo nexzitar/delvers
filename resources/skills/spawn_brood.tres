@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/combat/skills/spawn_brood.gd" id="2_behavior"]
+
+[resource]
+script = ExtResource("1_skill")
+skill_id = "spawn_brood"
+skill_name = "Spawn Brood"
+behavior_script = ExtResource("2_behavior")
+cooldown = 8.0

@@ -16,6 +16,11 @@ func _init():
 	_save(_renew(), "res://art/skills/skill_renew.png")
 	_save(_shield_wall(), "res://art/skills/skill_shield_wall.png")
 	_save(_thunderclap(), "res://art/skills/skill_thunderclap.png")
+	_save(_multishot(), "res://art/skills/skill_multishot.png")
+	_save(_piercing_shot(), "res://art/skills/skill_piercing_shot.png")
+	_save(_battle_shout(), "res://art/skills/skill_battle_shout.png")
+	_save(_rally(), "res://art/skills/skill_rally.png")
+	_save(_badge_empower(), "res://art/status/status_empower.png")
 	_save(_badge_poison(), "res://art/status/status_poison.png")
 	_save(_badge_daze(), "res://art/status/status_daze.png")
 	_save(_badge_stun(), "res://art/status/status_stun.png")
@@ -23,6 +28,9 @@ func _init():
 	_save(_badge_chill(), "res://art/status/status_chill.png")
 	_save(_badge_renew(), "res://art/status/status_renew.png")
 	_save(_badge_fortify(), "res://art/status/status_fortify.png")
+	_save(_star(Color("f0c542"), true), "res://art/status/star_full.png")
+	_save(_star(Color("b0973a"), false), "res://art/status/star_dormant.png")
+	_save(_star(Color("4a463c"), true), "res://art/status/star_empty.png")
 	print("icons written")
 	quit()
 
@@ -248,4 +256,82 @@ func _badge_fortify() -> Image:
 		var half = 9.0 if p.y < 17.0 else 9.0 * (1.0 - (p.y - 17.0) / 10.0)
 		if absf(p.x - 16.0) < half:
 			return Color("d8c684")
+		return null)
+
+## A fan of three arrows.
+func _multishot() -> Image:
+	var img = _tile(Color("2c3420"), Color("1a2012"), Color("50663a"))
+	for i in 3:
+		var a = -PI / 2 + (i - 1) * 0.45
+		var dir = Vector2(cos(a), sin(a))
+		var base = Vector2(C, 50)
+		var tip = base + dir * 34.0
+		_paint(img, func(p):
+			return _dist_to_segment(p, base, tip) < 2.0, Color("d8ceb0"))
+		_paint(img, func(p):
+			return p.distance_to(tip) < 3.2, Color("e8e0c8"))
+	return img
+
+## One heavy arrow through a plate.
+func _piercing_shot() -> Image:
+	var img = _tile(Color("34302a"), Color("201e18"), Color("5e5844"))
+	_paint(img, func(p):
+		return absf(p.x - C) < 9.0 and absf(p.y - C) < 12.0, Color("6a7078"))
+	_paint(img, func(p):
+		return _dist_to_segment(p, Vector2(10, 44), Vector2(52, 18)) < 2.4,
+		Color("ffe27a"))
+	_paint(img, func(p):
+		return p.distance_to(Vector2(52, 18)) < 4.0, Color("ffe27a"))
+	return img
+
+## A five-point star; hollow variants keep only the outline.
+func _star(tint: Color, filled: bool) -> Image:
+	return _badge(func(p):
+		var c := Vector2(16, 17)
+		var d = p - c
+		var r = d.length()
+		if r < 0.5:
+			return tint if filled else null
+		var a = atan2(d.y, d.x) + PI / 2
+		var spikes = 5.0
+		var t = fposmod(a, TAU / spikes) / (TAU / spikes)
+		var edge = lerpf(13.0, 5.5, absf(t - 0.5) * 2.0)
+		edge = 13.0 - absf(t - 0.5) * 2.0 * 7.5
+		if filled:
+			return tint if r <= edge else null
+		if absf(r - edge) < 1.6:
+			return tint
+		return null)
+
+## A raised banner with sound lines.
+func _battle_shout() -> Image:
+	var img = _tile(Color("40261a"), Color("28160c"), Color("74452a"))
+	_paint(img, func(p):
+		return absf(p.x - 24.0) < 2.2 and p.y > 14.0 and p.y < 50.0, Color("d8c684"))
+	_paint(img, func(p):
+		return p.x >= 26.0 and p.x <= 44.0 and p.y >= 16.0 and p.y <= 30.0 \
+			and (p.x - 26.0) < (32.0 - p.y) * 2.4 + 18.0, Color("c04a3a"))
+	for i in 3:
+		_paint(img, func(p):
+			return _dist_to_segment(p, Vector2(46, 34 + i * 5),
+				Vector2(54, 30 + i * 6)) < 1.5, Color("f0d05a"))
+	return img
+
+## Two hearts mended as one.
+func _rally() -> Image:
+	var img = _tile(Color("22381e"), Color("142212"), Color("3e6a38"))
+	for off in [-8.0, 8.0]:
+		_paint(img, func(p):
+			var v = absf(p.x - C - off) < 2.4 and absf(p.y - 32.0) < 8.0
+			var h = absf(p.y - 32.0) < 2.4 and absf(p.x - C - off) < 8.0
+			return v or h, Color("a8dc8a") if off < 0 else Color("74b060"))
+	return img
+
+func _badge_empower() -> Image:
+	return _badge(func(p):
+		var up = absf(p.x - 16.0) < 2.2 and p.y > 8.0 and p.y < 24.0
+		var left = _dist_to_segment(p, Vector2(16, 8), Vector2(9, 15)) < 2.0
+		var right = _dist_to_segment(p, Vector2(16, 8), Vector2(23, 15)) < 2.0
+		if up or left or right:
+			return Color("f0a04a")
 		return null)
