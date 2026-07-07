@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "sprung_boots"
+recipe_name = "Sprung Boots"
+tome_name = "Footwork of the Assembly Floor"
+tome_lore = "The floor crews never stood where the piston landed. The boots remember the step."
+result_gear_id = "sprung_boots"
+result_item_level = 24
+result_quality = 1
+costs = {"leather": 2, "cog_wheel": 2, "brass_fitting": 2}
+min_tier = 2

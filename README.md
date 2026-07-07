@@ -22,6 +22,8 @@ Fifty-six seconds, captured entirely from the live game: the abandoned camp, the
 
 ![The Spider Nest](docs/screenshots/battle_nest.png)
 
+![The Sunken Workshop](docs/screenshots/battle_workshop.png)
+
 | Hero loadout & mastery | The Forge |
 |------------------------|-----------|
 | ![Hero loadout](docs/screenshots/loadout_open.png) | ![The Forge](docs/screenshots/forge.png) |
@@ -147,7 +149,7 @@ New content is data plus (sometimes) a small behavior script:
 | Save / persistence (+ Reset Save) | Working |
 | Scratch-style block editor + "View Code" | Planned (engine ready) |
 | Engineer's Notebooks (scripting as recovered knowledge) | Planned |
-| Dungeon 3 (threat/answer/lesson pending design) | Planned |
+| Dungeon 3: The Sunken Workshop (pistons pierce armor; evasion answers) | Working |
 | Sound | Procedural placeholder audio (no composed music yet) |
 
 ## Requirements
@@ -213,15 +215,15 @@ Combat is split into two layers:
 
 | Kind | Count | Notes |
 |------|-------|-------|
-| Dungeons | 2 | The Darkwood, The Spider Nest — five difficulty tiers each |
-| Enemies | 9 | incl. two bosses (Slime King, The Broodmother) and the spawning Brood Tender |
+| Dungeons | 3 | The Darkwood, The Spider Nest, The Sunken Workshop — five difficulty tiers each, each with a threat, an answer, and a lesson |
+| Enemies | 14 | incl. three bosses (Slime King, The Broodmother, The Foreman), the spawning Brood Tender, and piston-swinging constructs |
 | Techniques | 15 | 9 mastery-owned cores + guild techniques (Charge, Heal, Battle Shout, Rally) |
 | Disciplines | 4 | Sword, Shield, Bow, Restoration — five stars each |
-| Recipes | 15 | every gear slot craftable, tier-gated coverage per dungeon |
+| Recipes | 18 | every gear slot craftable, tier-gated coverage per dungeon |
 | Affixes | 5 | Virulent, Frostforged, Flaming, Quick, Guarding — learnable, salvage-studied |
-| Materials | 12 | each owned by an enemy; bosses drop the royal ones |
-| Doctrines | 6 tactics + 3 capacity tiers | recovered, never listed before they're found |
-| Lore | 8 expedition-log fragments | the Black Hollow's trail, foreshadowing what's still buried |
+| Materials | 15 | each owned by an enemy; bosses drop the royal ones |
+| Doctrines | 6 tactics + 3 capacity tiers + 2 engineering tools | recovered, never listed before they're found |
+| Lore | 12 expedition-log fragments | the Black Hollow's trail, foreshadowing what's still buried |
 
 ## License
 

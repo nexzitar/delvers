@@ -8,6 +8,29 @@ const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 const SlimeRig = preload("res://scripts/theater3d/slime_rig.gd")
 const SpiderRig = preload("res://scripts/theater3d/spider_rig.gd")
 
+## Constructs: the old guild's machines, built from the delver frame
+## in brass and gunmetal - the worn-gear boxes read as plating.
+const SENTINEL_OPTS := {
+	"hair": null, "skin": Color(0.45, 0.42, 0.38),
+	"tunic": Color(0.4, 0.34, 0.24),
+	"chest_plate": Color(0.55, 0.42, 0.25),
+	"shoulders": Color(0.5, 0.38, 0.22),
+	"gauntlets": Color(0.42, 0.4, 0.36), "greaves": Color(0.42, 0.4, 0.36),
+	"sword": true,
+}
+const THROWER_OPTS := {
+	"hair": null, "skin": Color(0.5, 0.47, 0.42),
+	"tunic": Color(0.32, 0.3, 0.28),
+	"chest_plate": Color(0.5, 0.4, 0.26), "bracers": Color(0.55, 0.42, 0.25),
+}
+const FOREMAN_OPTS := {
+	"hair": null, "skin": Color(0.4, 0.36, 0.3),
+	"tunic": Color(0.45, 0.36, 0.2),
+	"chest_plate": Color(0.62, 0.47, 0.26), "shoulders": Color(0.6, 0.45, 0.24),
+	"gauntlets": Color(0.5, 0.46, 0.4), "greaves": Color(0.5, 0.46, 0.4),
+	"belt_trim": Color(0.6, 0.5, 0.3), "sword": true,
+}
+
 const GOBLIN_OPTS := {
 	"bow": true, "ears": true, "hair": null,
 	"skin": Color("7aa54e"), "tunic": Color("8a4b3a"),
@@ -80,6 +103,29 @@ static func hero_opts(equipped: Dictionary) -> Dictionary:
 
 static func build_enemy(template) -> Node3D:
 	match template.enemy_id:
+		"scrap_sentinel":
+			var sentinel = DelverRig.new(SENTINEL_OPTS)
+			sentinel.scale = Vector3.ONE * 1.15
+			return sentinel
+		"cog_thrower":
+			return DelverRig.new(THROWER_OPTS)
+		"foreman":
+			var foreman = DelverRig.new(FOREMAN_OPTS)
+			foreman.scale = Vector3.ONE * 1.5
+			return foreman
+		"oil_slick":
+			return SlimeRig.new({
+				"body": Color(0.14, 0.13, 0.12),
+				"body_dark": Color(0.08, 0.08, 0.09),
+			})
+		"rust_mite":
+			var mite = SpiderRig.new({
+				"chitin": Color(0.52, 0.3, 0.16),
+				"chitin_dark": Color(0.36, 0.2, 0.1),
+				"eyes": Color(0.95, 0.7, 0.2),
+			})
+			mite.scale = Vector3.ONE * 0.62
+			return mite
 		"green_slime":
 			return SlimeRig.new()
 		"slime_king":

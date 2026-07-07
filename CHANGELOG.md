@@ -5,6 +5,17 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **The Sunken Workshop** (dungeon three): the old guild's flooded
+  engine-halls, below the Nest — the Broodmother guards the map. Its
+  threat: constructs whose **Piston Strikes pierce armor entirely**
+  ("DO NOT BE WHERE IT LANDS"); its answer, found inside: the evasion
+  set (Oiled Leathers, Sprung Boots, Engineer's Goggles — dodge slips
+  a piston whole); its lesson: don't trade blows with machines.
+  Scrap Sentinels, Oil Slicks (Gum Strike slows your swings), Cog
+  Throwers, Rust Mite swarms, and **The Foreman**, who walks the
+  assembly floor still and teaches the Engineer's Slate and
+  Battlefield Doctrine III. Brass-and-oil theater theme, four
+  workshop-log fragments, three new materials and recipes.
 - **The Engineer's Slate** (recovered knowledge, data-complete): turns
   the Doctrine Editor into snap-together colored blocks — gold WHEN
   blocks, blue target blocks, violet cast blocks — the same trees

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LoreDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/lore_definition.gd" id="1_lore"]
+
+[resource]
+script = ExtResource("1_lore")
+lore_id = "workshop_log_4"
+title = "Workshop Log, Fourth Fragment"
+body = "Day 11. The Foreman walks the assembly floor still, keeping the shapes. It does not know the guild is gone. We did not correct it."
+series = "The Sunken Workshop"
+order = 4

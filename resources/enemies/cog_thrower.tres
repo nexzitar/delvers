@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/arrow_shot.tres" id="4_shot"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "cog_thrower"
+enemy_name = "Cog Thrower"
+template_id = "cog_thrower"
+base_health = 38
+base_mana = 0
+base_attack = 7
+base_attack_interval = 3.4
+move_speed = 78
+skills = Array[ExtResource("2_skill")]([ExtResource("4_shot")])
+preferred_row = 1
+material_loot = Array[String](["cog_wheel"])
+material_drop_count = 1
+recipe_loot = Array[String](["engineers_goggles"])
+recipe_drop_chance = 0.04
+doctrine_loot = Array[String](["lowest"])
+armor = 2

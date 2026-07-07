@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "oiled_leathers"
+recipe_name = "Oiled Leathers"
+tome_name = "The Wright's Second Skin"
+tome_lore = "Oil turns a blade the way armor never learned to."
+result_gear_id = "oiled_leathers"
+result_item_level = 24
+result_quality = 1
+costs = {"leather": 3, "engine_oil": 3}
+min_tier = 1

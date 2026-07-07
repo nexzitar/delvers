@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/gum_strike.tres" id="4_gum"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "oil_slick"
+enemy_name = "Oil Slick"
+template_id = "oil_slick"
+base_health = 42
+base_mana = 0
+base_attack = 3
+base_attack_interval = 3.0
+move_speed = 72
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_gum")])
+material_loot = Array[String](["engine_oil"])
+material_drop_count = 1
+recipe_loot = Array[String](["oiled_leathers"])
+recipe_drop_chance = 0.05

@@ -20,6 +20,9 @@ const MATERIAL_PATHS := {
 	"leather": "res://resources/materials/leather.tres",
 	"silk_thread": "res://resources/materials/silk_thread.tres",
 	"chitin_plate": "res://resources/materials/chitin_plate.tres",
+	"brass_fitting": "res://resources/materials/brass_fitting.tres",
+	"engine_oil": "res://resources/materials/engine_oil.tres",
+	"cog_wheel": "res://resources/materials/cog_wheel.tres",
 	"brood_silk": "res://resources/materials/brood_silk.tres",
 }
 
@@ -39,6 +42,9 @@ const RECIPE_PATHS := {
 	"wardens_pauldrons": "res://resources/recipes/wardens_pauldrons.tres",
 	"silk_bracers": "res://resources/recipes/silk_bracers.tres",
 	"weavers_cloak": "res://resources/recipes/weavers_cloak.tres",
+	"oiled_leathers": "res://resources/recipes/oiled_leathers.tres",
+	"sprung_boots": "res://resources/recipes/sprung_boots.tres",
+	"engineers_goggles": "res://resources/recipes/engineers_goggles.tres",
 }
 
 const AFFIX_PATHS := {
@@ -60,11 +66,16 @@ const LORE_PATHS := {
 	"expedition_nest_2": "res://resources/lore/expedition_nest_2.tres",
 	"expedition_nest_3": "res://resources/lore/expedition_nest_3.tres",
 	"expedition_nest_4": "res://resources/lore/expedition_nest_4.tres",
+	"workshop_log_1": "res://resources/lore/workshop_log_1.tres",
+	"workshop_log_2": "res://resources/lore/workshop_log_2.tres",
+	"workshop_log_3": "res://resources/lore/workshop_log_3.tres",
+	"workshop_log_4": "res://resources/lore/workshop_log_4.tres",
 }
 
 const DUNGEON_PATHS := {
 	"darkwood": "res://resources/dungeons/darkwood.tres",
 	"spider_nest": "res://resources/dungeons/spider_nest.tres",
+	"sunken_workshop": "res://resources/dungeons/sunken_workshop.tres",
 }
 
 const HERO_PATHS := {
@@ -89,6 +100,9 @@ const GEAR_PATHS := {
 	"wardens_pauldrons": "res://resources/gear/wardens_pauldrons.tres",
 	"silk_bracers": "res://resources/gear/silk_bracers.tres",
 	"weavers_cloak": "res://resources/gear/weavers_cloak.tres",
+	"oiled_leathers": "res://resources/gear/oiled_leathers.tres",
+	"sprung_boots": "res://resources/gear/sprung_boots.tres",
+	"engineers_goggles": "res://resources/gear/engineers_goggles.tres",
 }
 
 const SKILL_PATHS := {

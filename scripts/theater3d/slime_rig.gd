@@ -21,8 +21,8 @@ var body: Node3D
 ## the whole rig up).
 func _init(opts := {}):
 	var king: bool = opts.get("king", false)
-	var tint = ROYAL if king else SLIME
-	var tint_dark = ROYAL_DARK if king else SLIME_DARK
+	var tint: Color = opts.get("body", ROYAL if king else SLIME)
+	var tint_dark: Color = opts.get("body_dark", ROYAL_DARK if king else SLIME_DARK)
 
 	body = Node3D.new()
 	add_child(body)

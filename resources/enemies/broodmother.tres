@@ -26,4 +26,5 @@ affix_drop_chance = 1.0
 loot_ids = Array[String](["starter_sword", "starter_bow", "starter_shield", "starter_helmet", "starter_armor", "fast_dagger", "heavy_axe"])
 drop_chance = 1.0
 is_boss = true
+map_loot = "sunken_workshop"
 armor = 3

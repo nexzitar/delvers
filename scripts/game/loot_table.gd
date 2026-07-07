@@ -173,6 +173,11 @@ static func roll_enemy_drops(
 ## Who to hunt for a material: the non-boss enemy with the most copies
 ## of it in their table (bosses only as a last resort).
 const ENEMY_PATHS := [
+	"res://resources/enemies/scrap_sentinel.tres",
+	"res://resources/enemies/oil_slick.tres",
+	"res://resources/enemies/cog_thrower.tres",
+	"res://resources/enemies/rust_mite.tres",
+	"res://resources/enemies/foreman.tres",
 	"res://resources/enemies/green_slime.tres",
 	"res://resources/enemies/goblin_archer.tres",
 	"res://resources/enemies/goblin_warrior.tres",

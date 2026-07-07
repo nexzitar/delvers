@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LoreDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/lore_definition.gd" id="1_lore"]
+
+[resource]
+script = ExtResource("1_lore")
+lore_id = "workshop_log_1"
+title = "Workshop Log, First Fragment"
+body = "Day 3 below. The engineers\' halls still have light - the machines kept working after the guild stopped. Whatever they were building, it never heard the news."
+series = "The Sunken Workshop"
+order = 1
