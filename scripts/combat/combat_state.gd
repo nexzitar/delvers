@@ -81,7 +81,7 @@ func validate_target(entity):
 		if combat_time < entity.retarget_at:
 			return
 	entity.retarget_at = combat_time + 0.8
-	_set_target(entity, _pick_by_tactic(entity))
+	_set_target(entity, BehaviorTree.pick_target(self, entity))
 
 ## The party's focus order (enemy_ids, first = kill first), fed from
 ## the roster at setup. Tactics score against it.
@@ -89,51 +89,6 @@ var enemy_priority: Array = []
 ## Monotonic entity ids: setup starts at 1, reinforcements continue.
 var _next_entity_id := 1
 
-func _priority_rank(target) -> int:
-	var idx = enemy_priority.find(target.template.enemy_id)
-	return idx if idx >= 0 else enemy_priority.size()
-
-## Scores living opponents under the entity's tactic; lower wins.
-## (Enemies without threat also route here and use "nearest".)
-func _pick_by_tactic(hero) -> int:
-	var best_id := -1
-	var best_key := []
-	var opponents = enemies if hero.team == CombatEntity.Team.HERO else heroes
-	for enemy in opponents:
-		if not enemy.alive:
-			continue
-		var dist = hero.position.distance_to(enemy.position)
-		var key := []
-		match hero.tactic:
-			"lowest":
-				key = [enemy.current_health, dist]
-			"priority":
-				key = [_priority_rank(enemy), dist]
-			"guard":
-				# The tank's eye: whoever holds the least threat toward
-				# this delver gets struck (and taught) first.
-				key = [enemy.threat_table.get(hero.entity_id, 0.0), dist]
-			"spread":
-				# Prefer foes not yet carrying this hero's poison.
-				var covered := 0
-				for status in enemy.statuses:
-					if status.kind == StatusEffect.Kind.POISON \
-							and status.source_id == hero.entity_id \
-							and status.remaining > 0.0:
-						covered = 1
-				key = [covered, _priority_rank(enemy), dist]
-			_:
-				key = [dist]
-		if best_id == -1 or _key_less(key, best_key):
-			best_id = enemy.entity_id
-			best_key = key
-	return best_id
-
-static func _key_less(a: Array, b: Array) -> bool:
-	for i in a.size():
-		if a[i] != b[i]:
-			return a[i] < b[i]
-	return false
 
 func _set_target(entity, new_target_id: int):
 	if entity.target_id == new_target_id:

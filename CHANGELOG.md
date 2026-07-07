@@ -5,6 +5,14 @@ Notable changes per pull request. Newest first.
 ## PR #10 — Mastery: identity through practice *(open)*
 
 ### Added
+- **The shared behaviour-tree engine** (`BehaviorTree`): built-in
+  tactics are now pre-authored trees — plain JSON rule lists with a
+  targeting channel and a casting channel ("IF enemy count >= 4 THEN
+  Thunderclap") — full parity with the old scorer, and entities carry
+  an optional custom tree: the exact data Scratch and the Engineer's
+  Python will write. **Protect the Healer** ships as the first
+  composite tree (hunts whatever hunts the mender), taught by the
+  Brood Tender.
 - **Battlefield Doctrines** (first slice of the recovered-knowledge
   progression, spec: 2026-07-07-recovered-knowledge-progression.md):
   tactics are knowledge now, not menu options. A fresh guild knows

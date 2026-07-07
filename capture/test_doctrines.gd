@@ -58,7 +58,7 @@ func _ready():
 	var vet = load("res://scripts/game/player_roster.gd").new()
 	vet.autosave = false
 	assert(RosterSave.load_into(vet, path), "old save loads")
-	assert(vet.known_tactics.size() == 5, "veterans keep their doctrine")
+	assert(vet.known_tactics.size() == 6, "veterans keep their doctrine")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 	roster.free()

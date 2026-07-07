@@ -20,6 +20,11 @@ const ALL := {
 		"tome": "Doctrine of the Creeping Venom",
 		"lore": "One drop in every cup. The nest taught us that.",
 	},
+	"protect": {
+		"name": "Protect the Healer",
+		"tome": "Doctrine of the Warding Hand",
+		"lore": "The one who mends is the one they hunt. Stand where the hunt must pass.",
+	},
 	"guard": {
 		"name": "Guard the Line",
 		"tome": "Doctrine of the Shield-Line",

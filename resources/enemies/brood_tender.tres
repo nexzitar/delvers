@@ -17,5 +17,6 @@ skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_b
 material_loot = Array[String](["silk_thread", "silk_thread", "poison_sac"])
 recipe_loot = Array[String](["silk_hood", "chitin_armor"])
 affix_loot = Array[String](["virulent"])
+doctrine_loot = Array[String](["protect"])
 preferred_row = 1
 armor = 1

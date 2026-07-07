@@ -46,6 +46,9 @@ var threat_table: Dictionary = {}
 ## time it re-evaluates its choice.
 var tactic := "nearest"
 var retarget_at: float = 0.0
+## Custom behaviour tree (see BehaviorTree). Empty = the tactic's
+## pre-authored tree. This is what Scratch and Python will write.
+var behavior_tree: Array = []
 ## Entity that summoned this one (Brood Tenders cap their brood).
 var spawned_by: int = -1
 var in_combat: bool = false
@@ -212,6 +215,8 @@ func _try_special_skills(combat_state) -> bool:
 		if skill == null or skill.behavior_script == null:
 			continue
 		if combat_state.combat_time < skill_ready_at.get(skill.skill_id, 0.0):
+			continue
+		if not BehaviorTree.allows_cast(combat_state, self, skill.skill_id):
 			continue
 		if skill.behavior_script.try_use(combat_state, self, skill):
 			skill_ready_at[skill.skill_id] = combat_state.combat_time + skill.cooldown

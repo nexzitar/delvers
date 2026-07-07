@@ -77,7 +77,16 @@ than you.
   spiders: Spread the Venom; bosses: Focus Order), shelve in the
   Library, and unlock their tactic on banking. Veteran saves keep
   everything they've used.
-- **Deferred**: Phase 3 (Scratch over the shared behaviour tree),
-  Phase 4 (Python + View Code bridge), Engineer's Notebooks as the
-  language's loot tables, formalizing the tactic scorer into the
-  shared behaviour-tree engine all three interfaces compile to.
+- **2026-07-07 (engine)**: the shared behaviour-tree engine exists
+  (`BehaviorTree`): trees are plain JSON-able rule lists with a
+  targeting channel and a casting channel; built-in tactics are
+  pre-authored trees (full parity with the old scorer, proven by the
+  unchanged tactics tests); entities carry an optional custom tree —
+  the exact field Scratch and Python will write. Condition vocabulary
+  v1: enemy_count_gte, health_below, mana_gte, enemies_within,
+  healer_threatened. **Protect the Healer** shipped as the first
+  composite tree (a real doctrine, taught by the Brood Tender).
+- **Deferred**: Phase 3 (the Scratch editor over this engine), Phase 4
+  (Python parser + View Code bridge), Engineer's Notebooks gating the
+  condition/selector vocabulary, tree complexity budget enforcing the
+  no-raw-power pillar.
