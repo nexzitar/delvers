@@ -12,7 +12,7 @@ extends Node3D
 const ROLES := {
 	"idle": ["idle", "stand", "breath"],
 	"walk": ["walk", "run", "move", "jog"],
-	"swing": ["attack", "swing", "slash", "melee", "punch"],
+	"swing": ["attack", "swing", "slash", "melee", "punch", "chop"],
 	"shoot": ["shoot", "bow", "draw", "fire", "aim"],
 	"death": ["death", "die", "fall", "defeat"],
 	"cast": ["cast", "spell", "magic"],
