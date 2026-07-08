@@ -1,8 +1,10 @@
 extends Node3D
 
-## Live pose tuning for ANY animation. Run this scene (F6), then in
-## the editor: Scene panel -> Remote tab -> select PoseTuner, and
-## drag the exported sliders. Everything re-poses live.
+## THE GUILD ANIMATOR: live pose tuning for ANY animation. Run this
+## scene (F6), then in the editor: Scene panel -> Remote tab -> select
+## GuildAnimator, and drag the exported sliders. Everything re-poses
+## live. Camera: LEFT-drag orbits, wheel zooms, MIDDLE-drag (or
+## shift+drag) pans.
 ##
 ## - pose: which animation plays (authored poses and baked clips both)
 ## - scrub + playing: freeze at a moment or let it run
@@ -40,10 +42,16 @@ const JOINTS := {
 }
 
 func _ready():
-	var cam := Camera3D.new()
-	cam.position = Vector3(0.9, 1.2, 2.1)
-	cam.look_at_from_position(cam.position, Vector3(0, 0.55, 0))
+	var cam := OrbitCamera.new()
+	cam.enabled = true
+	cam.allow_pan = true
+	cam.target = Vector3(0, 0.55, 0)
+	cam.distance = 2.3
+	cam.min_distance = 0.3
+	cam.yaw = 0.4
+	cam.pitch = 0.35
 	add_child(cam)
+	cam._refresh()
 	cam.current = true
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-45, -30, 0)

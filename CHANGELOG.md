@@ -5,6 +5,13 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **The Guild Animator** (`capture/guild_animator.tscn`, formerly the
+  pose tuner): any pose, scrub/play, live sword-grip fitting,
+  per-joint degree offsets — and now a **free camera**: left-drag
+  orbits, wheel zooms, middle-drag (or shift+drag) pans.
+- **The camp camera orbits**: right-drag circles the fire, the wheel
+  zooms — inspect the party from any angle; left-click hero picking
+  is untouched. The menu stays scripted.
 - **Camp scene polish round three**: the menu camera pans left so
   seated delvers never hide behind the panel; the resting shield
   leans against the log instead of standing on it; the lap-sword
