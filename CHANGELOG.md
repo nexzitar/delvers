@@ -5,6 +5,14 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Imported-model landing zone** (for the TripoAI delvers): heroes
+  can carry a glTF `model_scene` on their template; the path travels
+  through the SPAWN event, and a new `AnimatedActor` wraps the
+  imported scene to speak the exact pose contract the procedural rigs
+  do — clips discovered by name (walk/attack/idle/death), driven by
+  deterministic scrubbing (replay-safe), missing clips borrowing
+  gracefully. No model set = procedural rig, unchanged. Drop a GLB
+  in, point a template at it, done.
 - **The Sunken Workshop** (dungeon three): the old guild's flooded
   engine-halls, below the Nest — the Broodmother guards the map. Its
   threat: constructs whose **Piston Strikes pierce armor entirely**

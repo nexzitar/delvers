@@ -47,6 +47,8 @@ const GOBLIN_SCALE := 0.85
 
 static func build_from_spawn(event) -> Node3D:
 	if event.team == CombatEntity.Team.HERO:
+		if event.model_path != "":
+			return AnimatedActor.new(load(event.model_path), hero_opts(event.equipped))
 		return build_hero(event.equipped)
 	return build_enemy(event.template)
 

@@ -1,0 +1,75 @@
+extends Node
+
+## The imported-model landing zone: an AnimationPlayer scene speaks
+## the same pose contract as the procedural rigs, deterministically.
+
+func _build_model() -> PackedScene:
+	var root := Node3D.new()
+	root.name = "TripoDelver"
+	var cube := MeshInstance3D.new()
+	cube.name = "Body"
+	cube.mesh = BoxMesh.new()
+	root.add_child(cube)
+	cube.owner = root
+	var player := AnimationPlayer.new()
+	player.name = "AnimationPlayer"
+	root.add_child(player)
+	player.owner = root
+	var lib := AnimationLibrary.new()
+	for clip in [["Walking_loop", 1.0], ["Sword_Attack", 0.8], ["Idle_breathing", 2.0], ["Death_backward", 1.2]]:
+		var anim := Animation.new()
+		anim.length = clip[1]
+		var track = anim.add_track(Animation.TYPE_POSITION_3D)
+		anim.track_set_path(track, "Body")
+		anim.position_track_insert_key(track, 0.0, Vector3.ZERO)
+		anim.position_track_insert_key(track, clip[1], Vector3(0, clip[1], 0))
+		lib.add_animation(clip[0], anim)
+	player.add_animation_library("", lib)
+	var packed := PackedScene.new()
+	packed.pack(root)
+	return packed
+
+func _ready():
+	var model = _build_model()
+
+	# Clip discovery by name fragments.
+	var actor = AnimatedActor.new(model)
+	add_child(actor)
+	assert(actor.clip_for("walk") == "Walking_loop", "walk found")
+	assert(actor.clip_for("swing") == "Sword_Attack", "attack found")
+	assert(actor.clip_for("death") == "Death_backward", "death found")
+	assert(actor.clip_for("shoot") == "Sword_Attack", "missing roles borrow")
+
+	# Deterministic scrubbing: same t, same transform - replay-safe.
+	var body = actor.get_child(0).get_node("Body")
+	actor.pose_walk(0.5)
+	var at_half = body.position
+	actor.pose_walk(0.9)
+	actor.pose_walk(0.5)
+	assert(body.position.is_equal_approx(at_half), "the scrub is deterministic")
+	assert(absf(at_half.y - 0.5) < 0.01, "half the walk is half the clip")
+	actor.pose_walk(1.25)
+	assert(absf(body.position.y - 0.25) < 0.01, "loops wrap")
+	actor.pose_death(5.0)
+	assert(absf(body.position.y - 1.2) < 0.05, "one-shots clamp at the end")
+
+	# The sim carries the model path through the event log.
+	var template = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	template.model_scene = model
+	var combat = CombatState.new()
+	combat.setup_combat([template], [load("res://resources/enemies/green_slime.tres")])
+	var spawn_path := ""
+	for event in combat.combat_log.events:
+		if event.type == CombatEvent.EventType.SPAWN and event.team == CombatEntity.Team.HERO:
+			spawn_path = event.model_path
+	assert(spawn_path == "", "unsaved scene carries no path (procedural fallback)")
+
+	# The factory: no model -> procedural rig, as ever.
+	var spawn = combat.combat_log.events.filter(func(e):
+		return e.type == CombatEvent.EventType.SPAWN and e.team == CombatEntity.Team.HERO)[0]
+	var rig = ActorFactory3D.build_from_spawn(spawn)
+	assert(rig.has_method("pose_walk") and not (rig is AnimatedActor), "procedural fallback holds")
+	rig.free()
+
+	print("PASS animated actor")
+	get_tree().quit()

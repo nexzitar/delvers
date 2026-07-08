@@ -600,6 +600,8 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		)
 
 		hero.tactic = hero_template.tactic
+		if hero_template.model_scene != null:
+			hero.model_path = hero_template.model_scene.resource_path
 		# Custom doctrine runs only within the guild's recovered
 		# complexity budget; over it, the pre-authored tactic holds.
 		if not hero_template.custom_tree.is_empty() \

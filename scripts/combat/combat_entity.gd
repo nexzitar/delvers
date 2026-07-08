@@ -49,6 +49,8 @@ var retarget_at: float = 0.0
 ## Custom behaviour tree (see BehaviorTree). Empty = the tactic's
 ## pre-authored tree. This is what Scratch and Python will write.
 var behavior_tree: Array = []
+## Imported model scene path ("" = procedural rig in the theater).
+var model_path := ""
 ## Entity that summoned this one (Brood Tenders cap their brood).
 var spawned_by: int = -1
 var in_combat: bool = false
