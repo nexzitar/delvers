@@ -357,9 +357,19 @@ func tick_movement_toward(entity, goal_pos: Vector2, delta):
 	var consumed = not entity.path.is_empty() \
 		and entity.path_index >= entity.path.size()
 	var retry = entity.path.is_empty() and combat_time >= entity.path_retry_at
-	if entity.path_goal != goal or consumed or retry:
+	# Stalled against a crowd (moving but going nowhere): force a
+	# fresh path so the queue gets flanked instead of shoved.
+	var stalled := false
+	if combat_time >= entity.stall_check_at:
+		if entity.moving and entity.position.distance_to(entity.stall_anchor) < 6.0:
+			stalled = true
+		entity.stall_anchor = entity.position
+		entity.stall_check_at = combat_time + 0.5
+
+	if entity.path_goal != goal or consumed or retry or stalled:
 		entity.path = pathfinder.find_path(
-			grid.world_to_tile(entity.position), goal
+			grid.world_to_tile(entity.position), goal,
+			_occupied_tiles(entity, goal_pos)
 		)
 		entity.path_index = 0
 		entity.path_goal = goal
@@ -409,6 +419,19 @@ func tick_movement_toward(entity, goal_pos: Vector2, delta):
 		var started = not entity.moving
 		entity.moving = true
 		_log_move(entity, started)
+
+## Tiles held by everyone else (the walker's own tile and the goal
+## tile stay free - you may approach your target's square).
+func _occupied_tiles(entity, goal_pos: Vector2) -> Dictionary:
+	var occupied := {}
+	var goal_tile = grid.world_to_tile(goal_pos)
+	for other in heroes + enemies:
+		if other == entity or not other.alive:
+			continue
+		var tile = grid.world_to_tile(other.position)
+		if tile != goal_tile:
+			occupied[tile] = true
+	return occupied
 
 func _other_positions(entity) -> Array:
 	var out := []

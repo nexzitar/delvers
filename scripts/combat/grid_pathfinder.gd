@@ -5,7 +5,12 @@ var _grid
 func _init(grid):
 	_grid = grid
 
-func find_path(from_cell: Vector2i, to_cell: Vector2i) -> PackedVector2Array:
+## Tiles holding other units cost extra: paths flow AROUND a queue of
+## bodies instead of pressing through it. Soft, so a truly walled-in
+## unit still paths (it just pays for the shove).
+const BODY_COST := 4.0
+
+func find_path(from_cell: Vector2i, to_cell: Vector2i, occupied := {}) -> PackedVector2Array:
 	# Never hard-fail on an unwalkable endpoint: units get pushed onto
 	# blocked cells or out of bounds (separation, displacement skills),
 	# and targets standing there must still be approachable.
@@ -34,7 +39,8 @@ func find_path(from_cell: Vector2i, to_cell: Vector2i) -> PackedVector2Array:
 		for neighbor in _neighbors(current):
 			if not _grid.is_walkable(neighbor):
 				continue
-			var tentative = g_score.get(current, INF) + 1
+			var tentative = g_score.get(current, INF) + 1.0 \
+				+ (BODY_COST if occupied.has(neighbor) else 0.0)
 			if tentative >= g_score.get(neighbor, INF):
 				continue
 			came_from[neighbor] = current

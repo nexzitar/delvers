@@ -38,6 +38,8 @@ var path_index: int = 0
 var path_goal: Vector2i = Vector2i(-9999, -9999)
 ## Failed searches retry after a short delay instead of caching forever.
 var path_retry_at: float = 0.0
+var stall_check_at: float = 0.0
+var stall_anchor := Vector2.ZERO
 var moving: bool = false
 var last_logged_facing: Vector2 = Vector2.RIGHT
 var target_id: int = -1

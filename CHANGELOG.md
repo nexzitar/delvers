@@ -5,6 +5,20 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Crowd navigation** (playtest, the big one): paths are
+  crowd-aware — tiles held by other units cost extra, so attackers
+  **fan out around a queue** instead of forming one, and a unit
+  heading for a target behind a blocker **flanks instead of
+  bulldozing** (measured: six swarmers now land five in range where
+  they used to queue; a blocker is displaced 12px instead of shoved
+  across the field). Stall detection forces a fresh path when a unit
+  is walking but going nowhere.
+- **Pose corrections round two**: helmet turned around (the nose
+  guard was at the nape) and fitted; the head-lift sign flipped (he
+  was looking *more* down); the swing crest lowered and tilted
+  outward so the blade clears the head; the lap-sword lies flatter;
+  and at the campfire **the shield comes off the arm** and leans
+  beside him while he tends the blade.
 - **The delvers get dressed** (worn gear on imported models): every
   worn slot mounts on the skeleton — helmet (fitted), pauldrons,
   chest plate, gold-buckled belt, gauntlets, bracers, greaves, boots,

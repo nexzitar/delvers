@@ -40,6 +40,8 @@ var _model: Node3D
 var _clips := {}
 var _bones := {}
 var _has_sword := false
+var _shield_arm: BoneAttachment3D
+var _shield_prop: Node3D
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -158,8 +160,9 @@ func _dress(opts: Dictionary):
 	if opts.get("helmet", false):
 		var helm_mount = _attach("Head")
 		var helm = DelverBuilder.build_helmet()
-		helm.position = Vector3(0, 0.135, 0)
-		helm.scale = Vector3.ONE * 0.7
+		helm.position = Vector3(0, 0.13, -0.01)
+		helm.rotation_degrees = Vector3(0, 180, 0)
+		helm.scale = Vector3.ONE * 0.78
 		helm_mount.add_child(helm)
 	if opts.has("shoulders"):
 		for side in ["L", "R"]:
@@ -244,12 +247,19 @@ func _dress(opts: Dictionary):
 		weapon.scale = Vector3.ONE * 0.8
 		hand.add_child(weapon)
 	if opts.get("shield", false):
-		var arm = _attach("L_Forearm")
+		_shield_arm = _attach("L_Forearm")
 		var shield = DelverBuilder.build_shield()
 		shield.position = Vector3(0.0, 0.12, -0.05)
 		shield.rotation_degrees = Vector3(90, -35, 0)
 		shield.scale = Vector3.ONE * 0.8
-		arm.add_child(shield)
+		_shield_arm.add_child(shield)
+		# At rest the shield comes off the arm and leans beside him.
+		_shield_prop = DelverBuilder.build_shield()
+		_shield_prop.position = Vector3(0.34, 0.26, 0.06)
+		_shield_prop.rotation_degrees = Vector3(12, 20, 78)
+		_shield_prop.scale = Vector3.ONE * 0.9
+		_shield_prop.visible = false
+		add_child(_shield_prop)
 
 func _flat(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -293,8 +303,9 @@ func _pose(role: String, fraction: float, looped := false):
 	_player.seek(from + fraction * (to - from), true)
 	_player.pause()
 	_model.position.y = 0.0
+	_set_shield_grounded(false)
 	# The captures carry the chin low; lift the gaze off the ground.
-	_rotate_bone("Head", Vector3.RIGHT, -0.22)
+	_rotate_bone("Head", Vector3.RIGHT, 0.25)
 
 # --- The rig contract ------------------------------------------------------
 
@@ -311,6 +322,12 @@ func pose_walk(phase: float):
 ## Baked clips cover locomotion; combat reads better authored. Base
 ## frame first (calm idle), then local-axis rotations on named bones -
 ## deterministic in t, contact exactly where the theater expects it.
+
+func _set_shield_grounded(grounded: bool):
+	if _shield_arm:
+		_shield_arm.visible = not grounded
+	if _shield_prop:
+		_shield_prop.visible = grounded
 
 func _bone_pose_base():
 	_pose("idle", 0.0)
@@ -333,11 +350,11 @@ func pose_swing(t: float):
 	var wind = smoothstep(0.0, 0.4, t)
 	var cut = smoothstep(0.4, 0.62, t)
 	var settle = smoothstep(0.72, 1.0, t)
-	var lift = (2.5 * wind - 2.1 * cut) * (1.0 - settle)
+	var lift = (1.9 * wind - 1.6 * cut) * (1.0 - settle)
 	var elbow = (0.9 * wind - 0.85 * cut) * (1.0 - settle)
 	var twist = (0.35 * wind - 0.65 * cut) * (1.0 - settle)
 	_rotate_bone("R_Upperarm", Vector3.RIGHT, lift)
-	_rotate_bone("R_Upperarm", Vector3.BACK, -0.25 * cut * (1.0 - settle))
+	_rotate_bone("R_Upperarm", Vector3.BACK, (-0.4 * wind - 0.2 * cut) * (1.0 - settle))
 	_rotate_bone("R_Forearm", Vector3.RIGHT, elbow)
 	_rotate_bone("Spine01", Vector3.UP, twist)
 	_rotate_bone("Spine02", Vector3.UP, twist * 0.6)
@@ -363,13 +380,14 @@ func pose_sit(t: float):
 	if _has_sword:
 		# The blade rests across the lap; the off hand polishes it in
 		# slow strokes.
-		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.5)
-		_rotate_bone("R_Hand", Vector3.UP, 1.35)
-		_rotate_bone("R_Hand", Vector3.RIGHT, 0.4)
+		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.65)
+		_rotate_bone("R_Hand", Vector3.UP, 1.7)
+		_rotate_bone("R_Hand", Vector3.RIGHT, 0.9)
 		var stroke = sin(t * 2.6)
 		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.35 + 0.12 * stroke)
 		_rotate_bone("L_Upperarm", Vector3.BACK, 0.35)
 		_rotate_bone("L_Forearm", Vector3.RIGHT, 0.55 + 0.18 * stroke)
+	_set_shield_grounded(true)
 	_model.position.y = -0.31
 
 func pose_shoot(t: float, _target_dist := 2.2):
