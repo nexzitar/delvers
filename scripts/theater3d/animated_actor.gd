@@ -53,6 +53,11 @@ func _init(scene: PackedScene, opts := {}):
 	if _skeleton:
 		for i in _skeleton.get_bone_count():
 			_bones[_skeleton.get_bone_name(i)] = i
+	# Animation donor: a bare rigged export borrows a sibling's clips -
+	# same skeleton, retargeted by bone name. One animation set can
+	# drive the whole cast.
+	if _player == null and _skeleton and opts.has("animation_donor"):
+		_player = _borrow_animations(load(opts.animation_donor))
 	if _skeleton:
 		_dress(opts)
 	if _player == null:
@@ -72,6 +77,30 @@ func _init(scene: PackedScene, opts := {}):
 				if lower.contains(keyword):
 					_clips[role] = clip_name
 					break
+
+## Copy the donor's animations, rewriting every track's node path to
+## our skeleton (bone names carry over unchanged).
+func _borrow_animations(donor_scene: PackedScene) -> AnimationPlayer:
+	var donor = donor_scene.instantiate()
+	var donor_player = _find_player(donor)
+	if donor_player == null:
+		donor.free()
+		return null
+	var player := AnimationPlayer.new()
+	_skeleton.add_child(player)
+	player.root_node = player.get_path_to(_skeleton)
+	var lib := AnimationLibrary.new()
+	for clip_name in donor_player.get_animation_list():
+		var clip: Animation = donor_player.get_animation(clip_name).duplicate(true)
+		for track in clip.get_track_count():
+			var path := String(clip.track_get_path(track))
+			var bone = path.get_slice(":", 1)
+			if bone != "":
+				clip.track_set_path(track, NodePath(".:" + bone))
+		lib.add_animation(clip_name, clip)
+	player.add_animation_library("", lib)
+	donor.free()
+	return player
 
 func _find_skeleton(node: Node) -> Skeleton3D:
 	if node is Skeleton3D:
@@ -119,16 +148,17 @@ func _dress(opts: Dictionary):
 		var weapon = DelverBuilder.build_axe() if opts.get("axe", false) \
 			else DelverBuilder.build_dagger() if opts.get("dagger", false) \
 			else DelverBuilder.build_sword()
-		# Hand bone: +Y runs along the fingers; the blade continues
-		# past the fist.
+		# Hand bone: +Y runs along the fingers; the grip tilts the
+		# blade forward and slightly up from the fist.
 		weapon.position = Vector3(0.0, 0.05, 0.0)
+		weapon.rotation_degrees = Vector3(-115, 0, 0)
 		weapon.scale = Vector3.ONE * 0.8
 		hand.add_child(weapon)
 	if opts.get("shield", false):
 		var arm = _attach("L_Forearm")
 		var shield = DelverBuilder.build_shield()
 		shield.position = Vector3(0.0, 0.12, -0.05)
-		shield.rotation_degrees = Vector3(90, 0, 0)
+		shield.rotation_degrees = Vector3(90, -35, 0)
 		shield.scale = Vector3.ONE * 0.8
 		arm.add_child(shield)
 
@@ -168,6 +198,8 @@ func _pose(role: String, fraction: float, looped := false):
 	_player.seek(from + fraction * (to - from), true)
 	_player.pause()
 	_model.position.y = 0.0
+	# The captures carry the chin low; lift the gaze off the ground.
+	_rotate_bone("Head", Vector3.RIGHT, -0.22)
 
 # --- The rig contract ------------------------------------------------------
 
@@ -227,10 +259,10 @@ func pose_sit(t: float):
 	_bone_pose_base()
 	var sway = 0.03 * sin(t * 0.9)
 	for side in ["L", "R"]:
-		_rotate_bone(side + "_Thigh", Vector3.RIGHT, -1.5)
-		_rotate_bone(side + "_Calf", Vector3.RIGHT, 1.35)
-		_rotate_bone(side + "_Upperarm", Vector3.RIGHT, -0.5)
-		_rotate_bone(side + "_Forearm", Vector3.RIGHT, -0.5)
+		_rotate_bone(side + "_Thigh", Vector3.RIGHT, 1.5)
+		_rotate_bone(side + "_Calf", Vector3.RIGHT, -1.35)
+		_rotate_bone(side + "_Upperarm", Vector3.RIGHT, 0.5)
+		_rotate_bone(side + "_Forearm", Vector3.RIGHT, 0.4)
 	_rotate_bone("Spine01", Vector3.RIGHT, 0.12 + sway)
 	_rotate_bone("Head", Vector3.RIGHT, -0.08 - sway)
 	_model.position.y = -0.31

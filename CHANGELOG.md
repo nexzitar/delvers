@@ -5,6 +5,18 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Wren has a body** (`delver_female.glb`): her export came as a
+  bare rig, so the adapter grew an **animation donor** system — she
+  borrows the male's clips, retargeted onto her skeleton by bone name
+  (one animation set can drive the whole same-skeleton cast; future
+  models need no animation export at all). Companions carry their
+  bodies by name (Wren and Kessa are women), persisted in the save,
+  backfilled for pre-model saves.
+- **Pose corrections** (playtest): the sit folds the legs *forward*
+  (they were tucked behind, through the log), the sword rests
+  forward-and-up from the fist instead of hanging straight down, the
+  shield angles toward the line of advance, and every pose lifts the
+  chin — he no longer studies the ground.
 - **Model animation polish** (playtest): the idle scrubs only its
   calm first stretch (the 15s capture had wandering feet), the walk
   runs at stride pacing (the theater's radian phase was cycling the

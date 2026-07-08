@@ -217,6 +217,8 @@ func recruit_hero(kit_ids: Array):
 	for candidate in GuildUnlocks.COMPANION_NAMES:
 		if not used.has(candidate):
 			hero.hero_name = candidate
+			if GuildUnlocks.COMPANION_MODELS.has(candidate):
+				hero.model_scene = load(GuildUnlocks.COMPANION_MODELS[candidate])
 			break
 	hero.bonus_skills = [null, null, null, null, null]
 	var kit := []

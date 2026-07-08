@@ -48,6 +48,21 @@ const GOBLIN_SCALE := 0.85
 ## Per-model import tuning: facing, scale, and the clip map for
 ## exports that lose animation names.
 const MODEL_CONFIGS := {
+	"res://resources/models/delver_female.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 1.17,
+		"walk_cycle_scale": 1.5,
+		"animation_donor": "res://resources/models/delver_male.glb",
+		"clip_ranges": {"idle": [0.2, 4.2]},
+		"clip_map": {
+			"death": "NlaTrack",
+			"idle": "NlaTrack_001",
+			"run": "NlaTrack_002",
+			"swing": "NlaTrack_003",
+			"walk": "NlaTrack_004",
+			"cast": "NlaTrack_005",
+		},
+	},
 	"res://resources/models/delver_male.glb": {
 		"facing_fix": -PI / 2,
 		"model_scale": 1.2,

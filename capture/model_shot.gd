@@ -32,7 +32,7 @@ func _ready():
 	add_child(ground)
 
 	var out = ProjectSettings.globalize_path("res://capture/proto3d/renders")
-	var poses = [["idle", 3.0], ["swing", 0.15], ["swing", 0.45], ["swing", 0.55], ["swing", 0.8], ["sit", 2.0]]
+	var poses = [["idle", 3.0], ["walk", 2.0], ["sit", 2.0]]
 	var counter := 0
 	for pose in poses:
 		for child in get_children():
@@ -44,7 +44,9 @@ func _ready():
 		imported.name = "actor_imported"
 		imported.position = Vector3(-0.7, 0, 0)
 		add_child(imported)
-		var rig = DelverRig.new({"sword": true, "shield": true})
+		var config_f = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_female.glb"].duplicate(true)
+		config_f.merge({"bow": true}, true)
+		var rig = AnimatedActor.new(load("res://resources/models/delver_female.glb"), config_f)
 		rig.name = "actor_rig"
 		rig.position = Vector3(0.7, 0, 0)
 		add_child(rig)
@@ -52,9 +54,9 @@ func _ready():
 			"idle":
 				imported.pose_idle(pose[1])
 				rig.pose_idle(pose[1])
-			"swing":
-				imported.pose_swing(pose[1])
-				rig.pose_swing(pose[1])
+			"walk":
+				imported.pose_walk(pose[1])
+				rig.pose_walk(pose[1])
 			"sit":
 				imported.pose_sit(pose[1])
 				rig.pose_sit(pose[1])

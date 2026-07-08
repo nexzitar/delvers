@@ -150,6 +150,7 @@ static func save(roster, path := SAVE_PATH) -> void:
 			"tactic": hero.tactic,
 			"mastery": hero.mastery,
 			"custom_tree": hero.custom_tree,
+			"model": hero.model_scene.resource_path if hero.model_scene else "",
 		})
 
 	var data := {
@@ -324,6 +325,12 @@ static func _restore_hero(entry):
 		hero.bonus_skills.append(_skill_from_id(skill_id))
 	hero.tactic = entry.get("tactic", "nearest")
 	hero.custom_tree = entry.get("custom_tree", []) if entry.get("custom_tree", []) is Array else []
+	var model_path = entry.get("model", "")
+	if model_path != "" and ResourceLoader.exists(model_path):
+		hero.model_scene = load(model_path)
+	# Pre-model saves: companions get their bodies on arrival.
+	elif GuildUnlocks.COMPANION_MODELS.has(hero.hero_name):
+		hero.model_scene = load(GuildUnlocks.COMPANION_MODELS[hero.hero_name])
 	hero.mastery = {}
 	var mastery = entry.get("mastery", {})
 	for discipline in mastery:

@@ -96,5 +96,39 @@ func _ready():
 	# Clip ranges: the idle scrubs inside its calm window only.
 	assert(tripo.clip_ranges.has("idle"), "the idle is sliced")
 
+	# The animation donor: a bare rigged export borrows the male's
+	# clips, retargeted by bone name.
+	var config_f = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_female.glb"].duplicate(true)
+	var wren = AnimatedActor.new(load("res://resources/models/delver_female.glb"), config_f)
+	add_child(wren)
+	assert(wren._player != null, "the donor's clips arrive")
+	assert(wren.clip_for("walk") == "NlaTrack_004", "the borrowed walk is found")
+	wren.pose_walk(1.0)
+	wren.pose_sit(1.0)
+	wren.pose_swing(0.5)
+
+	# Companions carry their bodies, and the body survives the save.
+	var roster = load("res://scripts/game/player_roster.gd").new()
+	roster.autosave = false
+	roster._build_heroes()
+	roster._build_stash()
+	roster.purchased_unlocks = []
+	roster.adventures_completed = 1
+	roster.check_milestones()
+	assert(roster.heroes.size() == 2, "Wren arrives")
+	assert(roster.heroes[1].model_scene != null
+		and roster.heroes[1].model_scene.resource_path.contains("female"),
+		"Wren wears her own body")
+	var path := "user://test_model_save.json"
+	RosterSave.save(roster, path)
+	var restored = load("res://scripts/game/player_roster.gd").new()
+	restored.autosave = false
+	assert(RosterSave.load_into(restored, path), "save loads")
+	assert(restored.heroes[1].model_scene.resource_path.contains("female"),
+		"the body persists")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	roster.free()
+	restored.free()
+
 	print("PASS animated actor")
 	get_tree().quit()
