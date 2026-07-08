@@ -17,7 +17,18 @@ extends Node3D
 	set(value):
 		pose = value
 @export var playing := true
+## Freeze-frame position when playing is OFF (works for every pose).
 @export_range(0.0, 1.0, 0.01) var scrub := 0.5
+## Animation speed while playing.
+@export_range(0.1, 3.0, 0.05) var speed := 1.0
+## How far the polish strokes travel (sit only).
+@export_range(0.0, 2.0, 0.05) var stroke_scale := 1.0
+## Where the delver stands (sink him onto the seat).
+@export var delver_position := Vector3(0, 0.31, 0)
+
+@export_group("Resting shield")
+@export var shield_pos := Vector3(0.4, 0.0, 0.2)
+@export var shield_tilt := Vector3(32, 60, 60)
 
 @export_group("Sword grip")
 @export var grip_position := Vector3(0.0, 0.05, 0.0)
@@ -27,6 +38,7 @@ extends Node3D
 @export var right_shoulder := Vector3.ZERO
 @export var right_elbow := Vector3.ZERO
 @export var right_hand := Vector3.ZERO
+@export var left_hand := Vector3.ZERO
 @export var left_shoulder := Vector3.ZERO
 @export var left_elbow := Vector3.ZERO
 @export var head := Vector3.ZERO
@@ -37,7 +49,8 @@ var clock := 0.0
 
 const JOINTS := {
 	"right_shoulder": "R_Upperarm", "right_elbow": "R_Forearm",
-	"right_hand": "R_Hand", "left_shoulder": "L_Upperarm",
+	"right_hand": "R_Hand", "left_hand": "L_Hand",
+	"left_shoulder": "L_Upperarm",
 	"left_elbow": "L_Forearm", "head": "Head", "spine": "Spine01",
 }
 
@@ -83,23 +96,30 @@ func _ready():
 
 func _process(delta):
 	if playing:
-		clock += delta
-	var t = clock if pose in ["sit", "idle"] else fposmod(clock * 0.6, 1.0) if playing else scrub
-	garrick.position.y = 0.31 if pose == "sit" else 0.0
+		clock += delta * speed
+	garrick.position = delver_position
+	# Paused: scrub places every pose at an exact moment.
+	var cycle = clock if playing else scrub * 2.42
+	var shot = fposmod(clock * 0.6, 1.0) if playing else scrub
 	match pose:
-		"sit": garrick.pose_sit(t)
-		"swing": garrick.pose_swing(t if not playing else fposmod(clock * 0.8, 1.0))
-		"idle": garrick.pose_idle(t)
+		"sit": garrick.pose_sit(cycle, stroke_scale)
+		"swing": garrick.pose_swing(fposmod(clock * 0.8, 1.0) if playing else scrub)
+		"idle": garrick.pose_idle(clock if playing else scrub * 4.0)
 		"walk": garrick.pose_walk(clock * 7.0 if playing else scrub * TAU)
-		"shoot": garrick.pose_shoot(t)
-		"cast": garrick.pose_spellcast(t)
-		"spin": garrick.pose_spin(t)
-		"death": garrick.pose_death(scrub if not playing else clampf(fposmod(clock * 0.4, 1.4), 0.0, 1.0))
+		"shoot": garrick.pose_shoot(shot)
+		"cast": garrick.pose_spellcast(shot)
+		"spin": garrick.pose_spin(shot)
+		"death": garrick.pose_death(clampf(fposmod(clock * 0.4, 1.4), 0.0, 1.0) if playing else scrub)
 
-	# Grip fit and joint offsets ride on top, live.
-	if garrick._sword_node:
+	# Grip, shield, and joint offsets ride on top, live. (The sit pose
+	# sets its own lap grip; the knobs override it while nonzero.)
+	if garrick._sword_node and (grip_position != Vector3.ZERO
+			or grip_rotation != Vector3(-115, 0, 0)):
 		garrick._sword_node.position = grip_position
 		garrick._sword_node.rotation_degrees = grip_rotation
+	if garrick._shield_prop:
+		garrick._shield_prop.position = shield_pos
+		garrick._shield_prop.rotation_degrees = shield_tilt
 	for knob in JOINTS:
 		var offset: Vector3 = get(knob)
 		if offset != Vector3.ZERO:

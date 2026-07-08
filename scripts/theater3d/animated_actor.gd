@@ -306,6 +306,9 @@ func _pose(role: String, fraction: float, looped := false):
 	_player.pause()
 	_model.position.y = 0.0
 	_set_shield_grounded(false)
+	if _sword_node:
+		_sword_node.position = Vector3(0.0, 0.05, 0.0)
+		_sword_node.rotation_degrees = Vector3(-115, 0, 0)
 	# The captures carry the chin low; lift the gaze off the ground.
 	_rotate_bone("Head", Vector3.RIGHT, 0.25)
 
@@ -366,7 +369,7 @@ func pose_swing_off(t: float):
 	pose_swing(t)
 
 ## Sitting at the fire: hips folded, calves tucked, hands on knees.
-func pose_sit(t: float):
+func pose_sit(t: float, stroke_scale := 1.0):
 	if _skeleton == null:
 		_pose("idle", t, true)
 		return
@@ -380,15 +383,27 @@ func pose_sit(t: float):
 	_rotate_bone("Spine01", Vector3.RIGHT, 0.12 + sway)
 	_rotate_bone("Head", Vector3.RIGHT, -0.08 - sway)
 	if _has_sword:
-		# The blade rests across the lap; the off hand polishes it in
-		# slow strokes.
+		# The blade rests across the lap (owner-tuned in the Guild
+		# Animator); the off hand polishes it in slow strokes.
 		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.55)
 		_rotate_bone("R_Hand", Vector3.UP, -0.4)
 		_rotate_bone("R_Hand", Vector3.RIGHT, -2.55)
-		var stroke = sin(t * 2.6)
+		for tweak in [["R_Upperarm", -1, 0, -2], ["R_Forearm", 10, -2, -1],
+				["R_Hand", 12, -4, 0], ["L_Upperarm", 10, 0, 0],
+				["L_Forearm", -3, 20, -2], ["Head", -2, 0, 0]]:
+			for axis in 3:
+				if tweak[axis + 1] != 0:
+					_rotate_bone(tweak[0],
+						[Vector3.RIGHT, Vector3.UP, Vector3.BACK][axis],
+						deg_to_rad(tweak[axis + 1]))
+		var stroke = sin(t * 2.6) * stroke_scale
 		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.45 + 0.12 * stroke)
 		_rotate_bone("L_Upperarm", Vector3.BACK, 0.35)
 		_rotate_bone("L_Forearm", Vector3.RIGHT, 0.55 + 0.18 * stroke)
+		# Seated, the fist turns the blade flat across the lap.
+		if _sword_node:
+			_sword_node.position = Vector3.ZERO
+			_sword_node.rotation_degrees = Vector3(-5, 0, -4)
 	_set_shield_grounded(true)
 	_model.position.y = -0.31
 
