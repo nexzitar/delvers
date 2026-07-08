@@ -30,6 +30,9 @@ func _build_model() -> PackedScene:
 	return packed
 
 func _ready():
+	await _run_all()
+
+func _run_all():
 	var model = _build_model()
 
 	# Clip discovery by name fragments.
@@ -129,6 +132,25 @@ func _ready():
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	roster.free()
 	restored.free()
+
+	# Spring hair: the tail trails the moving head and settles under
+	# gravity - never glued to the skull.
+	var tail = load("res://scripts/theater3d/spring_tail.gd").new()
+	add_child(tail)
+	await get_tree().process_frame
+	tail.global_position = Vector3.ZERO
+	tail.simulate(0.016)
+	for k in 20:
+		tail.global_position.x += 0.05
+		tail.simulate(0.016)
+	var tip = tail._points[tail._points.size() - 1]
+	assert(tip.x < tail.global_position.x - 0.05, "the tail trails the motion")
+	for k in 120:
+		tail.simulate(0.016)
+	tip = tail._points[tail._points.size() - 1]
+	assert(tip.y < tail.global_position.y, "gravity wins at rest")
+	assert(absf(tip.x - tail.global_position.x) < 0.2, "the swing settles")
+	tail.free()
 
 	print("PASS animated actor")
 	get_tree().quit()

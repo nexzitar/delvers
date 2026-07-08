@@ -2,6 +2,7 @@ class_name AnimatedActor
 extends Node3D
 
 const DelverBuilder = preload("res://scripts/theater3d/delver_builder.gd")
+const SpringTailScene = preload("res://scripts/theater3d/spring_tail.gd")
 
 ## Wraps an imported character (glTF/GLB, e.g. TripoAI) so the theater
 ## drives it exactly like a procedural rig: the pose functions SEEK
@@ -140,6 +141,15 @@ func _dress(opts: Dictionary):
 			eye_specs.offset.y, eye_specs.offset.z)
 		eye.scale = Vector3(1.0, 1.3, 0.5)
 		head.add_child(eye)
+
+	# Long hair swings free: a spring chain from the back of the head.
+	if opts.has("hair_tail"):
+		var tail = SpringTailScene.new()
+		var spec = opts.hair_tail
+		tail.tail_color = spec.get("color", tail.tail_color)
+		tail.segment_length = spec.get("segment_length", tail.segment_length)
+		tail.position = spec.get("offset", Vector3(0, 0.14, 0.09))
+		head.add_child(tail)
 
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.

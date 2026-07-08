@@ -5,6 +5,11 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Wren's hair moves** (`SpringTail`): a verlet spring chain hangs
+  from her head bone — the ponytail trails her movement, swings
+  through on stops, and settles under gravity, never glued to the
+  skull. Presentation-only physics (the sim never sees it), and the
+  same system will drive cloaks.
 - **Wren has a body** (`delver_female.glb`): her export came as a
   bare rig, so the adapter grew an **animation donor** system — she
   borrows the male's clips, retargeted onto her skeleton by bone name
