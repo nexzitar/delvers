@@ -5,6 +5,15 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **The delvers get dressed** (worn gear on imported models): every
+  worn slot mounts on the skeleton — helmet (fitted), pauldrons,
+  chest plate, gold-buckled belt, gauntlets, bracers, greaves, boots,
+  the bow in the archer's grip — reading the exact same opt keys the
+  procedural rigs dress with. The **cloak is a SpringTail**: it sways
+  with movement, exactly as promised.
+- **The campfire polish**: seated with a sword, the blade now rests
+  across the lap and the off hand works it in slow strokes — the
+  guild's quietest storytelling.
 - **Wren's hair moves** (`SpringTail`): a verlet spring chain hangs
   from her head bone — the ponytail trails her movement, swings
   through on stops, and settles under gravity, never glued to the

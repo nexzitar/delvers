@@ -39,13 +39,17 @@ func _ready():
 			if child.name.begins_with("actor_"):
 				child.free()
 		var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
-		config.merge({"sword": true, "shield": true}, true)
+		config.merge({"sword": true, "shield": true, "helmet": true,
+			"shoulders": Color(0.6, 0.63, 0.68), "chest_plate": Color(0.38, 0.29, 0.2),
+			"belt_trim": Color(0.42, 0.31, 0.19), "greaves": Color(0.6, 0.63, 0.68),
+			"boots_gear": Color(0.32, 0.26, 0.18), "gauntlets": Color(0.54, 0.42, 0.26)}, true)
 		var imported = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
 		imported.name = "actor_imported"
 		imported.position = Vector3(-0.7, 0, 0)
 		add_child(imported)
 		var config_f = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_female.glb"].duplicate(true)
-		config_f.merge({"bow": true}, true)
+		config_f.merge({"bow": true, "cloak": Color(0.74, 0.72, 0.8),
+			"bracers": Color(0.87, 0.84, 0.74)}, true)
 		var rig = AnimatedActor.new(load("res://resources/models/delver_female.glb"), config_f)
 		rig.name = "actor_rig"
 		rig.position = Vector3(0.7, 0, 0)

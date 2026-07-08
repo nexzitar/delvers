@@ -39,6 +39,7 @@ var _skeleton: Skeleton3D
 var _model: Node3D
 var _clips := {}
 var _bones := {}
+var _has_sword := false
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -49,6 +50,7 @@ func _init(scene: PackedScene, opts := {}):
 	_model = model
 	clip_ranges = opts.get("clip_ranges", {})
 	walk_cycle_scale = opts.get("walk_cycle_scale", 1.0)
+	_has_sword = opts.get("sword", false)
 	_player = _find_player(model)
 	_skeleton = _find_skeleton(model)
 	if _skeleton:
@@ -151,6 +153,83 @@ func _dress(opts: Dictionary):
 		tail.position = spec.get("offset", Vector3(0, 0.14, 0.09))
 		head.add_child(tail)
 
+	# Worn gear: the same opt keys the procedural rigs dress with,
+	# mounted on bones. Boxes for now; sculpted pieces come later.
+	if opts.get("helmet", false):
+		var helm_mount = _attach("Head")
+		var helm = DelverBuilder.build_helmet()
+		helm.position = Vector3(0, 0.135, 0)
+		helm.scale = Vector3.ONE * 0.7
+		helm_mount.add_child(helm)
+	if opts.has("shoulders"):
+		for side in ["L", "R"]:
+			var pad_mount = _attach(side + "_Upperarm")
+			for tier in [[0.0, 0.115, 0.05], [0.045, 0.095, 0.04]]:
+				var pad := MeshInstance3D.new()
+				var pad_mesh := BoxMesh.new()
+				pad_mesh.size = Vector3(tier[1], tier[2], tier[1])
+				pad.mesh = pad_mesh
+				pad.material_override = _flat(opts.shoulders)
+				pad.position = Vector3(0, -0.01 - tier[0], 0)
+				pad_mount.add_child(pad)
+	if opts.has("chest_plate"):
+		var chest_mount = _attach("Spine02")
+		var plate := MeshInstance3D.new()
+		var plate_mesh := BoxMesh.new()
+		plate_mesh.size = Vector3(0.21, 0.17, 0.045)
+		plate.mesh = plate_mesh
+		plate.material_override = _flat(opts.chest_plate)
+		plate.position = Vector3(0, 0.05, -0.075)
+		chest_mount.add_child(plate)
+	if opts.has("cloak"):
+		var cloak_mount = _attach("Spine02")
+		var cloak = SpringTailScene.new()
+		cloak.tail_color = opts.cloak
+		cloak.width = 0.3
+		cloak.depth = 0.022
+		cloak.segment_length = 0.15
+		cloak.stiffness = 0.5
+		cloak.rest_local = Vector3(0, -0.9, 0.35)
+		cloak.position = Vector3(0, 0.1, 0.075)
+		cloak_mount.add_child(cloak)
+	if opts.has("belt_trim"):
+		var belt_mount = _attach("Waist")
+		var belt := MeshInstance3D.new()
+		var belt_mesh := BoxMesh.new()
+		belt_mesh.size = Vector3(0.2, 0.05, 0.14)
+		belt.mesh = belt_mesh
+		belt.material_override = _flat(opts.belt_trim)
+		belt.position = Vector3(0, 0.03, 0)
+		belt_mount.add_child(belt)
+		var buckle := MeshInstance3D.new()
+		var buckle_mesh := BoxMesh.new()
+		buckle_mesh.size = Vector3(0.04, 0.04, 0.015)
+		buckle.mesh = buckle_mesh
+		buckle.material_override = _flat(Color(0.75, 0.62, 0.3))
+		buckle.position = Vector3(0, 0.03, -0.072)
+		belt_mount.add_child(buckle)
+	for pair in [["gauntlets", "Hand", Vector3(0, 0.02, 0), Vector3(0.075, 0.08, 0.09)],
+			["bracers", "Forearm", Vector3(0, 0.1, 0), Vector3(0.07, 0.09, 0.075)],
+			["greaves", "Calf", Vector3(0, 0.12, 0), Vector3(0.085, 0.13, 0.095)],
+			["boots_gear", "Foot", Vector3(0, 0.03, -0.02), Vector3(0.085, 0.07, 0.16)]]:
+		if not opts.has(pair[0]):
+			continue
+		for side in ["L", "R"]:
+			var mount = _attach(side + "_" + pair[1])
+			var piece := MeshInstance3D.new()
+			var piece_mesh := BoxMesh.new()
+			piece_mesh.size = pair[3]
+			piece.mesh = piece_mesh
+			piece.material_override = _flat(opts[pair[0]])
+			piece.position = pair[2]
+			mount.add_child(piece)
+	if opts.get("bow", false):
+		var bow_mount = _attach("L_Hand")
+		var bow = DelverBuilder.build_bow()
+		bow.position = Vector3(0, 0.05, 0)
+		bow.scale = Vector3.ONE * 0.9
+		bow_mount.add_child(bow)
+
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.
 	if opts.get("sword", false) or opts.get("axe", false) or opts.get("dagger", false):
@@ -171,6 +250,12 @@ func _dress(opts: Dictionary):
 		shield.rotation_degrees = Vector3(90, -35, 0)
 		shield.scale = Vector3.ONE * 0.8
 		arm.add_child(shield)
+
+func _flat(color: Color) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = 0.9
+	return mat
 
 func _find_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
@@ -275,6 +360,16 @@ func pose_sit(t: float):
 		_rotate_bone(side + "_Forearm", Vector3.RIGHT, 0.4)
 	_rotate_bone("Spine01", Vector3.RIGHT, 0.12 + sway)
 	_rotate_bone("Head", Vector3.RIGHT, -0.08 - sway)
+	if _has_sword:
+		# The blade rests across the lap; the off hand polishes it in
+		# slow strokes.
+		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.5)
+		_rotate_bone("R_Hand", Vector3.UP, 1.35)
+		_rotate_bone("R_Hand", Vector3.RIGHT, 0.4)
+		var stroke = sin(t * 2.6)
+		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.35 + 0.12 * stroke)
+		_rotate_bone("L_Upperarm", Vector3.BACK, 0.35)
+		_rotate_bone("L_Forearm", Vector3.RIGHT, 0.55 + 0.18 * stroke)
 	_model.position.y = -0.31
 
 func pose_shoot(t: float, _target_dist := 2.2):

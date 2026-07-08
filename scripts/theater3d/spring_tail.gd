@@ -8,6 +8,9 @@ extends Node3D
 @export var segment_length := 0.09
 @export var segment_count := 3
 @export var thickness := 0.055
+## Optional rectangular cross-section (cloaks); zero = use thickness.
+@export var width := 0.0
+@export var depth := 0.0
 @export var gravity := Vector3(0, -9.0, 0)
 @export var damping := 0.88
 @export var stiffness := 0.35
@@ -24,7 +27,9 @@ func _ready():
 		var seg := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
 		var taper = 1.0 - 0.25 * i
-		mesh.size = Vector3(thickness * taper, segment_length, thickness * taper)
+		var w = width if width > 0.0 else thickness
+		var d = depth if depth > 0.0 else thickness
+		mesh.size = Vector3(w * (1.0 - 0.08 * i), segment_length, d * taper)
 		seg.mesh = mesh
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = tail_color.darkened(0.06 * i)

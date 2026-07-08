@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://75iocrln8r66"
-path="res://.godot/imported/delver_female_low-poly_female_3d_model_basecolor.jpg-9b0914167d1df8a911d77abb42575630.ctex"
+path.s3tc="res://.godot/imported/delver_female_low-poly_female_3d_model_basecolor.jpg-9b0914167d1df8a911d77abb42575630.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "60dfac89e0505cf5e6e0c04056e2ba05"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/delver_female_low-poly_female_3d_model_basecolor.jpg"
-dest_files=["res://.godot/imported/delver_female_low-poly_female_3d_model_basecolor.jpg-9b0914167d1df8a911d77abb42575630.ctex"]
+dest_files=["res://.godot/imported/delver_female_low-poly_female_3d_model_basecolor.jpg-9b0914167d1df8a911d77abb42575630.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
