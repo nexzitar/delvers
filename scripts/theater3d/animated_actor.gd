@@ -255,8 +255,8 @@ func _dress(opts: Dictionary):
 		_shield_arm.add_child(shield)
 		# At rest the shield comes off the arm and leans beside him.
 		_shield_prop = DelverBuilder.build_shield()
-		_shield_prop.position = Vector3(0.34, 0.26, 0.06)
-		_shield_prop.rotation_degrees = Vector3(12, 20, 78)
+		_shield_prop.position = Vector3(0.42, 0.15, 0.24)
+		_shield_prop.rotation_degrees = Vector3(32, 18, 78)
 		_shield_prop.scale = Vector3.ONE * 0.9
 		_shield_prop.visible = false
 		add_child(_shield_prop)
@@ -381,8 +381,8 @@ func pose_sit(t: float):
 		# The blade rests across the lap; the off hand polishes it in
 		# slow strokes.
 		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.65)
-		_rotate_bone("R_Hand", Vector3.UP, 1.7)
-		_rotate_bone("R_Hand", Vector3.RIGHT, 0.9)
+		_rotate_bone("R_Hand", Vector3.UP, 2.5)
+		_rotate_bone("R_Hand", Vector3.RIGHT, 1.75)
 		var stroke = sin(t * 2.6)
 		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.35 + 0.12 * stroke)
 		_rotate_bone("L_Upperarm", Vector3.BACK, 0.35)

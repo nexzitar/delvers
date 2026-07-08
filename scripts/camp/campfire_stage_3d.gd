@@ -21,7 +21,7 @@ const LOG_TOP := 0.3
 ## "menu" frames the clearing wide; "camp" sits closer to the fire.
 @export var framing := "menu"
 
-const MENU_CAMERA := {"position": Vector3(0, 2.6, 7.2), "look": Vector3(0, 0.7, 0)}
+const MENU_CAMERA := {"position": Vector3(-1.9, 2.6, 7.0), "look": Vector3(-1.6, 0.7, 0)}
 const CAMP_CAMERA := {"position": Vector3(0, 3.1, 5.2), "look": Vector3(0, 0.4, 0)}
 
 var camera: Camera3D

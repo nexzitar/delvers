@@ -5,6 +5,12 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Camp scene polish round three**: the menu camera pans left so
+  seated delvers never hide behind the panel; the resting shield
+  leans against the log instead of standing on it; the lap-sword
+  angle improved; and `capture/pose_tuner.tscn` lets the owner tune
+  the sit pose live — run it, open the Remote scene tree, drag the
+  exported sliders, report the numbers.
 - **Crowd navigation** (playtest, the big one): paths are
   crowd-aware — tiles held by other units cost extra, so attackers
   **fan out around a queue** instead of forming one, and a unit
