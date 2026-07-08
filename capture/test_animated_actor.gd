@@ -41,15 +41,16 @@ func _ready():
 	assert(actor.clip_for("shoot") == "Sword_Attack", "missing roles borrow")
 
 	# Deterministic scrubbing: same t, same transform - replay-safe.
+	# The theater's walk phase is radians: TAU spans one clip cycle.
 	var body = actor.get_child(0).get_node("Body")
-	actor.pose_walk(0.5)
+	actor.pose_walk(TAU * 0.5)
 	var at_half = body.position
-	actor.pose_walk(0.9)
-	actor.pose_walk(0.5)
+	actor.pose_walk(TAU * 0.9)
+	actor.pose_walk(TAU * 0.5)
 	assert(body.position.is_equal_approx(at_half), "the scrub is deterministic")
-	assert(absf(at_half.y - 0.5) < 0.01, "half the walk is half the clip")
-	actor.pose_walk(1.25)
-	assert(absf(body.position.y - 0.25) < 0.01, "loops wrap")
+	assert(absf(at_half.y - 0.5) < 0.01, "half a cycle is half the clip")
+	actor.pose_walk(TAU * 1.25)
+	assert(absf(body.position.y - 0.25) < 0.01, "cycles wrap")
 	actor.pose_death(5.0)
 	assert(absf(body.position.y - 1.2) < 0.05, "one-shots clamp at the end")
 
@@ -90,6 +91,10 @@ func _ready():
 	assert(mounts == 3, "eyes, sword, shield ride the bones")
 	tripo.pose_walk(0.5)
 	tripo.pose_swing(0.3)
+	tripo.pose_sit(1.0)
+	tripo.pose_swing(0.5)
+	# Clip ranges: the idle scrubs inside its calm window only.
+	assert(tripo.clip_ranges.has("idle"), "the idle is sliced")
 
 	print("PASS animated actor")
 	get_tree().quit()

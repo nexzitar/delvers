@@ -51,6 +51,8 @@ const MODEL_CONFIGS := {
 	"res://resources/models/delver_male.glb": {
 		"facing_fix": -PI / 2,
 		"model_scale": 1.2,
+		"walk_cycle_scale": 1.5,
+		"clip_ranges": {"idle": [0.2, 4.2]},
 		"clip_map": {
 			"death": "NlaTrack",
 			"idle": "NlaTrack_001",

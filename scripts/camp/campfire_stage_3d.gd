@@ -126,7 +126,8 @@ func refresh_hero(hero_index: int):
 
 func _spawn_seated(seat_name: String, seat_pos: Vector3, hero_index: int):
 	var template = PlayerRoster.heroes[hero_index]
-	var rig = ActorFactory3D.build_hero(template.equipped)
+	var rig = ActorFactory3D.build_hero(template.equipped,
+		template.model_scene.resource_path if template.model_scene else "")
 	add_child(rig)
 	# Perched on the log, facing the fire.
 	rig.position = seat_pos + Vector3(0, LOG_TOP - 0.06, 0)

@@ -26,9 +26,18 @@ const FALLBACKS := {"cast": "swing", "spin": "swing", "shoot": "swing"}
 ## Most exports face -Z; our rigs face +Z. Override per model if needed.
 var facing_fix := PI
 
+## Long captured clips often hold one good stretch: per-role [from, to]
+## seconds, scrubbed within that window only (kills idle foot-slides).
+var clip_ranges := {}
+## The theater's walk phase is radians (sin-based rigs); one clip
+## cycle spans TAU * this. Bigger = slower stride.
+var walk_cycle_scale := 1.0
+
 var _player: AnimationPlayer
 var _skeleton: Skeleton3D
+var _model: Node3D
 var _clips := {}
+var _bones := {}
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -36,8 +45,14 @@ func _init(scene: PackedScene, opts := {}):
 	if opts.has("model_scale"):
 		model.scale = Vector3.ONE * opts.model_scale
 	add_child(model)
+	_model = model
+	clip_ranges = opts.get("clip_ranges", {})
+	walk_cycle_scale = opts.get("walk_cycle_scale", 1.0)
 	_player = _find_player(model)
 	_skeleton = _find_skeleton(model)
+	if _skeleton:
+		for i in _skeleton.get_bone_count():
+			_bones[_skeleton.get_bone_name(i)] = i
 	if _skeleton:
 		_dress(opts)
 	if _player == null:
@@ -142,10 +157,17 @@ func _pose(role: String, fraction: float, looped := false):
 		fraction = fposmod(fraction, 1.0)
 	else:
 		fraction = clampf(fraction, 0.0, 0.999)
+	var length: float = _player.get_animation(clip_name).length
+	var from := 0.0
+	var to: float = length
+	if clip_ranges.has(role):
+		from = clip_ranges[role][0]
+		to = minf(clip_ranges[role][1], length)
 	if _player.current_animation != clip_name:
 		_player.play(clip_name)
-	_player.seek(fraction * _player.get_animation(clip_name).length, true)
+	_player.seek(from + fraction * (to - from), true)
 	_player.pause()
+	_model.position.y = 0.0
 
 # --- The rig contract ------------------------------------------------------
 
@@ -156,13 +178,62 @@ func pose_idle(t: float):
 	_pose("idle", t / maxf(_player.get_animation(clip_name).length, 0.1), true)
 
 func pose_walk(phase: float):
-	_pose("walk", phase, true)
+	_pose("walk", phase / (TAU * walk_cycle_scale), true)
 
+## --- Authored bone poses ---------------------------------------------
+## Baked clips cover locomotion; combat reads better authored. Base
+## frame first (calm idle), then local-axis rotations on named bones -
+## deterministic in t, contact exactly where the theater expects it.
+
+func _bone_pose_base():
+	_pose("idle", 0.0)
+
+func _rotate_bone(bone: String, axis: Vector3, angle: float):
+	if not _bones.has(bone):
+		return
+	var idx = _bones[bone]
+	_skeleton.set_bone_pose_rotation(idx,
+		_skeleton.get_bone_pose_rotation(idx) * Quaternion(axis.normalized(), angle))
+
+## One-handed swing: raise overhead, cut down to a forward strike.
+## Upper-arm local +X pitches the arm forward-up (probe-verified);
+## contact lands at t=0.5, horizontal, matching the theater's beat.
 func pose_swing(t: float):
-	_pose("swing", t)
+	if _skeleton == null:
+		_pose("swing", t)
+		return
+	_bone_pose_base()
+	var wind = smoothstep(0.0, 0.4, t)
+	var cut = smoothstep(0.4, 0.62, t)
+	var settle = smoothstep(0.72, 1.0, t)
+	var lift = (2.5 * wind - 2.1 * cut) * (1.0 - settle)
+	var elbow = (0.9 * wind - 0.85 * cut) * (1.0 - settle)
+	var twist = (0.35 * wind - 0.65 * cut) * (1.0 - settle)
+	_rotate_bone("R_Upperarm", Vector3.RIGHT, lift)
+	_rotate_bone("R_Upperarm", Vector3.BACK, -0.25 * cut * (1.0 - settle))
+	_rotate_bone("R_Forearm", Vector3.RIGHT, elbow)
+	_rotate_bone("Spine01", Vector3.UP, twist)
+	_rotate_bone("Spine02", Vector3.UP, twist * 0.6)
+	_rotate_bone("Head", Vector3.UP, -twist * 0.8)
 
 func pose_swing_off(t: float):
-	_pose("swing", t)
+	pose_swing(t)
+
+## Sitting at the fire: hips folded, calves tucked, hands on knees.
+func pose_sit(t: float):
+	if _skeleton == null:
+		_pose("idle", t, true)
+		return
+	_bone_pose_base()
+	var sway = 0.03 * sin(t * 0.9)
+	for side in ["L", "R"]:
+		_rotate_bone(side + "_Thigh", Vector3.RIGHT, -1.5)
+		_rotate_bone(side + "_Calf", Vector3.RIGHT, 1.35)
+		_rotate_bone(side + "_Upperarm", Vector3.RIGHT, -0.5)
+		_rotate_bone(side + "_Forearm", Vector3.RIGHT, -0.5)
+	_rotate_bone("Spine01", Vector3.RIGHT, 0.12 + sway)
+	_rotate_bone("Head", Vector3.RIGHT, -0.08 - sway)
+	_model.position.y = -0.31
 
 func pose_shoot(t: float, _target_dist := 2.2):
 	_pose("shoot", t)

@@ -32,7 +32,8 @@ func _ready():
 	add_child(ground)
 
 	var out = ProjectSettings.globalize_path("res://capture/proto3d/renders")
-	var poses = [["idle", 3.0], ["walk", 0.35], ["swing", 0.55], ["cast", 0.5], ["death", 0.85]]
+	var poses = [["idle", 3.0], ["swing", 0.15], ["swing", 0.45], ["swing", 0.55], ["swing", 0.8], ["sit", 2.0]]
+	var counter := 0
 	for pose in poses:
 		for child in get_children():
 			if child.name.begins_with("actor_"):
@@ -51,21 +52,16 @@ func _ready():
 			"idle":
 				imported.pose_idle(pose[1])
 				rig.pose_idle(pose[1])
-			"walk":
-				imported.pose_walk(pose[1])
-				rig.pose_walk(pose[1])
 			"swing":
 				imported.pose_swing(pose[1])
 				rig.pose_swing(pose[1])
-			"cast":
-				imported.pose_spellcast(pose[1])
-				rig.pose_spellcast(pose[1])
-			"death":
-				imported.pose_death(pose[1])
-				rig.pose_death(pose[1])
+			"sit":
+				imported.pose_sit(pose[1])
+				rig.pose_sit(pose[1])
 		await get_tree().process_frame
 		await RenderingServer.frame_post_draw
 		var img = get_viewport().get_texture().get_image()
-		img.save_png("%s/model_%s.png" % [out, pose[0]])
+		img.save_png("%s/model_%d_%s.png" % [out, counter, pose[0]])
+		counter += 1
 	print("MODEL SHOTS DONE")
 	get_tree().quit()

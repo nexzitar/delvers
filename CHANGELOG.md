@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Model animation polish** (playtest): the idle scrubs only its
+  calm first stretch (the 15s capture had wandering feet), the walk
+  runs at stride pacing (the theater's radian phase was cycling the
+  clip seven times a second), and the wood-chop is retired from
+  combat — the one-handed swing is now **authored directly on the
+  skeleton** (probe-verified bone axes: windup overhead, cut to a
+  forward strike, contact on the theater's beat), the same
+  deterministic pose-function shape as the procedural rigs. The camp
+  went imported too: models reach the fire and **sit** via an
+  authored bone pose (hips folded, hands on knees, gentle sway).
 - **The first TripoAI delver walks** (`resources/models/delver_male.glb`):
   the male delver model is live in battle — clips identified by
   render-inspection and mapped explicitly (idle/walk/run/chop/defeat/
