@@ -1,24 +1,48 @@
 extends Node3D
 
-## Live pose tuning: run this scene (F6), then in the editor pick
-## Scene panel -> Remote tab -> PoseTuner, and drag the exported
-## sliders. The seated pair re-poses every frame from these values.
-## When it looks right, read the numbers off and hand them over.
+## Live pose tuning for ANY animation. Run this scene (F6), then in
+## the editor: Scene panel -> Remote tab -> select PoseTuner, and
+## drag the exported sliders. Everything re-poses live.
+##
+## - pose: which animation plays (authored poses and baked clips both)
+## - scrub + playing: freeze at a moment or let it run
+## - grip: seat the sword in the fist (position in hand-space, meters)
+## - joint offsets: degrees, added ON TOP of the pose every frame
+## When it looks right, screenshot the inspector and hand it over.
 
-@export_range(-3.0, 3.0, 0.05) var hand_yaw := 2.5
-@export_range(-3.0, 3.0, 0.05) var hand_pitch := 1.75
-@export_range(-2.0, 2.0, 0.05) var forearm_bend := 0.65
-@export_range(-2.0, 2.0, 0.05) var polish_reach := 0.35
-@export var shield_pos := Vector3(0.42, 0.15, 0.24)
-@export var shield_tilt := Vector3(32, 18, 78)
+@export_enum("sit", "swing", "idle", "walk", "shoot", "cast", "spin", "death") \
+	var pose := "sit":
+	set(value):
+		pose = value
+@export var playing := true
+@export_range(0.0, 1.0, 0.01) var scrub := 0.5
+
+@export_group("Sword grip")
+@export var grip_position := Vector3(0.0, 0.05, 0.0)
+@export var grip_rotation := Vector3(-115, 0, 0)
+
+@export_group("Joint offsets (degrees)")
+@export var right_shoulder := Vector3.ZERO
+@export var right_elbow := Vector3.ZERO
+@export var right_hand := Vector3.ZERO
+@export var left_shoulder := Vector3.ZERO
+@export var left_elbow := Vector3.ZERO
+@export var head := Vector3.ZERO
+@export var spine := Vector3.ZERO
 
 var garrick: AnimatedActor
 var clock := 0.0
 
+const JOINTS := {
+	"right_shoulder": "R_Upperarm", "right_elbow": "R_Forearm",
+	"right_hand": "R_Hand", "left_shoulder": "L_Upperarm",
+	"left_elbow": "L_Forearm", "head": "Head", "spine": "Spine01",
+}
+
 func _ready():
 	var cam := Camera3D.new()
-	cam.position = Vector3(0.8, 1.1, 2.0)
-	cam.look_at_from_position(cam.position, Vector3(0, 0.45, 0))
+	cam.position = Vector3(0.9, 1.2, 2.1)
+	cam.look_at_from_position(cam.position, Vector3(0, 0.55, 0))
 	add_child(cam)
 	cam.current = true
 	var sun := DirectionalLight3D.new()
@@ -47,17 +71,31 @@ func _ready():
 	var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
 	config.merge({"sword": true, "shield": true, "helmet": true}, true)
 	garrick = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
-	garrick.position = Vector3(0, 0.31, 0)
 	add_child(garrick)
 
 func _process(delta):
-	clock += delta
-	garrick.pose_sit(clock)
-	# Re-apply the tunable joints on top.
-	garrick._rotate_bone("R_Forearm", Vector3.RIGHT, forearm_bend - 0.65)
-	garrick._rotate_bone("R_Hand", Vector3.UP, hand_yaw - 2.5)
-	garrick._rotate_bone("R_Hand", Vector3.RIGHT, hand_pitch - 1.75)
-	garrick._rotate_bone("L_Upperarm", Vector3.RIGHT, polish_reach - 0.35)
-	if garrick._shield_prop:
-		garrick._shield_prop.position = shield_pos
-		garrick._shield_prop.rotation_degrees = shield_tilt
+	if playing:
+		clock += delta
+	var t = clock if pose in ["sit", "idle"] else fposmod(clock * 0.6, 1.0) if playing else scrub
+	garrick.position.y = 0.31 if pose == "sit" else 0.0
+	match pose:
+		"sit": garrick.pose_sit(t)
+		"swing": garrick.pose_swing(t if not playing else fposmod(clock * 0.8, 1.0))
+		"idle": garrick.pose_idle(t)
+		"walk": garrick.pose_walk(clock * 7.0 if playing else scrub * TAU)
+		"shoot": garrick.pose_shoot(t)
+		"cast": garrick.pose_spellcast(t)
+		"spin": garrick.pose_spin(t)
+		"death": garrick.pose_death(scrub if not playing else clampf(fposmod(clock * 0.4, 1.4), 0.0, 1.0))
+
+	# Grip fit and joint offsets ride on top, live.
+	if garrick._sword_node:
+		garrick._sword_node.position = grip_position
+		garrick._sword_node.rotation_degrees = grip_rotation
+	for knob in JOINTS:
+		var offset: Vector3 = get(knob)
+		if offset != Vector3.ZERO:
+			for axis in 3:
+				if offset[axis] != 0.0:
+					var axis_vec = [Vector3.RIGHT, Vector3.UP, Vector3.BACK][axis]
+					garrick._rotate_bone(JOINTS[knob], axis_vec, deg_to_rad(offset[axis]))

@@ -42,6 +42,7 @@ var _bones := {}
 var _has_sword := false
 var _shield_arm: BoneAttachment3D
 var _shield_prop: Node3D
+var _sword_node: Node3D
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -246,6 +247,7 @@ func _dress(opts: Dictionary):
 		weapon.rotation_degrees = Vector3(-115, 0, 0)
 		weapon.scale = Vector3.ONE * 0.8
 		hand.add_child(weapon)
+		_sword_node = weapon
 	if opts.get("shield", false):
 		_shield_arm = _attach("L_Forearm")
 		var shield = DelverBuilder.build_shield()
@@ -255,8 +257,8 @@ func _dress(opts: Dictionary):
 		_shield_arm.add_child(shield)
 		# At rest the shield comes off the arm and leans beside him.
 		_shield_prop = DelverBuilder.build_shield()
-		_shield_prop.position = Vector3(0.42, 0.15, 0.24)
-		_shield_prop.rotation_degrees = Vector3(32, 18, 78)
+		_shield_prop.position = Vector3(0.4, 0.0, 0.2)
+		_shield_prop.rotation_degrees = Vector3(32, 60, 60)
 		_shield_prop.scale = Vector3.ONE * 0.9
 		_shield_prop.visible = false
 		add_child(_shield_prop)
@@ -380,11 +382,11 @@ func pose_sit(t: float):
 	if _has_sword:
 		# The blade rests across the lap; the off hand polishes it in
 		# slow strokes.
-		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.65)
-		_rotate_bone("R_Hand", Vector3.UP, 2.5)
-		_rotate_bone("R_Hand", Vector3.RIGHT, 1.75)
+		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.55)
+		_rotate_bone("R_Hand", Vector3.UP, -0.4)
+		_rotate_bone("R_Hand", Vector3.RIGHT, -2.55)
 		var stroke = sin(t * 2.6)
-		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.35 + 0.12 * stroke)
+		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.45 + 0.12 * stroke)
 		_rotate_bone("L_Upperarm", Vector3.BACK, 0.35)
 		_rotate_bone("L_Forearm", Vector3.RIGHT, 0.55 + 0.18 * stroke)
 	_set_shield_grounded(true)
