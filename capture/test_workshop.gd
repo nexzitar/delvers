@@ -68,9 +68,14 @@ func _ready():
 		[], [], [], load("res://resources/dungeons/sunken_workshop.tres"),
 		["darkwood", "spider_nest", "sunken_workshop"], 1, ["nearest"])
 	assert(spoils.doctrines.size() >= 1, "the Foreman lectures")
-	for doctrine_id in spoils.doctrines:
-		assert(doctrine_id in ["engineers_slate", "doctrine_capacity_3"],
-			"engineering lessons only")
+	assert(spoils.doctrines == ["engineers_slate"],
+		"the first lecture is the Slate itself")
+	var second = LootTable.roll_enemy_drops([foreman], 10,
+		[], [], [], load("res://resources/dungeons/sunken_workshop.tres"),
+		["darkwood", "spider_nest", "sunken_workshop"], 1,
+		["nearest", "engineers_slate"])
+	assert(second.doctrines == ["doctrine_capacity_2"],
+		"then the doctrine grows, in order")
 
 	# Goggles are tier-gated knowledge; workshop ilvl band holds.
 	var goggles = load("res://resources/recipes/engineers_goggles.tres")

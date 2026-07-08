@@ -172,6 +172,13 @@ func update(delta, combat_state):
 	if _try_special_skills(combat_state):
 		return
 
+	# Movement doctrine: a skirmisher falls back while melee closes,
+	# and shoots from the new ground (classic stutter-kite).
+	if BehaviorTree.move_directive(combat_state, self) == "kite" \
+			and combat_state.tick_kite(self, delta):
+		attack_timer -= delta * attack_speed_multiplier()
+		return
+
 	# Attacks fire anywhere inside range, but melee keeps closing to
 	# comfortable striking distance before settling.
 	var in_range = combat_state.in_attack_range(self, target)

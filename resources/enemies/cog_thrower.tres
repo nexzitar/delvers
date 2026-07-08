@@ -21,5 +21,5 @@ material_loot = Array[String](["cog_wheel"])
 material_drop_count = 1
 recipe_loot = Array[String](["engineers_goggles"])
 recipe_drop_chance = 0.04
-doctrine_loot = Array[String](["lowest"])
+doctrine_loot = Array[String](["skirmish", "lowest"])
 armor = 2

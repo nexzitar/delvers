@@ -21,6 +21,10 @@ const TACTIC_TREES := {
 		{"when": [{"cond": "healer_threatened"}], "target": "healer_attacker"},
 		{"when": [], "target": "nearest"},
 	],
+	"skirmish": [
+		{"when": [{"cond": "melee_closing"}], "move": "kite"},
+		{"when": [], "target": "nearest"},
+	],
 }
 
 ## Doctrine complexity: a tree's size in nodes — one per rule, one
@@ -58,6 +62,12 @@ static func check(state, hero, condition: Dictionary) -> bool:
 			return near >= int(condition.get("n", 1))
 		"healer_threatened":
 			return _healer_attacker(state, hero) != -1
+		"melee_closing":
+			for foe in _living_opponents(state, hero):
+				if foe.target_id == hero.entity_id \
+						and hero.position.distance_to(foe.position) < 110.0:
+					return true
+			return false
 	return false
 
 static func passes(state, hero, conditions: Array) -> bool:
@@ -108,6 +118,17 @@ static func _select(state, hero, selector: String) -> int:
 			best_id = foe.entity_id
 			best_key = key
 	return best_id
+
+# --- Movement channel -----------------------------------------------------
+
+## The first matching move rule wins; "" means stand and fight as ever.
+static func move_directive(state, hero) -> String:
+	for rule in tree_for(hero):
+		if not rule.has("move"):
+			continue
+		if passes(state, hero, rule.get("when", [])):
+			return rule.move
+	return ""
 
 # --- Casting channel ------------------------------------------------------
 
@@ -172,6 +193,7 @@ const _COND_CODE := {
 	"mana_gte": "self.mana >= {n}",
 	"enemies_within": "enemies_within(reach={range}) >= {n}",
 	"healer_threatened": "healer_threatened()",
+	"melee_closing": "melee_closing()",
 }
 const _SELECTOR_CODE := {
 	"nearest": "nearest_enemy()",
@@ -194,7 +216,9 @@ static func to_code(tree: Array) -> String:
 			var template = _COND_CODE.get(condition.get("cond", "always"), "True")
 			tests.append(template.format(condition))
 		var body := ""
-		if rule.has("cast"):
+		if rule.has("move"):
+			body = "return keep_distance()"
+		elif rule.has("cast"):
 			body = "cast(\"%s\")" % rule.cast
 		else:
 			body = "return target(%s)" % _SELECTOR_CODE.get(rule.get("target", "nearest"), "nearest_enemy()")

@@ -135,7 +135,7 @@ static func roll_enemy_drops(
 				func(id): return not seen_doctrines.has(id)
 			)
 			if not unknown_doctrines.is_empty():
-				var doctrine_id = unknown_doctrines.pick_random()
+				var doctrine_id = unknown_doctrines[0]
 				drops.doctrines.append(doctrine_id)
 				seen_doctrines.append(doctrine_id)
 

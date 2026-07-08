@@ -13,13 +13,22 @@ Notable changes per pull request. Newest first.
   a piston whole); its lesson: don't trade blows with machines.
   Scrap Sentinels, Oil Slicks (Gum Strike slows your swings), Cog
   Throwers, Rust Mite swarms, and **The Foreman**, who walks the
-  assembly floor still and teaches the Engineer's Slate and
-  Battlefield Doctrine III. Brass-and-oil theater theme, four
+  assembly floor still and teaches the Engineer's Slate, then
+  Battlefield Doctrine II and III. Brass-and-oil theater theme, four
   workshop-log fragments, three new materials and recipes.
-- **The Engineer's Slate** (recovered knowledge, data-complete): turns
-  the Doctrine Editor into snap-together colored blocks — gold WHEN
-  blocks, blue target blocks, violet cast blocks — the same trees
-  underneath.
+- **The Engineer's Slate** IS the Doctrine Editor now (owner call:
+  capacity before the editor was backwards): no custom doctrine at
+  all until the Foreman teaches the Slate, which opens the editor as
+  snap-together colored blocks — gold WHEN, blue target, violet cast,
+  green move — holding four marks. Battlefield Doctrine II (8 nodes)
+  and III (16) follow from the same teacher, in order.
+- **Movement joins the doctrine engine**: trees gained a move channel
+  ("A melee foe closes in" → "Move: Keep Distance"), the sim gained
+  real kiting (fall back to open ground, shoot from the new range —
+  classic stutter-kite), and the **Skirmisher's Step** doctrine
+  teaches it as a built-in tactic — recovered from the Cog Thrower,
+  who has always fought that way. *"Loose, step, loose. The ground
+  you give away is ammunition."*
 - **The Engineer's Annotations** (recovered knowledge, data-complete):
   adds the **View Code** button — the doctrine shown as the Python it
   always was ("The blocks were always words."). Its teacher waits in

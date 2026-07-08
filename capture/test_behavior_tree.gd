@@ -81,21 +81,21 @@ func _ready():
 	roster._build_stash()
 	assert(roster.doctrine_capacity() == 0, "a fresh guild plans nothing custom")
 	roster.start_delve()
-	roster.delve_doctrines = ["doctrine_capacity_1", "guard"]
+	roster.delve_doctrines = ["doctrine_capacity_2", "guard"]
 	roster.bank_delve_loot()
-	assert(roster.doctrine_capacity() == 4, "Battlefield Doctrine I: four nodes")
+	assert(roster.doctrine_capacity() == 0, "capacity waits for the Slate")
 	assert(roster.known_tactics.has("guard"), "tactics route to tactics")
-	assert(not roster.known_tactics.has("doctrine_capacity_1"),
-		"capacity routes to engineering")
-	roster.known_engineering.append("doctrine_capacity_2")
-	assert(roster.doctrine_capacity() == 8, "the highest tier holds")
+	roster.known_engineering.append("engineers_slate")
+	assert(roster.doctrine_capacity() == 8, "the Slate opens; Doctrine II extends")
+	roster.known_engineering = ["engineers_slate"]
+	assert(roster.doctrine_capacity() == 4, "the Slate alone holds four marks")
 
 	# Setup enforces the budget: within it, the custom tree fights;
 	# over it, the pre-authored tactic holds the line.
 	PlayerRoster.autosave = false
 	PlayerRoster._build_heroes()
 	PlayerRoster._build_stash()
-	PlayerRoster.known_engineering = ["doctrine_capacity_1"]
+	PlayerRoster.known_engineering = ["engineers_slate"]
 	var scripted = load("res://resources/heroes/default_delver.tres").duplicate(true)
 	scripted.custom_tree = small_tree
 	var combat_ok = CombatState.new()
@@ -109,6 +109,7 @@ func _ready():
 		"twelve nodes exceed four: the tactic holds")
 
 	# Custom doctrine survives the save.
+	roster.known_engineering = ["engineers_slate", "doctrine_capacity_2"]
 	roster.heroes[0].custom_tree = small_tree
 	var path := "user://test_doctrine_tree_save.json"
 	RosterSave.save(roster, path)
@@ -116,11 +117,34 @@ func _ready():
 	restored.autosave = false
 	assert(RosterSave.load_into(restored, path), "save loads")
 	assert(restored.doctrine_capacity() == 8, "capacity persists")
+	assert(restored.has_tool("engineers_slate"), "the slate persists")
 	assert(BehaviorTree.node_count(restored.heroes[0].custom_tree) == 3,
 		"the doctrine survives written down")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	roster.free()
 	restored.free()
+
+	# Skirmisher's Step: the archer gives ground while melee closes.
+	var kite_combat = CombatState.new()
+	var archer_template = load("res://resources/heroes/default_delver.tres").duplicate(true)
+	archer_template.equipped = {
+		Equip.Position.MAIN_HAND: LootTable.materialize("starter_bow", 5, 1),
+	}
+	kite_combat.setup_combat([archer_template], [slime])
+	var skirmisher = kite_combat.heroes[0]
+	skirmisher.tactic = "skirmish"
+	var wolf = kite_combat.enemies[0]
+	wolf.position = skirmisher.position + Vector2(70, 0)
+	wolf.target_id = skirmisher.entity_id
+	assert(BehaviorTree.move_directive(kite_combat, skirmisher) == "kite",
+		"the step is called")
+	var gap_before = skirmisher.position.distance_to(wolf.position)
+	for k in 8:
+		kite_combat.tick_kite(skirmisher, 0.1)
+	assert(skirmisher.position.distance_to(wolf.position) > gap_before,
+		"ground given, range gained")
+	assert(BehaviorTree.to_code(BehaviorTree.TACTIC_TREES.skirmish).contains("keep_distance()"),
+		"movement reads as code")
 
 	# The Annotations: blocks were always words.
 	var code = BehaviorTree.to_code([

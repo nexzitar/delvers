@@ -318,6 +318,34 @@ func stop_movement(entity):
 		_log_move(entity, true)
 
 func tick_movement(entity, target, delta):
+	tick_movement_toward(entity, target.position, delta)
+
+## Kiting (movement doctrine): while a melee foe closes on this unit,
+## fall back to open ground. Returns true while actually fleeing.
+const KITE_RADIUS := 110.0
+const KITE_STEP := 128.0
+
+func tick_kite(entity, delta) -> bool:
+	if entity.is_rooted():
+		return false
+	var threats := []
+	var opponents = enemies if entity.team == CombatEntity.Team.HERO else heroes
+	for foe in opponents:
+		if foe.alive and foe.target_id == entity.entity_id \
+				and foe.position.distance_to(entity.position) < KITE_RADIUS:
+			threats.append(foe)
+	if threats.is_empty():
+		return false
+	var away := Vector2.ZERO
+	for foe in threats:
+		away += (entity.position - foe.position).normalized()
+	if away == Vector2.ZERO:
+		away = Vector2.RIGHT.rotated(float(entity.entity_id))
+	var flee = grid.clamp_world(entity.position + away.normalized() * KITE_STEP)
+	tick_movement_toward(entity, flee, delta)
+	return true
+
+func tick_movement_toward(entity, goal_pos: Vector2, delta):
 	if entity.is_rooted():
 		return
 
@@ -325,7 +353,7 @@ func tick_movement(entity, target, delta):
 	# was walked to the end but we're still out of range (separation
 	# pushed us off), or when a failed search's retry delay elapsed —
 	# a stall must never cache forever.
-	var goal = grid.world_to_tile(target.position)
+	var goal = grid.world_to_tile(goal_pos)
 	var consumed = not entity.path.is_empty() \
 		and entity.path_index >= entity.path.size()
 	var retry = entity.path.is_empty() and combat_time >= entity.path_retry_at

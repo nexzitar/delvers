@@ -14,7 +14,7 @@ func _doctrine_checks(camp):
 	_ok("editor hidden without capacity",
 		not texts.any(func(t): return "nodes" in t))
 	# Capacity + a written doctrine: rows and an honest counter.
-	PlayerRoster.known_engineering = ["doctrine_capacity_1"]
+	PlayerRoster.known_engineering = ["engineers_slate"]
 	PlayerRoster.known_tactics = ["nearest", "guard", "protect"]
 	PlayerRoster.heroes[0].custom_tree = [
 		{"when": [{"cond": "healer_threatened"}], "target": "healer_attacker"},
@@ -27,8 +27,7 @@ func _doctrine_checks(camp):
 			counter = child.text
 	_ok("node counter reads 3/4", counter.begins_with("3/4"))
 	# With the Slate and Annotations recovered: blocks + View Code.
-	PlayerRoster.known_engineering = ["doctrine_capacity_1",
-		"engineers_slate", "engineers_annotations"]
+	PlayerRoster.known_engineering = ["engineers_slate", "engineers_annotations"]
 	loadout._fill_tactics()
 	var has_view_code := false
 	for child in loadout._tactics_box.get_children():

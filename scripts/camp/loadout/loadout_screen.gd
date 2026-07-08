@@ -65,6 +65,7 @@ var _tactics_box: VBoxContainer
 const BLOCK_WHEN := Color(0.72, 0.6, 0.2)
 const BLOCK_TARGET := Color(0.3, 0.5, 0.75)
 const BLOCK_CAST := Color(0.55, 0.38, 0.7)
+const BLOCK_MOVE := Color(0.35, 0.62, 0.4)
 
 const DOCTRINE_CONDITIONS := [
 	["always", "Always", "", 0],
@@ -73,6 +74,7 @@ const DOCTRINE_CONDITIONS := [
 	["mana_gte", "Mana at least", "n", 4],
 	["enemies_within", "Foes in reach at least", "n", 2],
 	["healer_threatened", "Healer threatened", "", 0],
+	["melee_closing", "A melee foe closes in", "", 0],
 ]
 const TACTIC_SELECTOR := {
 	"nearest": ["nearest", "Nearest Foe"],
@@ -90,6 +92,7 @@ const TACTICS := [
 	["spread", "Spread the Venom", "Poisons uncovered foes first, then follows the focus order."],
 	["guard", "Guard the Line", "Strikes whoever heeds this delver least - the tank keeps every eye on them."],
 	["protect", "Protect the Healer", "Hunts whatever hunts the mender; otherwise the nearest foe."],
+	["skirmish", "Skirmisher's Step", "Falls back while melee closes, and shoots from the new ground."],
 ]
 var _right_tabs: TabContainer
 ## Clicked recipe: its crafted-item preview stays pinned in the
@@ -472,9 +475,9 @@ func _fill_tactics():
 ## its first Battlefield Doctrine tome, then rule rows over the same
 ## trees the built-in tactics use. Combat enforces the node budget.
 func _fill_doctrine_editor(hero):
-	var capacity = PlayerRoster.doctrine_capacity()
-	if capacity <= 0:
+	if not PlayerRoster.has_tool("engineers_slate"):
 		return
+	var capacity = PlayerRoster.doctrine_capacity()
 	var used = BehaviorTree.node_count(hero.custom_tree)
 
 	_tactics_box.add_child(_title("Custom Doctrine"))
@@ -539,14 +542,14 @@ func _block_style(tint: Color) -> StyleBoxFlat:
 func _doctrine_rule_row(hero, index: int) -> Control:
 	var rule = hero.custom_tree[index]
 	var capacity = PlayerRoster.doctrine_capacity()
-	var blocks: bool = PlayerRoster.has_tool("engineers_slate")
 	var panel = PanelContainer.new()
-	if blocks:
-		var action_tint = BLOCK_CAST if rule.has("cast") else BLOCK_TARGET
-		panel.add_theme_stylebox_override("panel",
-			_block_style(BLOCK_WHEN if not rule.get("when", []).is_empty() else action_tint))
-	else:
-		panel.add_theme_stylebox_override("panel", _slot_style())
+	var action_tint = BLOCK_TARGET
+	if rule.has("cast"):
+		action_tint = BLOCK_CAST
+	elif rule.has("move"):
+		action_tint = BLOCK_MOVE
+	panel.add_theme_stylebox_override("panel",
+		_block_style(BLOCK_WHEN if not rule.get("when", []).is_empty() else action_tint))
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	panel.add_child(row)
@@ -612,6 +615,8 @@ func _doctrine_rule_row(hero, index: int) -> Control:
 	for skill_id in castable:
 		var skill = load(RosterSave.SKILL_PATHS[skill_id])
 		options.append(["cast", skill_id, "Cast: " + skill.skill_name])
+	if PlayerRoster.known_tactics.has("skirmish"):
+		options.append(["move", "kite", "Move: Keep Distance"])
 	for o in options.size():
 		then_pick.add_item(options[o][2])
 		then_pick.set_item_metadata(o, options[o])
@@ -621,6 +626,7 @@ func _doctrine_rule_row(hero, index: int) -> Control:
 		var chosen = then_pick.get_item_metadata(sel)
 		rule.erase("target")
 		rule.erase("cast")
+		rule.erase("move")
 		rule[chosen[0]] = chosen[1]
 		_save_doctrine()
 		_fill_tactics())
