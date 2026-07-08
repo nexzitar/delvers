@@ -5,6 +5,12 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **The Guild Animator saves** (`save_tuning` toggle acts as a
+  button): the sit values write to `resources/tuning/pose_tuning.json`
+  and the game reads that file — tune, save, done, no screenshots.
+  The knobs load from the file on start, sit knobs ARE the tuning
+  (single source of truth), and the owner's latest session ships as
+  the defaults.
 - **The Guild Animator** (`capture/guild_animator.tscn`, formerly the
   pose tuner): any pose, scrub/play, live sword-grip fitting,
   per-joint degree offsets — and now a **free camera**: left-drag

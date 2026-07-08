@@ -40,6 +40,20 @@ var _model: Node3D
 var _clips := {}
 var _bones := {}
 var _has_sword := false
+## Owner-tuned pose parameters (see the Guild Animator's save button).
+var tuning := {}
+
+const TUNING_PATH := "res://resources/tuning/pose_tuning.json"
+static var _tuning_cache = null
+
+static func _load_tuning() -> Dictionary:
+	if _tuning_cache == null:
+		_tuning_cache = {}
+		if FileAccess.file_exists(TUNING_PATH):
+			var parsed = JSON.parse_string(FileAccess.get_file_as_string(TUNING_PATH))
+			if parsed is Dictionary:
+				_tuning_cache = parsed
+	return _tuning_cache
 var _shield_arm: BoneAttachment3D
 var _shield_prop: Node3D
 var _sword_node: Node3D
@@ -54,6 +68,7 @@ func _init(scene: PackedScene, opts := {}):
 	clip_ranges = opts.get("clip_ranges", {})
 	walk_cycle_scale = opts.get("walk_cycle_scale", 1.0)
 	_has_sword = opts.get("sword", false)
+	tuning = _load_tuning().duplicate(true)
 	_player = _find_player(model)
 	_skeleton = _find_skeleton(model)
 	if _skeleton:
@@ -263,6 +278,9 @@ func _dress(opts: Dictionary):
 		_shield_prop.visible = false
 		add_child(_shield_prop)
 
+static func _vec(arr) -> Vector3:
+	return Vector3(arr[0], arr[1], arr[2]) if arr is Array and arr.size() == 3 else Vector3.ZERO
+
 func _flat(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
@@ -304,7 +322,7 @@ func _pose(role: String, fraction: float, looped := false):
 		_player.play(clip_name)
 	_player.seek(from + fraction * (to - from), true)
 	_player.pause()
-	_model.position.y = 0.0
+	_model.position = Vector3.ZERO
 	_set_shield_grounded(false)
 	if _sword_node:
 		_sword_node.position = Vector3(0.0, 0.05, 0.0)
@@ -382,30 +400,34 @@ func pose_sit(t: float, stroke_scale := 1.0):
 		_rotate_bone(side + "_Forearm", Vector3.RIGHT, 0.4)
 	_rotate_bone("Spine01", Vector3.RIGHT, 0.12 + sway)
 	_rotate_bone("Head", Vector3.RIGHT, -0.08 - sway)
+	var sit = tuning.get("sit", {})
 	if _has_sword:
-		# The blade rests across the lap (owner-tuned in the Guild
-		# Animator); the off hand polishes it in slow strokes.
+		# The blade rests across the lap; every number here is
+		# owner-tuned in the Guild Animator and saved to the tuning
+		# file. The off hand polishes in slow strokes.
 		_rotate_bone("R_Forearm", Vector3.RIGHT, 0.55)
 		_rotate_bone("R_Hand", Vector3.UP, -0.4)
 		_rotate_bone("R_Hand", Vector3.RIGHT, -2.55)
-		for tweak in [["R_Upperarm", -1, 0, -2], ["R_Forearm", 10, -2, -1],
-				["R_Hand", 12, -4, 0], ["L_Upperarm", 10, 0, 0],
-				["L_Forearm", -3, 20, -2], ["Head", -2, 0, 0]]:
+		for bone in sit.get("joints", {}):
+			var deg = sit.joints[bone]
 			for axis in 3:
-				if tweak[axis + 1] != 0:
-					_rotate_bone(tweak[0],
+				if deg[axis] != 0:
+					_rotate_bone(bone,
 						[Vector3.RIGHT, Vector3.UP, Vector3.BACK][axis],
-						deg_to_rad(tweak[axis + 1]))
-		var stroke = sin(t * 2.6) * stroke_scale
+						deg_to_rad(deg[axis]))
+		var stroke = sin(t * 2.6 * sit.get("stroke_speed", 1.0)) \
+			* stroke_scale * sit.get("stroke_scale", 1.0)
 		_rotate_bone("L_Upperarm", Vector3.RIGHT, 0.45 + 0.12 * stroke)
 		_rotate_bone("L_Upperarm", Vector3.BACK, 0.35)
 		_rotate_bone("L_Forearm", Vector3.RIGHT, 0.55 + 0.18 * stroke)
-		# Seated, the fist turns the blade flat across the lap.
 		if _sword_node:
-			_sword_node.position = Vector3.ZERO
-			_sword_node.rotation_degrees = Vector3(-5, 0, -4)
+			_sword_node.position = _vec(sit.get("grip_position", [0, 0.05, 0]))
+			_sword_node.rotation_degrees = _vec(sit.get("grip_rotation", [-50, 0, -40]))
+	if _shield_prop:
+		_shield_prop.position = _vec(sit.get("shield_position", [0.4, 0, 0.2]))
+		_shield_prop.rotation_degrees = _vec(sit.get("shield_tilt", [32, 70, 60]))
 	_set_shield_grounded(true)
-	_model.position.y = -0.31
+	_model.position = _vec(sit.get("seat_offset", [0, 0, 0])) + Vector3(0, -0.31, 0)
 
 func pose_shoot(t: float, _target_dist := 2.2):
 	_pose("shoot", t)

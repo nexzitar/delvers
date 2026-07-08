@@ -1,6 +1,13 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://8uilxtjec0jv"]
 
-[ext_resource type="Script" path="res://capture/guild_animator.gd" id="1"]
+[ext_resource type="Script" uid="uid://bkw8ao784m43n" path="res://capture/guild_animator.gd" id="1"]
 
-[node name="GuildAnimator" type="Node3D"]
+[node name="GuildAnimator" type="Node3D" unique_id=1510447005]
 script = ExtResource("1")
+grip_rotation = Vector3(-50, 0, -40)
+right_shoulder = Vector3(-10, 0, -20)
+right_elbow = Vector3(10, -20, -10)
+right_hand = Vector3(120, -40, 0)
+left_shoulder = Vector3(10, 0, 0)
+left_elbow = Vector3(-30, 20, -20)
+head = Vector3(-20, 0, 0)

@@ -6,11 +6,22 @@ extends Node3D
 ## live. Camera: LEFT-drag orbits, wheel zooms, MIDDLE-drag (or
 ## shift+drag) pans.
 ##
+## SAVING: toggle save_tuning and the current sit values write to
+## resources/tuning/pose_tuning.json - the game reads that file, so
+## the camp updates on its next load. No screenshots needed.
+##
 ## - pose: which animation plays (authored poses and baked clips both)
 ## - scrub + playing: freeze at a moment or let it run
 ## - grip: seat the sword in the fist (position in hand-space, meters)
 ## - joint offsets: degrees, added ON TOP of the pose every frame
 ## When it looks right, screenshot the inspector and hand it over.
+
+## Toggle to write the sit tuning to disk (acts as a button).
+@export var save_tuning := false:
+	set(value):
+		save_tuning = false
+		if value:
+			_save()
 
 @export_enum("sit", "swing", "idle", "walk", "shoot", "cast", "spin", "death") \
 	var pose := "sit":
@@ -46,6 +57,45 @@ extends Node3D
 
 var garrick: AnimatedActor
 var clock := 0.0
+
+func _sync_from_tuning():
+	var sit = garrick.tuning.get("sit", {})
+	var joints = sit.get("joints", {})
+	for knob in JOINTS:
+		if joints.has(JOINTS[knob]):
+			var deg = joints[JOINTS[knob]]
+			set(knob, Vector3(deg[0], deg[1], deg[2]))
+	grip_position = AnimatedActor._vec(sit.get("grip_position", [0, 0.05, 0]))
+	grip_rotation = AnimatedActor._vec(sit.get("grip_rotation", [-50, 0, -40]))
+	shield_pos = AnimatedActor._vec(sit.get("shield_position", [0.4, 0, 0.2]))
+	shield_tilt = AnimatedActor._vec(sit.get("shield_tilt", [32, 70, 60]))
+	stroke_scale = sit.get("stroke_scale", 1.0)
+	speed = sit.get("stroke_speed", 1.0)
+
+func _apply_to_tuning():
+	var joints := {}
+	for knob in JOINTS:
+		var v: Vector3 = get(knob)
+		joints[JOINTS[knob]] = [v.x, v.y, v.z]
+	garrick.tuning["sit"] = {
+		"joints": joints,
+		"grip_position": [grip_position.x, grip_position.y, grip_position.z],
+		"grip_rotation": [grip_rotation.x, grip_rotation.y, grip_rotation.z],
+		"shield_position": [shield_pos.x, shield_pos.y, shield_pos.z],
+		"shield_tilt": [shield_tilt.x, shield_tilt.y, shield_tilt.z],
+		"seat_offset": [delver_position.x - 0.0, delver_position.y - 0.31,
+			delver_position.z - 0.0],
+		"stroke_scale": stroke_scale,
+		"stroke_speed": speed,
+	}
+
+func _save():
+	_apply_to_tuning()
+	var file = FileAccess.open(AnimatedActor.TUNING_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(garrick.tuning, "\t"))
+	file = null
+	AnimatedActor._tuning_cache = null
+	print("TUNING SAVED to ", AnimatedActor.TUNING_PATH)
 
 const JOINTS := {
 	"right_shoulder": "R_Upperarm", "right_elbow": "R_Forearm",
@@ -93,6 +143,9 @@ func _ready():
 	config.merge({"sword": true, "shield": true, "helmet": true}, true)
 	garrick = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
 	add_child(garrick)
+	_sync_from_tuning()
+	delver_position = Vector3(0, 0.31, 0) \
+		+ AnimatedActor._vec(garrick.tuning.get("sit", {}).get("seat_offset", [0, 0, 0]))
 
 func _process(delta):
 	if playing:
@@ -111,19 +164,19 @@ func _process(delta):
 		"spin": garrick.pose_spin(shot)
 		"death": garrick.pose_death(clampf(fposmod(clock * 0.4, 1.4), 0.0, 1.0) if playing else scrub)
 
-	# Grip, shield, and joint offsets ride on top, live. (The sit pose
-	# sets its own lap grip; the knobs override it while nonzero.)
-	if garrick._sword_node and (grip_position != Vector3.ZERO
-			or grip_rotation != Vector3(-115, 0, 0)):
-		garrick._sword_node.position = grip_position
-		garrick._sword_node.rotation_degrees = grip_rotation
-	if garrick._shield_prop:
-		garrick._shield_prop.position = shield_pos
-		garrick._shield_prop.rotation_degrees = shield_tilt
-	for knob in JOINTS:
-		var offset: Vector3 = get(knob)
-		if offset != Vector3.ZERO:
-			for axis in 3:
-				if offset[axis] != 0.0:
-					var axis_vec = [Vector3.RIGHT, Vector3.UP, Vector3.BACK][axis]
-					garrick._rotate_bone(JOINTS[knob], axis_vec, deg_to_rad(offset[axis]))
+	if pose == "sit":
+		# The knobs ARE the tuning: pose_sit consumes them next frame.
+		_apply_to_tuning()
+	else:
+		# Other poses: knobs ride on top as additive experiments.
+		if garrick._sword_node and (grip_position != Vector3.ZERO
+				or grip_rotation != Vector3(-115, 0, 0)):
+			garrick._sword_node.position = grip_position
+			garrick._sword_node.rotation_degrees = grip_rotation
+		for knob in JOINTS:
+			var offset: Vector3 = get(knob)
+			if offset != Vector3.ZERO:
+				for axis in 3:
+					if offset[axis] != 0.0:
+						var axis_vec = [Vector3.RIGHT, Vector3.UP, Vector3.BACK][axis]
+						garrick._rotate_bone(JOINTS[knob], axis_vec, deg_to_rad(offset[axis]))
