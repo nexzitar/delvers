@@ -71,5 +71,25 @@ func _ready():
 	assert(rig.has_method("pose_walk") and not (rig is AnimatedActor), "procedural fallback holds")
 	rig.free()
 
+	# Explicit clip maps override discovery (Tripo loses clip names).
+	var mapped = AnimatedActor.new(model, {"clip_map": {"death": "Walking_loop"}})
+	add_child(mapped)
+	assert(mapped.clip_for("death") == "Walking_loop", "the map outranks the name")
+	# The real GLB: config resolves, clips land, eyes and sword mount.
+	var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
+	config.merge({"sword": true, "shield": true}, true)
+	var tripo = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
+	add_child(tripo)
+	assert(tripo.clip_for("walk") == "NlaTrack_004", "the walk is found")
+	assert(tripo.clip_for("swing") == "NlaTrack_003", "the chop swings")
+	assert(tripo._skeleton != null, "the skeleton is found")
+	var mounts := 0
+	for child in tripo._skeleton.get_children():
+		if child is BoneAttachment3D:
+			mounts += 1
+	assert(mounts == 3, "eyes, sword, shield ride the bones")
+	tripo.pose_walk(0.5)
+	tripo.pose_swing(0.3)
+
 	print("PASS animated actor")
 	get_tree().quit()

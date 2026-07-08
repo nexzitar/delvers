@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://ypyclgsx45sk" path="res://scenes/theater/actors/hero_actor.tscn" id="1_iac65"]
 [ext_resource type="Script" uid="uid://dcbphjyx7hvig" path="res://scripts/data/hero_template.gd" id="1_ok26h"]
+[ext_resource type="PackedScene" path="res://resources/models/delver_male.glb" id="9_model"]
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_ctke7"]
 [ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_iac65"]
 [ext_resource type="Script" uid="uid://bitmblhuwkx5f" path="res://scripts/data/gear_definition.gd" id="4_gear"]
@@ -26,3 +27,4 @@ portrait = ExtResource("9_icon")
 starting_skills = Array[ExtResource("2_ctke7")]([ExtResource("3_iac65")])
 starting_gear = Array[ExtResource("4_gear")]([ExtResource("5_sword"), ExtResource("6_shield"), ExtResource("7_helmet"), ExtResource("8_armor")])
 preferred_slots = null
+model_scene = ExtResource("9_model")

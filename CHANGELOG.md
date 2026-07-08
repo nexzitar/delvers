@@ -5,6 +5,15 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **The first TripoAI delver walks** (`resources/models/delver_male.glb`):
+  the male delver model is live in battle — clips identified by
+  render-inspection and mapped explicitly (idle/walk/run/chop/defeat/
+  cast; Tripo strips names to NlaTrack_*), geometry-decal eyes placed
+  on the head bone via a marker-sweep render (the texture's ghost
+  eyes, answered), sword and shield gripped by the hand bones (the
+  same meshes the procedural rigs carry), scale and facing tuned to
+  the world. Procedural rigs remain for everyone else — the two cast
+  systems coexist per-actor.
 - **Imported-model landing zone** (for the TripoAI delvers): heroes
   can carry a glTF `model_scene` on their template; the path travels
   through the SPAWN event, and a new `AnimatedActor` wraps the

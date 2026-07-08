@@ -45,14 +45,39 @@ const GOBLIN_WARRIOR_OPTS := {
 }
 const GOBLIN_SCALE := 0.85
 
+## Per-model import tuning: facing, scale, and the clip map for
+## exports that lose animation names.
+const MODEL_CONFIGS := {
+	"res://resources/models/delver_male.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 1.2,
+		"clip_map": {
+			"death": "NlaTrack",
+			"idle": "NlaTrack_001",
+			"run": "NlaTrack_002",
+			"swing": "NlaTrack_003",
+			"walk": "NlaTrack_004",
+			"cast": "NlaTrack_005",
+		},
+	},
+}
+
 static func build_from_spawn(event) -> Node3D:
 	if event.team == CombatEntity.Team.HERO:
 		if event.model_path != "":
-			return AnimatedActor.new(load(event.model_path), hero_opts(event.equipped))
+			var config = MODEL_CONFIGS.get(event.model_path, {})
+			var opts = hero_opts(event.equipped)
+			opts.merge(config, true)
+			return AnimatedActor.new(load(event.model_path), opts)
 		return build_hero(event.equipped)
 	return build_enemy(event.template)
 
-static func build_hero(equipped: Dictionary) -> Node3D:
+static func build_hero(equipped: Dictionary, model_path := "") -> Node3D:
+	if model_path != "":
+		var config = MODEL_CONFIGS.get(model_path, {})
+		var opts = hero_opts(equipped)
+		opts.merge(config, true)
+		return AnimatedActor.new(load(model_path), opts)
 	return DelverRig.new(hero_opts(equipped))
 
 ## Worn-gear palette by family; slot fallbacks below.
