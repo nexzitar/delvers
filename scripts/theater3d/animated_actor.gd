@@ -10,6 +10,18 @@ const SpringTailScene = preload("res://scripts/theater3d/spring_tail.gd")
 ## friendly scrubbing, the same shape as pose_walk(t) on DelverRig.
 ## Missing clips degrade gracefully (fall back role, then stillness).
 
+## Sculpted gear models (TripoAI) by worn-slot opt key; anything not
+## listed falls back to the procedural boxes. Transforms tuned per
+## model in the Guild Animator tradition: render, look, adjust.
+const WORN_MODELS := {
+	"helmet": {"path": "res://resources/models/starter_helm.glb",
+		"bone": "Head", "position": Vector3(0, 0.078, -0.012),
+		"rotation": Vector3(0, 180, 0), "scale": 0.27},
+	"chest_plate": {"path": "res://resources/models/starter_chest.glb",
+		"bone": "Spine01", "position": Vector3(0, -0.06, 0),
+		"rotation": Vector3(0, 180, 0), "scale": 0.42},
+}
+
 ## Clip discovery: first animation whose name contains a keyword wins
 ## the role. Tripo/Mixamo-style names all land.
 const ROLES := {
@@ -174,12 +186,13 @@ func _dress(opts: Dictionary):
 	# Worn gear: the same opt keys the procedural rigs dress with,
 	# mounted on bones. Boxes for now; sculpted pieces come later.
 	if opts.get("helmet", false):
-		var helm_mount = _attach("Head")
-		var helm = DelverBuilder.build_helmet()
-		helm.position = Vector3(0, 0.13, -0.01)
-		helm.rotation_degrees = Vector3(0, 180, 0)
-		helm.scale = Vector3.ONE * 0.78
-		helm_mount.add_child(helm)
+		if not _mount_worn_model("helmet"):
+			var helm_mount = _attach("Head")
+			var helm = DelverBuilder.build_helmet()
+			helm.position = Vector3(0, 0.13, -0.01)
+			helm.rotation_degrees = Vector3(0, 180, 0)
+			helm.scale = Vector3.ONE * 0.78
+			helm_mount.add_child(helm)
 	if opts.has("shoulders"):
 		for side in ["L", "R"]:
 			var pad_mount = _attach(side + "_Upperarm")
@@ -192,14 +205,15 @@ func _dress(opts: Dictionary):
 				pad.position = Vector3(0, -0.01 - tier[0], 0)
 				pad_mount.add_child(pad)
 	if opts.has("chest_plate"):
-		var chest_mount = _attach("Spine02")
-		var plate := MeshInstance3D.new()
-		var plate_mesh := BoxMesh.new()
-		plate_mesh.size = Vector3(0.21, 0.17, 0.045)
-		plate.mesh = plate_mesh
-		plate.material_override = _flat(opts.chest_plate)
-		plate.position = Vector3(0, 0.05, -0.075)
-		chest_mount.add_child(plate)
+		if not _mount_worn_model("chest_plate"):
+			var chest_mount = _attach("Spine02")
+			var plate := MeshInstance3D.new()
+			var plate_mesh := BoxMesh.new()
+			plate_mesh.size = Vector3(0.21, 0.17, 0.045)
+			plate.mesh = plate_mesh
+			plate.material_override = _flat(opts.chest_plate)
+			plate.position = Vector3(0, 0.05, -0.075)
+			chest_mount.add_child(plate)
 	if opts.has("cloak"):
 		var cloak_mount = _attach("Spine02")
 		var cloak = SpringTailScene.new()
@@ -277,6 +291,22 @@ func _dress(opts: Dictionary):
 		_shield_prop.scale = Vector3.ONE * 0.9
 		_shield_prop.visible = false
 		add_child(_shield_prop)
+
+## Mounts a sculpted gear model on its bone. False = no model listed
+## (caller falls back to boxes).
+func _mount_worn_model(slot_key: String) -> bool:
+	if not WORN_MODELS.has(slot_key):
+		return false
+	var spec = WORN_MODELS[slot_key]
+	if not ResourceLoader.exists(spec.path):
+		return false
+	var mount = _attach(spec.bone)
+	var piece = load(spec.path).instantiate()
+	piece.position = spec.position
+	piece.rotation_degrees = spec.rotation
+	piece.scale = Vector3.ONE * spec.scale
+	mount.add_child(piece)
+	return true
 
 static func _vec(arr) -> Vector3:
 	return Vector3(arr[0], arr[1], arr[2]) if arr is Array and arr.size() == 3 else Vector3.ZERO

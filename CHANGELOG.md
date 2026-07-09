@@ -5,6 +5,12 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Sculpted gear models arrive** (TripoAI): `starter_helm.glb` and
+  `starter_chest.glb` mount on the skeleton through a worn-model
+  registry keyed by slot — helm fitted with the face open, chest
+  wrapping the torso. Slots without a sculpted model keep their
+  procedural boxes; per-gear-id models (iron vs starter vs chitin)
+  are the natural next step of the same table.
 - **The Guild Animator saves** (`save_tuning` toggle acts as a
   button): the sit values write to `resources/tuning/pose_tuning.json`
   and the game reads that file — tune, save, done, no screenshots.

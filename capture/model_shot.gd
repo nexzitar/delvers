@@ -7,7 +7,7 @@ const DelverRig = preload("res://scripts/theater3d/delver_rig.gd")
 
 func _ready():
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 1.5, 4.2)
+	cam.position = Vector3(0, 1.35, 2.6)
 	cam.look_at_from_position(cam.position, Vector3(0, 0.55, 0))
 	add_child(cam)
 	cam.current = true
