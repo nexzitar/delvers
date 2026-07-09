@@ -10,17 +10,26 @@ const SpringTailScene = preload("res://scripts/theater3d/spring_tail.gd")
 ## friendly scrubbing, the same shape as pose_walk(t) on DelverRig.
 ## Missing clips degrade gracefully (fall back role, then stillness).
 
-## Sculpted gear models (TripoAI) by worn-slot opt key; anything not
-## listed falls back to the procedural boxes. Transforms tuned per
-## model in the Guild Animator tradition: render, look, adjust.
-const WORN_MODELS := {
-	"helmet": {"path": "res://resources/models/starter_helm.glb",
+## Sculpted gear (TripoAI): fits are per-sculpt transforms, WORN_MODELS
+## maps gear ids onto a fit plus an optional recolor palette (the
+## gear_recolor shader swaps primary/secondary/trim, keeping the baked
+## shading). Unlisted gear falls back to the procedural boxes.
+const GEAR_FITS := {
+	"helm": {"path": "res://resources/models/starter_helm.glb",
 		"bone": "Head", "position": Vector3(0, 0.078, -0.012),
 		"rotation": Vector3(0, 180, 0), "scale": 0.27},
-	"chest_plate": {"path": "res://resources/models/starter_chest.glb",
+	"chest": {"path": "res://resources/models/starter_chest.glb",
 		"bone": "Spine01", "position": Vector3(0, -0.06, 0),
 		"rotation": Vector3(0, 180, 0), "scale": 0.42},
 }
+const WORN_MODELS := {
+	"starter_helmet": {"fit": "helm"},
+	"starter_armor": {"fit": "chest"},
+	"chitin_armor": {"fit": "chest", "palette": {
+		"primary": Color(0.32, 0.23, 0.13), "secondary": Color(0.14, 0.1, 0.07),
+		"trim": Color(0.78, 0.73, 0.58)}},
+}
+const RECOLOR_SHADER := "res://art/shaders/gear_recolor.gdshader"
 
 ## Clip discovery: first animation whose name contains a keyword wins
 ## the role. Tripo/Mixamo-style names all land.
@@ -186,7 +195,7 @@ func _dress(opts: Dictionary):
 	# Worn gear: the same opt keys the procedural rigs dress with,
 	# mounted on bones. Boxes for now; sculpted pieces come later.
 	if opts.get("helmet", false):
-		if not _mount_worn_model("helmet"):
+		if not _mount_worn_model(opts.get("helmet_gear", "")):
 			var helm_mount = _attach("Head")
 			var helm = DelverBuilder.build_helmet()
 			helm.position = Vector3(0, 0.13, -0.01)
@@ -205,7 +214,7 @@ func _dress(opts: Dictionary):
 				pad.position = Vector3(0, -0.01 - tier[0], 0)
 				pad_mount.add_child(pad)
 	if opts.has("chest_plate"):
-		if not _mount_worn_model("chest_plate"):
+		if not _mount_worn_model(opts.get("chest_gear", "")):
 			var chest_mount = _attach("Spine02")
 			var plate := MeshInstance3D.new()
 			var plate_mesh := BoxMesh.new()
@@ -292,21 +301,41 @@ func _dress(opts: Dictionary):
 		_shield_prop.visible = false
 		add_child(_shield_prop)
 
-## Mounts a sculpted gear model on its bone. False = no model listed
-## (caller falls back to boxes).
-func _mount_worn_model(slot_key: String) -> bool:
-	if not WORN_MODELS.has(slot_key):
+## Mounts a sculpted gear model on its bone, recolored by its palette.
+## False = no model for this gear id (caller falls back to boxes).
+func _mount_worn_model(gear_id: String) -> bool:
+	if not WORN_MODELS.has(gear_id):
 		return false
-	var spec = WORN_MODELS[slot_key]
-	if not ResourceLoader.exists(spec.path):
+	var entry = WORN_MODELS[gear_id]
+	var fit = GEAR_FITS[entry.fit]
+	if not ResourceLoader.exists(fit.path):
 		return false
-	var mount = _attach(spec.bone)
-	var piece = load(spec.path).instantiate()
-	piece.position = spec.position
-	piece.rotation_degrees = spec.rotation
-	piece.scale = Vector3.ONE * spec.scale
+	var mount = _attach(fit.bone)
+	var piece = load(fit.path).instantiate()
+	piece.position = fit.position
+	piece.rotation_degrees = fit.rotation
+	piece.scale = Vector3.ONE * fit.scale
 	mount.add_child(piece)
+	if entry.has("palette"):
+		_recolor(piece, entry.palette)
 	return true
+
+## Swap the sculpt's palette: same model, different armor.
+func _recolor(piece: Node, palette: Dictionary):
+	var stack = [piece]
+	while not stack.is_empty():
+		var node = stack.pop_back()
+		if node is MeshInstance3D:
+			var base = node.get_active_material(0)
+			if base is StandardMaterial3D and base.albedo_texture:
+				var mat := ShaderMaterial.new()
+				mat.shader = load(RECOLOR_SHADER)
+				mat.set_shader_parameter("base_tex", base.albedo_texture)
+				mat.set_shader_parameter("col_primary", palette.primary)
+				mat.set_shader_parameter("col_secondary", palette.secondary)
+				mat.set_shader_parameter("col_trim", palette.trim)
+				node.material_override = mat
+		stack.append_array(node.get_children())
 
 static func _vec(arr) -> Vector3:
 	return Vector3(arr[0], arr[1], arr[2]) if arr is Array and arr.size() == 3 else Vector3.ZERO

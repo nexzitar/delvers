@@ -5,6 +5,12 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Gear recolor shader** (one sculpt, many armors): a palette-swap
+  shader classifies each texel of a gear model against its three
+  source materials (by chroma, ignoring baked shading) and remaps to
+  a primary/secondary/trim palette per gear id — Chitin Armor now
+  wears the chest sculpt in dark chitin with pale silk trim. Leather
+  and cloth silhouettes still need their own sculpts.
 - **Sculpted gear models arrive** (TripoAI): `starter_helm.glb` and
   `starter_chest.glb` mount on the skeleton through a worn-model
   registry keyed by slot — helm fitted with the face open, chest
