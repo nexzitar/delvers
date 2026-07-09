@@ -103,6 +103,8 @@ func _set_target(entity, new_target_id: int):
 ## Re-applying the same status id refreshes it instead of stacking
 ## (on-hit effects would otherwise pile up every swing).
 func apply_status(target, kind, duration: float, magnitude: float, status_id: String, source_id := -1):
+	if kind in [StatusEffect.Kind.STUN, StatusEffect.Kind.SLUGGISH]:
+		duration *= 1.0 - target.stagger_resist
 	for existing in target.statuses:
 		if existing.id == status_id:
 			existing.remaining = maxf(existing.remaining, duration)
@@ -241,7 +243,8 @@ func register_damage(source, target, skill, amount):
 		enemy.in_combat = true
 	if target.team == CombatEntity.Team.ENEMY:
 		var multiplier = skill.threat_modifier if skill else 1.0
-		Threat.add_damage(target.threat_table, source.entity_id, amount * multiplier)
+		Threat.add_damage(target.threat_table, source.entity_id,
+			amount * multiplier * source.threat_mult)
 
 func _nearest_opponent_id(entity) -> int:
 	var best_id := -1
@@ -596,6 +599,22 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		hero.current_mana = hero_template.base_mana
 		hero.max_mana = hero_template.base_mana
 
+		# Armor types trade in HOW you fight: plate holds the line and
+		# draws every eye, leather moves and strikes, cloth casts.
+		for item in loadout:
+			match item.armor_type:
+				"plate":
+					hero.threat_mult += 0.06
+					hero.stagger_resist = minf(hero.stagger_resist + 0.08, 0.5)
+					hero.dodge_chance -= 0.015
+				"leather":
+					hero.crit_chance += 0.01
+				"cloth":
+					hero.max_mana += 2
+					hero.current_mana += 2
+					hero.cast_speed_mult *= 0.95
+					hero.spell_power += 1
+
 		# Secondary stats come off the whole loadout.
 		for item in loadout:
 			hero.armor += item.armor
@@ -614,6 +633,11 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		if hero.main_weapon:
 			hero.weapon_reach = hero.main_weapon.effective_reach()
 		hero.move_speed = hero_template.move_speed
+		for item in loadout:
+			if item.armor_type == "plate":
+				hero.move_speed *= 0.97
+			elif item.armor_type == "leather":
+				hero.move_speed *= 1.015
 		hero.attack_timer = hero.attack_interval
 		# Off-hand starts half a beat out of phase: dual wielding reads
 		# as an alternating flurry, and equal-speed weapons never land
@@ -652,6 +676,9 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		hero.armor += mastery_kit.passives.armor_add
 		hero.spell_power += mastery_kit.passives.spell_power_add
 		hero.attack_interval *= mastery_kit.passives.attack_speed_mult
+		for item in loadout:
+			if item.armor_type == "leather":
+				hero.attack_interval *= 0.98
 
 		hero.position = _spawn_position(
 			arena.hero_spawn_center, heroes.size(),

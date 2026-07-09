@@ -1482,6 +1482,8 @@ func _cmp_divider():
 
 func _tooltip_gear(gear: GearDefinition):
 	_tip_line(gear.gear_name, ItemQuality.color(gear.quality), 26, 0)
+	if gear.armor_type != "":
+		_tip_line(gear.armor_type.capitalize(), Color(0.65, 0.7, 0.78), 14, 0)
 	_tip_line(ItemQuality.tier_name(gear.quality), ItemQuality.color(gear.quality), 16, 0)
 	_tip_line(_gear_subtitle(gear), DIM, 17, 0)
 

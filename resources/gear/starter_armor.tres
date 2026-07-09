@@ -8,6 +8,7 @@ resource_name = "Starter Armor"
 script = ExtResource("1_gear")
 gear_id = "starter_armor"
 gear_name = "Starter Armor"
+armor_type = "leather"
 slot = 1
 texture = ExtResource("2_tex")
 icon = ExtResource("2_tex")

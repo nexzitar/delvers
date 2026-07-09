@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **Armor types** (owner design: armor shapes HOW you fight, never
+  what you may wear): every armor piece is Plate, Leather, or Cloth.
+  Per piece worn — Plate: +6% threat, +8% stagger resistance (stuns
+  and gum shrug off sooner), −1.5% dodge, −3% speed. Leather: +1%
+  crit, +2% swing speed, +1.5% move. Cloth: +2 mana, 5% faster casts,
+  +1 spell power. A paladin in plate is a different caster, not a
+  worse one; plate on a healer is a build, not an error. Armor
+  Proficiency mastery (Plate Training I/II, Plate Master) and the
+  tier visual language (common→legendary silhouettes) are recorded
+  design, coming later.
 - **Gear recolor shader** (one sculpt, many armors): a palette-swap
   shader classifies each texel of a gear model against its three
   source materials (by chroma, ignoring baked shading) and remaps to

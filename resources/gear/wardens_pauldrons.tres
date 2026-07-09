@@ -7,6 +7,7 @@
 script = ExtResource("1_gear")
 gear_id = "wardens_pauldrons"
 gear_name = "Warden's Pauldrons"
+armor_type = "plate"
 slot = 5
 icon = ExtResource("2_tex")
 health_bonus = 6

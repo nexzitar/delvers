@@ -53,6 +53,10 @@ var retarget_at: float = 0.0
 var behavior_tree: Array = []
 ## Imported model scene path ("" = procedural rig in the theater).
 var model_path := ""
+## Armor-type identity trades (set from the worn loadout).
+var threat_mult := 1.0
+var stagger_resist := 0.0
+var cast_speed_mult := 1.0
 ## Entity that summoned this one (Brood Tenders cap their brood).
 var spawned_by: int = -1
 var in_combat: bool = false
@@ -252,7 +256,7 @@ func start_behavior_cast(combat_state, skill, duration: float):
 	is_casting = true
 	casting_skill = skill
 	casting_behavior = skill.behavior_script
-	cast_remaining = duration
+	cast_remaining = duration * cast_speed_mult
 	combat_state.stop_movement(self)
 	combat_state.combat_log.add_event(CombatEvent.create_cast_start(
 		entity_id, target_id, combat_state.combat_time, skill

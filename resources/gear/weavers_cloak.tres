@@ -7,6 +7,7 @@
 script = ExtResource("1_gear")
 gear_id = "weavers_cloak"
 gear_name = "Weaver's Cloak"
+armor_type = "cloth"
 slot = 6
 icon = ExtResource("2_tex")
 health_bonus = 6
