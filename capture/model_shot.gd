@@ -42,7 +42,7 @@ func _ready():
 		config.merge({"sword": true, "shield": true, "helmet": true,
 			"shoulders": Color(0.6, 0.63, 0.68), "chest_plate": Color(0.38, 0.29, 0.2),
 			"helmet_gear": "starter_helmet", "chest_gear": "chitin_armor",
-			"belt_gear": "studded_belt",
+			"belt_gear": "studded_belt", "shoulder_gear": "wardens_pauldrons",
 			"belt_trim": Color(0.42, 0.31, 0.19), "greaves": Color(0.6, 0.63, 0.68),
 			"boots_gear": Color(0.32, 0.26, 0.18), "gauntlets": Color(0.54, 0.42, 0.26)}, true)
 		var imported = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)

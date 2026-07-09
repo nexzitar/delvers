@@ -24,6 +24,10 @@ const GEAR_FITS := {
 	"belt": {"path": "res://resources/models/leather_belt.glb",
 		"bone": "Waist", "position": Vector3(0, -0.04, 0),
 		"rotation": Vector3(0, 180, 0), "scale": 0.21},
+	"pauldron": {"path": "res://resources/models/iron_pauldron.glb",
+		"pair_bones": ["L_Upperarm", "R_Upperarm"],
+		"position": Vector3(0, 0.055, 0),
+		"rotation": Vector3(0, 90, 0), "scale": 0.24},
 }
 const WORN_MODELS := {
 	"starter_helmet": {"fit": "helm"},
@@ -32,6 +36,7 @@ const WORN_MODELS := {
 		"primary": Color(0.32, 0.23, 0.13), "secondary": Color(0.14, 0.1, 0.07),
 		"trim": Color(0.78, 0.73, 0.58)}},
 	"studded_belt": {"fit": "belt"},
+	"wardens_pauldrons": {"fit": "pauldron"},
 }
 const RECOLOR_SHADER := "res://art/shaders/gear_recolor.gdshader"
 
@@ -206,7 +211,7 @@ func _dress(opts: Dictionary):
 			helm.rotation_degrees = Vector3(0, 180, 0)
 			helm.scale = Vector3.ONE * 0.78
 			helm_mount.add_child(helm)
-	if opts.has("shoulders"):
+	if opts.has("shoulders") and not _mount_worn_model(opts.get("shoulder_gear", "")):
 		for side in ["L", "R"]:
 			var pad_mount = _attach(side + "_Upperarm")
 			for tier in [[0.0, 0.115, 0.05], [0.045, 0.095, 0.04]]:
@@ -314,14 +319,19 @@ func _mount_worn_model(gear_id: String) -> bool:
 	var fit = GEAR_FITS[entry.fit]
 	if not ResourceLoader.exists(fit.path):
 		return false
-	var mount = _attach(fit.bone)
-	var piece = load(fit.path).instantiate()
-	piece.position = fit.position
-	piece.rotation_degrees = fit.rotation
-	piece.scale = Vector3.ONE * fit.scale
-	mount.add_child(piece)
-	if entry.has("palette"):
-		_recolor(piece, entry.palette)
+	var bones = fit.get("pair_bones", [fit.get("bone", "")])
+	for i in bones.size():
+		var mount = _attach(bones[i])
+		var piece = load(fit.path).instantiate()
+		piece.position = fit.position
+		piece.rotation_degrees = fit.rotation
+		if i == 1:
+			# The mirrored side wears it turned around.
+			piece.rotation_degrees.y += 180
+		piece.scale = Vector3.ONE * fit.scale
+		mount.add_child(piece)
+		if entry.has("palette"):
+			_recolor(piece, entry.palette)
 	return true
 
 ## Swap the sculpt's palette: same model, different armor.

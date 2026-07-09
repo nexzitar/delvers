@@ -1,6 +1,6 @@
 extends Node
 func _ready():
-	for gear in ["leather_belt"]:
+	for gear in ["iron_pauldron"]:
 		var model = load("res://resources/models/%s.glb" % gear).instantiate()
 		add_child(model)
 		var aabb := AABB()

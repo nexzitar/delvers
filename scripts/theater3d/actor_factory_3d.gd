@@ -143,6 +143,8 @@ static func hero_opts(equipped: Dictionary) -> Dictionary:
 		opts["chest_gear"] = equipped[Equip.Position.CHEST].gear_id
 	if equipped.get(Equip.Position.WAIST):
 		opts["belt_gear"] = equipped[Equip.Position.WAIST].gear_id
+	if equipped.get(Equip.Position.SHOULDER):
+		opts["shoulder_gear"] = equipped[Equip.Position.SHOULDER].gear_id
 	# Everything worn shows: shoulders, cloak, plate, belt, and the rest.
 	for pos in equipped:
 		var item = equipped[pos]

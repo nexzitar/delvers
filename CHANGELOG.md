@@ -2,6 +2,15 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #13 — The generated armory *(open)*
+
+### Added
+- **Claude generates gear now**: the Tripo API pipeline is wired end
+  to end (SDK in a local venv, Blender addon + MCP bridge installed
+  for interactive work). First generated asset: **iron pauldrons** —
+  prompt → GLB → paired shoulder mounts (mirrored) → fitted, in
+  minutes. The Warden's Pauldrons wear them.
+
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
