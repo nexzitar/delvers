@@ -21,6 +21,9 @@ const GEAR_FITS := {
 	"chest": {"path": "res://resources/models/starter_chest.glb",
 		"bone": "Spine01", "position": Vector3(0, -0.06, 0),
 		"rotation": Vector3(0, 180, 0), "scale": 0.42},
+	"belt": {"path": "res://resources/models/leather_belt.glb",
+		"bone": "Waist", "position": Vector3(0, -0.04, 0),
+		"rotation": Vector3(0, 180, 0), "scale": 0.21},
 }
 const WORN_MODELS := {
 	"starter_helmet": {"fit": "helm"},
@@ -28,6 +31,7 @@ const WORN_MODELS := {
 	"chitin_armor": {"fit": "chest", "palette": {
 		"primary": Color(0.32, 0.23, 0.13), "secondary": Color(0.14, 0.1, 0.07),
 		"trim": Color(0.78, 0.73, 0.58)}},
+	"studded_belt": {"fit": "belt"},
 }
 const RECOLOR_SHADER := "res://art/shaders/gear_recolor.gdshader"
 
@@ -234,7 +238,7 @@ func _dress(opts: Dictionary):
 		cloak.rest_local = Vector3(0, -0.9, 0.35)
 		cloak.position = Vector3(0, 0.1, 0.075)
 		cloak_mount.add_child(cloak)
-	if opts.has("belt_trim"):
+	if opts.has("belt_trim") and not _mount_worn_model(opts.get("belt_gear", "")):
 		var belt_mount = _attach("Waist")
 		var belt := MeshInstance3D.new()
 		var belt_mesh := BoxMesh.new()

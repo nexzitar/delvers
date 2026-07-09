@@ -5,6 +5,10 @@ Notable changes per pull request. Newest first.
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
+- **The leather belt** (`leather_belt.glb`): the studded belt wears a
+  sculpted model on the waist bone. Design rule recorded: belts are
+  leather, whatever the rest of the set — a belt of plate is a
+  strange object.
 - **Armor types** (owner design: armor shapes HOW you fight, never
   what you may wear): every armor piece is Plate, Leather, or Cloth.
   Per piece worn — Plate: +6% threat, +8% stagger resistance (stuns
