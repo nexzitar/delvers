@@ -5,6 +5,14 @@ Notable changes per pull request. Newest first.
 ## PR #13 — The generated armory *(open)*
 
 ### Added
+- **The batch**: eight more generated pieces in one session — shield
+  (wood and iron boss, replacing the procedural disc everywhere,
+  including the campfire lean), arming sword (replacing the
+  procedural blade), boots, greaves, bracers, gauntlets, a leather
+  jerkin (the leather chest silhouette), and a cloth robe (the cloth
+  silhouette) — all fitted, all recolorable. The guild portrait
+  (docs/screenshots/guild_portrait.png): Warden in plate, Vanguard
+  in chitin, Scout in oiled leather, Mystic in pale silk.
 - **Claude generates gear now**: the Tripo API pipeline is wired end
   to end (SDK in a local venv, Blender addon + MCP bridge installed
   for interactive work). First generated asset: **iron pauldrons** —

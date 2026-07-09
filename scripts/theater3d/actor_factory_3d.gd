@@ -126,12 +126,14 @@ static func hero_opts(equipped: Dictionary) -> Dictionary:
 	var opts := {}
 	var main = equipped.get(Equip.Position.MAIN_HAND)
 	if main:
+		opts["main_gear"] = main.gear_id
 		if main.weapon_type == GearDefinition.WeaponType.BOW:
 			opts["bow"] = true
 		else:
 			opts["sword"] = true
 	var off = equipped.get(Equip.Position.OFF_HAND)
 	if off:
+		opts["off_gear"] = off.gear_id
 		if off.attack_speed > 0.0:
 			opts["off_sword"] = true
 		else:

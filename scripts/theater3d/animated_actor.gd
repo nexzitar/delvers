@@ -28,15 +28,63 @@ const GEAR_FITS := {
 		"pair_bones": ["L_Upperarm", "R_Upperarm"],
 		"position": Vector3(0, 0.055, 0),
 		"rotation": Vector3(0, 90, 0), "scale": 0.24},
+	"boot": {"path": "res://resources/models/gear_boot.glb",
+		"pair_bones": ["L_Foot", "R_Foot"],
+		"position": Vector3(0, 0.04, -0.02),
+		"rotation": Vector3(0, 180, 0), "scale": 0.2},
+	"greave": {"path": "res://resources/models/gear_greave.glb",
+		"pair_bones": ["L_Calf", "R_Calf"],
+		"position": Vector3(0, 0.12, -0.02),
+		"rotation": Vector3(0, 180, 0), "scale": 0.3},
+	"bracer": {"path": "res://resources/models/gear_bracer.glb",
+		"pair_bones": ["L_Forearm", "R_Forearm"],
+		"position": Vector3(0, 0.12, 0),
+		"rotation": Vector3(0, 0, 0), "scale": 0.12},
+	"gauntlet": {"path": "res://resources/models/gear_gauntlet.glb",
+		"pair_bones": ["L_Hand", "R_Hand"],
+		"position": Vector3(0, 0.04, 0),
+		"rotation": Vector3(0, 0, 0), "scale": 0.15},
+	"chest_leather": {"path": "res://resources/models/gear_leather_chest.glb",
+		"bone": "Spine01", "position": Vector3(0, 0.0, 0),
+		"rotation": Vector3(0, 180, 0), "scale": 0.38},
+	"robe": {"path": "res://resources/models/gear_robe.glb",
+		"bone": "Spine01", "position": Vector3(0, -0.03, 0.015),
+		"rotation": Vector3(-6, 0, 0), "scale": 0.58},
+	"shield_m": {"path": "res://resources/models/gear_shield.glb",
+		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
+		"rotation": Vector3(0, 0, 0), "scale": 0.4},
+	"sword_m": {"path": "res://resources/models/gear_sword.glb",
+		"bone": "R_Hand", "position": Vector3(0, 0.05, 0),
+		"rotation": Vector3(-45, 0, 0), "scale": 0.5},
 }
 const WORN_MODELS := {
 	"starter_helmet": {"fit": "helm"},
-	"starter_armor": {"fit": "chest"},
 	"chitin_armor": {"fit": "chest", "palette": {
 		"primary": Color(0.32, 0.23, 0.13), "secondary": Color(0.14, 0.1, 0.07),
 		"trim": Color(0.78, 0.73, 0.58)}},
 	"studded_belt": {"fit": "belt"},
 	"wardens_pauldrons": {"fit": "pauldron"},
+	"iron_shod_boots": {"fit": "boot"},
+	"sprung_boots": {"fit": "boot", "palette": {
+		"primary": Color(0.22, 0.16, 0.1), "secondary": Color(0.45, 0.42, 0.38),
+		"trim": Color(0.6, 0.5, 0.3)}},
+	"iron_greaves": {"fit": "greave"},
+	"silk_bracers": {"fit": "bracer", "palette": {
+		"primary": Color(0.85, 0.82, 0.72), "secondary": Color(0.6, 0.55, 0.45),
+		"trim": Color(0.5, 0.42, 0.3)}},
+	"goblin_work_gauntlets": {"fit": "gauntlet"},
+	"starter_armor": {"fit": "chest_leather"},
+	"oiled_leathers": {"fit": "chest_leather", "palette": {
+		"primary": Color(0.16, 0.12, 0.08), "secondary": Color(0.3, 0.24, 0.16),
+		"trim": Color(0.55, 0.45, 0.3)}},
+	"showcase_robe": {"fit": "robe", "palette": {
+		"primary": Color(0.78, 0.75, 0.66), "secondary": Color(0.45, 0.4, 0.5),
+		"trim": Color(0.6, 0.5, 0.32)}},
+	"starter_shield": {"fit": "shield_m"},
+	"chitin_shield": {"fit": "shield_m", "palette": {
+		"primary": Color(0.3, 0.22, 0.13), "secondary": Color(0.16, 0.11, 0.07),
+		"trim": Color(0.75, 0.7, 0.55)}},
+	"starter_sword": {"fit": "sword_m"},
 }
 const RECOLOR_SHADER := "res://art/shaders/gear_recolor.gdshader"
 
@@ -283,7 +331,13 @@ func _dress(opts: Dictionary):
 
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.
-	if opts.get("sword", false) or opts.get("axe", false) or opts.get("dagger", false):
+	var main_model := false
+	if opts.get("sword", false):
+		main_model = _mount_worn_model(opts.get("main_gear", ""))
+		if main_model:
+			var mounts = _skeleton.get_children()
+			_sword_node = mounts[mounts.size() - 1].get_child(0)
+	if not main_model and (opts.get("sword", false) or opts.get("axe", false) or opts.get("dagger", false)):
 		var hand = _attach("R_Hand")
 		var weapon = DelverBuilder.build_axe() if opts.get("axe", false) \
 			else DelverBuilder.build_dagger() if opts.get("dagger", false) \
@@ -295,7 +349,18 @@ func _dress(opts: Dictionary):
 		weapon.scale = Vector3.ONE * 0.8
 		hand.add_child(weapon)
 		_sword_node = weapon
-	if opts.get("shield", false):
+	if opts.get("shield", false) and _mount_worn_model(opts.get("off_gear", "")):
+		var mounts = _skeleton.get_children()
+		_shield_arm = mounts[mounts.size() - 1]
+		_shield_prop = load(GEAR_FITS.shield_m.path).instantiate()
+		_shield_prop.position = Vector3(0.42, 0.15, 0.24)
+		_shield_prop.rotation_degrees = Vector3(0, 15, 75)
+		_shield_prop.scale = Vector3.ONE * 0.36
+		_shield_prop.visible = false
+		add_child(_shield_prop)
+		if WORN_MODELS.get(opts.get("off_gear", ""), {}).has("palette"):
+			_recolor(_shield_prop, WORN_MODELS[opts.off_gear].palette)
+	elif opts.get("shield", false):
 		_shield_arm = _attach("L_Forearm")
 		var shield = DelverBuilder.build_shield()
 		shield.position = Vector3(0.0, 0.12, -0.05)
