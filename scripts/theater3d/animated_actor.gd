@@ -54,6 +54,9 @@ const GEAR_FITS := {
 	"robe": {"path": "res://resources/models/gear_robe.glb",
 		"bone": "Spine01", "position": Vector3(0, -0.03, 0.015),
 		"rotation": Vector3(-6, 0, 0), "scale": 0.58},
+	"derived_chest": {"path": "res://resources/models/derived_chest.glb",
+		"bone": "Spine01", "position": Vector3.ZERO,
+		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
 		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
 		"rotation": Vector3(0, 0, 0), "scale": 0.4},
@@ -89,6 +92,9 @@ const WORN_MODELS := {
 		"primary": Color(0.3, 0.22, 0.13), "secondary": Color(0.16, 0.11, 0.07),
 		"trim": Color(0.75, 0.7, 0.55)}},
 	"starter_sword": {"fit": "sword_m"},
+	"derived_leathers": {"fit": "derived_chest", "palette": {
+		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
+		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
 }
 const RECOLOR_SHADER := "res://art/shaders/gear_recolor.gdshader"
 
@@ -144,6 +150,17 @@ var worn_mounts := {}
 ## Named body parts (Hair/Feet/Hands), hidden by the gear that covers
 ## them - the surgery lives in the GLBs, split via Blender.
 var _body_parts := {}
+## Derived gear (built FROM the body in Blender) ships in body
+## coordinates: align it to the skeleton at rest, then the mount
+## bone carries it. Fit by construction, no numbers.
+var _world_rest_pending := []
+
+func _ready():
+	for fit_key in _world_rest_pending:
+		for piece in worn_mounts.get(fit_key, []):
+			var mount = piece.get_parent()
+			piece.transform = mount.global_transform.affine_inverse() \
+				* _skeleton.global_transform
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -428,6 +445,8 @@ func _mount_worn_model(gear_id: String) -> bool:
 			_recolor(piece, entry.palette)
 	if fit.has("hides") and _body_parts.has(fit.hides):
 		_body_parts[fit.hides].visible = false
+	if fit.get("world_rest", false):
+		_world_rest_pending.append(entry.fit)
 	return true
 
 ## The registry fit, with any owner-saved override from the tuning
@@ -469,6 +488,7 @@ func _recolor(piece: Node, palette: Dictionary):
 				mat.set_shader_parameter("col_primary", palette.primary)
 				mat.set_shader_parameter("col_secondary", palette.secondary)
 				mat.set_shader_parameter("col_trim", palette.trim)
+				mat.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
 				node.material_override = mat
 		stack.append_array(node.get_children())
 

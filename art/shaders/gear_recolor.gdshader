@@ -11,6 +11,9 @@ uniform vec3 col_primary : source_color = vec3(0.33, 0.33, 0.33);
 uniform vec3 col_secondary : source_color = vec3(0.33, 0.17, 0.17);
 uniform vec3 col_trim : source_color = vec3(0.33, 0.33, 0.17);
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.85;
+// 0 = keep source luminance; 1 = flat dye (for derived skin-textured
+// shells that must become cloth or leather).
+uniform float luma_flatten : hint_range(0.0, 1.0) = 0.0;
 
 void fragment() {
 	vec3 tex = texture(base_tex, UV).rgb;
@@ -25,6 +28,7 @@ void fragment() {
 		target = col_trim;
 	}
 	float luma = dot(tex, vec3(0.299, 0.587, 0.114));
+	luma = mix(luma, 0.45 + 0.25 * (luma - 0.5), luma_flatten);
 	float target_luma = max(dot(target, vec3(0.299, 0.587, 0.114)), 0.05);
 	ALBEDO = clamp(target * (luma / target_luma) * 1.6, vec3(0.0), vec3(1.0));
 	ROUGHNESS = roughness_value;
