@@ -1,3 +1,4 @@
+@tool
 class_name SpringTail
 extends Node3D
 

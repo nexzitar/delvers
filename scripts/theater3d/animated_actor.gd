@@ -1,3 +1,4 @@
+@tool
 class_name AnimatedActor
 extends Node3D
 
