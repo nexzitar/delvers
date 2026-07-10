@@ -9,7 +9,7 @@ const OUTFITS = [
 		"starter_gloves", "starter_belt"]},
 	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"]},
 	{"model": "res://resources/models/delver_female.glb",
-		"pieces": ["starter_armor", "leather_trousers", "iron_shod_boots"],
+		"pieces": ["starter_headband", "starter_armor", "leather_trousers", "iron_shod_boots"],
 		"dye": {"name": "forest", "primary": Color(0.2, 0.3, 0.16), "secondary": Color(0.12, 0.18, 0.1), "trim": Color(0.5, 0.45, 0.28), "flatten": 0.9}},
 	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"],
 		"dye": {"name": "oxblood", "primary": Color(0.36, 0.14, 0.12), "secondary": Color(0.2, 0.09, 0.08), "trim": Color(0.6, 0.5, 0.34), "flatten": 0.9}},

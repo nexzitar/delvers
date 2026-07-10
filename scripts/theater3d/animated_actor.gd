@@ -48,6 +48,9 @@ const GEAR_FITS := {
 		"pair_bones": ["L_Hand", "R_Hand"],
 		"position": Vector3(0, 0.04, 0),
 		"rotation": Vector3(0, 0, 0), "scale": 0.15},
+	"headband": {"path": "res://resources/models/gear_headband.glb",
+		"bone": "Head", "position": Vector3.ZERO,
+		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"jacket": {"path": "res://resources/models/derived_jacket.glb",
 		"skinned": true, "hides": ["Torso", "RForearm"]},
 	"jacket_plain": {"path": "res://resources/models/derived_jacket_plain.glb",
@@ -63,6 +66,7 @@ const GEAR_FITS := {
 }
 const WORN_MODELS := {
 	"starter_helmet": {"fit": "helm"},
+	"starter_headband": {"fit": "headband"},
 	"chitin_armor": {"fit": "chest", "palette": {
 		"primary": Color(0.32, 0.23, 0.13), "secondary": Color(0.14, 0.1, 0.07),
 		"trim": Color(0.78, 0.73, 0.58)}},
