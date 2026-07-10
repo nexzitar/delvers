@@ -67,6 +67,26 @@ Fifty-six seconds, captured entirely from the live game: the abandoned camp, the
 | <img src="docs/screenshots/cast_nest_spiderling.png" height="90" alt="Nest Spiderling"> | <img src="docs/screenshots/cast_web_weaver.png" height="110" alt="Web Weaver"> | <img src="docs/screenshots/cast_chitin_crawler.png" height="120" alt="Chitin Crawler"> | <img src="docs/screenshots/cast_brood_tender.png" height="120" alt="Brood Tender"> | <img src="docs/screenshots/cast_broodmother.png" height="140" alt="The Broodmother"> |
 | The swarm | Its silk roots you | Armored; owns chitin | Births spiderlings mid-fight | Boss of the deep |
 
+## The Garment Construction Engine
+
+Equipment isn't modeled — it's **compiled**. Characters are generated
+(TripoAI), and their clothing is derived from their own bodies in
+headless Blender: a garment spec (`{volume, collar, shoulder_layers,
+buckles, sleeves, belt}`) compiles into an assembled, skinned garment —
+face-partitioned panels with independent thickness and bevels, layered
+shoulder flanges, clasp ladders, waist compression, asymmetric sleeves —
+that deforms with the wearer and hides exactly the body parts it covers.
+Same body, same grammar, different spec: a different garment.
+Construction first, appearance second — **the spec, not the mesh, is
+the item.**
+
+![The leather outfit](docs/screenshots/leather_outfit_lineup.png)
+
+*One grammar, two garments — jacket and trousers, compiled from the
+delver's own body: rolled sleeve, knee pads, thigh pouch and all. The
+recolor shader dyes each scheme's palette; the hardware keeps its
+leather and steel.*
+
 ## Features
 
 - **Spatial combat simulation** — Heroes and enemies fight on a tile-based battlefield: units path toward their targets (A* + soft separation), attacks are gated on weapon/skill range and line of sight, ranged attacks wind up standing still, and enemies pick targets from threat tables. Combat runs headlessly and produces a full event log.
