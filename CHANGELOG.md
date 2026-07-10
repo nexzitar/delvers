@@ -5,6 +5,28 @@ Notable changes per pull request. Newest first.
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added
+- **GARMENT ENGINE v6 — convergence on believable equipment** (owner
+  reference-render analysis): the face partition no longer IS the
+  garment; it decorates one. New grammar rules: (1) BASE SHELL first —
+  one watertight draped surface, so seams can never gap and skin can
+  never peek; (2) OVERLAYS — the partition pieces sit proud of the
+  base at defined altitudes (the layer ladder: base < panels < straps
+  < pads); (3) CHUNKY FACETS — limited-dissolve planarization turns
+  body triangulation into deliberate low-poly planes; (4) FABRIC
+  FORGETS ANATOMY — a torso-scoped cast-to-cylinder (the torso's own
+  mean radius) drapes cloth across the belly instead of shrink-
+  wrapping abs (a Laplacian smooth pass shredded open shells — dead
+  end recorded); (5) TERMINATION BANDS — cuffs at wrists/elbows and
+  waistbands with buckles, because hems are what make fabric read as
+  clothing; (6) FEW BOLD HARDWARE — a studded baldric, pillowed
+  two-layer shoulder pads, a hardware size floor.
+- **Solid two-tone garment materials end the texture noise era**: the
+  engine assigns GarmentPrimary/GarmentSecondary solid materials (no
+  body texture), and `_recolor` now dyes **per surface** — garments
+  tint directly, textured sculpts keep the chroma shader, hardware
+  keeps its leather and steel. Kills the waistband mottle, the
+  skin-toned sleeves, and Wren's painted-on abs in one move; GLBs
+  drop ~40% (no embedded texture copies).
 - **The socket system — weapons are finally HELD**: bodies carry
   named sockets (grip_main in the right palm, grip_off in the left,
   back and hip_l/hip_r for future quivers, backpacks and potion
