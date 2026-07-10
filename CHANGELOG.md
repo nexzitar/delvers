@@ -5,6 +5,13 @@ Notable changes per pull request. Newest first.
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added
+- **Wren wears a headband, not a helmet**: her recruit kit swaps the
+  Starter Helmet for a Starter Headband (leather, HEAD, open — hair
+  and ponytail physics stay visible; "Keeps the hair out of the
+  bowstring"). The band is built by a new Blender harness that
+  measures the wearer's own skull at brow height — snug elliptical
+  band, knot and trailing ends at the back — compiled per body like
+  the garments (male + `_f`). Goblin Archers drop it.
 - **Garments compile per body — and Wren gets a shirt**: recruit kits
   now include Starter Armor (Wren arrived with bow and helmet only),
   and the jacket, plain jacket and trousers are compiled from the
