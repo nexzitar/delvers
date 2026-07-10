@@ -5,6 +5,13 @@ Notable changes per pull request. Newest first.
 ## PR #13 — The generated armory *(open)*
 
 ### Added
+- **Armor design language** (owner doctrine, spec:
+  2026-07-10-armor-design-language.md): the pipeline works, the
+  design doesn't — armor needs CONSTRUCTION (panels, thickness,
+  straps, layers, broken silhouettes), each material has a
+  shape-language not a color, and Delvers armor is explorer-built:
+  repaired, mismatched, asymmetric. Derive v2 will build
+  construction pieces from the body instead of inflated shells.
 - **Body-derived armor works end to end**: the first chest piece is
   Garrick's own torso — spine-weighted faces duplicated in Blender,
   inflated off the skin, solidified, exported, rest-aligned onto his
