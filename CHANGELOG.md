@@ -2,6 +2,36 @@
 
 Notable changes per pull request. Newest first.
 
+## The Continuous Dungeon — Phase A *(open)*
+
+### Added
+- **One dungeon, walked end to end**: no more teleporting between
+  rooms. DungeonLayout compiles a DungeonDefinition into one place -
+  rooms carved along a winding spine with L-corridors and pillars -
+  and the whole delve is ONE simulation: packs spawn dormant where
+  they live, the party walks the spine between fights, and the replay
+  shows all of it (the spec is the dungeon).
+- **The pull grammar**: packs wake when a hero enters perception,
+  when damage reaches a sleeper, or when an already-woken enemy
+  blunders into them - a fleeing enemy chains the next pack. Some
+  double-pack rooms are LINKED and pull together. An elite mid-boss
+  pack (+2 levels) holds the middle room; the boss keeps the end.
+- **Loot banks mid-run**: PACK_DEFEATED events roll and toast each
+  pack's drops during the replay ("Room N cleared - pressing on...");
+  training, knowledge pity and autosave follow the same cadence. The
+  enemy sidebar reveals packs only when they wake, so it always reads
+  as the current fight.
+- **test_pulls** pins the contracts: sleep at distance, travel when
+  quiet, chain aggro, linked pulls, walkable spine, and a full
+  compiled Darkwood terminating. Deterministic (seeded).
+
+### Changed
+- Dungeon-scale walls render as one MultiMesh (shell tiles only);
+  clearing dressing (treeline, scatter) stays for single arenas.
+- Enemy spawning refactored into spawn_enemy_entity (shared by
+  arenas, packs, reinforcements) with per-pack depth bonuses.
+- Harnesses with forced_arena_path keep the single-arena flow.
+
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added

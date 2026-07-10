@@ -107,6 +107,12 @@ func dungeon() -> DungeonDefinition:
 ## bench the fallen for the rest of the delve).
 var _party_indices := []
 
+## Continuous delve: the compiled layout being walked, sidebar entries
+## deferred until packs wake, and how deep the party got.
+var _layout: DungeonLayout = null
+var _pending_units := {}
+var _room_reached := 1
+
 func _ready():
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 
@@ -127,11 +133,21 @@ func _ready():
 
 	var combat = CombatState.new()
 	combat.enemy_priority = PlayerRoster.enemy_priority.duplicate()
-	# Rooms deepen and tiers bite: higher enemy levels on both axes.
-	combat.enemy_level_bonus = (room - 1) / 4 + (PlayerRoster.current_tier - 1) * 2
-	combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
-	while not combat.combat_over:
+	if forced_arena_path != "":
+		# Harness mode: one arena, one encounter (shots and probes).
+		combat.enemy_level_bonus = (room - 1) / 4 + (PlayerRoster.current_tier - 1) * 2
+		combat.setup_combat(party, roll_encounter(room), _pick_arena(room), entry_health)
+	else:
+		# The continuous dungeon: one place, walked end to end.
+		var rng = RandomNumberGenerator.new()
+		rng.randomize()
+		_layout = DungeonLayout.generate(dungeon(), rng)
+		combat.setup_delve(party, _layout, entry_health,
+			(PlayerRoster.current_tier - 1) * 2)
+	var guard := 60000
+	while not combat.combat_over and guard > 0:
 		combat.update(0.1)
+		guard -= 1
 	combat_result = combat.build_result()
 
 	# Win or lose, what walked out of the dark is now seen.
@@ -145,7 +161,8 @@ func _ready():
 
 	_setup_world(combat.arena)
 	_setup_ui()
-	_show_room_banner(room)
+	if _layout == null:
+		_show_room_banner(room)
 	_build_timeline(combat_result.combat_log)
 	_playing = true
 
@@ -324,6 +341,13 @@ func _play_event(event):
 			_play_buff(event)
 		CombatEvent.EventType.BUFF_EXPIRED:
 			_play_buff_expired(event)
+		CombatEvent.EventType.ROOM_ENTERED:
+			_room_reached = maxi(_room_reached, event.room)
+			_show_room_banner(event.room)
+		CombatEvent.EventType.PACK_PULLED:
+			_wake_pack(event.pack_id)
+		CombatEvent.EventType.PACK_DEFEATED:
+			_bank_pack(event)
 		CombatEvent.EventType.TELEGRAPH:
 			var telegraph = AoeTelegraph3D.new(
 				event.telegraph_radius * WORLD_SCALE, event.telegraph_duration
@@ -358,14 +382,21 @@ func _play_spawn(event):
 		"yaw_target": rig.rotation.y,
 		"target_id": -1,
 		"shoot_dist": 2.0,
+		"pack_id": event.pack_id,
+		"dormant": event.team == CombatEntity.Team.ENEMY and event.pack_id >= 0,
 	}
 
 	var sidebar = (
 		hero_sidebar if event.team == CombatEntity.Team.HERO
 		else enemy_sidebar
 	)
-	sidebar.add_unit(event)
-	sidebars_by_entity[event.entity_id] = sidebar
+	# A dormant pack hasn't been met yet: its sidebar entry appears
+	# when it wakes, so the enemy panel reads as the current fight.
+	if actors[event.entity_id].dormant:
+		_pending_units[event.entity_id] = event
+	else:
+		sidebar.add_unit(event)
+		sidebars_by_entity[event.entity_id] = sidebar
 
 func _play_move(event):
 	var state = actors.get(event.entity_id)
@@ -621,7 +652,7 @@ func _update_camera(delta):
 	var high := Vector3(-INF, 0, -INF)
 	var count := 0
 	for state in actors.values():
-		if state.mode != "dead":
+		if state.mode != "dead" and not state.get("dormant", false):
 			var p = state.rig.position
 			low.x = minf(low.x, p.x)
 			low.z = minf(low.z, p.z)
@@ -754,12 +785,118 @@ func _show_room_banner(room: int):
 	tween.tween_property(label, "modulate:a", 0.0, 0.6)
 	tween.tween_callback(layer.queue_free)
 
+## A pack noticed the party: wake its actors and reveal them in the
+## enemy panel.
+func _wake_pack(pack_id: int):
+	for entity_id in actors:
+		var state = actors[entity_id]
+		if state.get("pack_id", -1) != pack_id or not state.get("dormant", false):
+			continue
+		state.dormant = false
+		if _pending_units.has(entity_id):
+			enemy_sidebar.add_unit(_pending_units[entity_id])
+			sidebars_by_entity[entity_id] = enemy_sidebar
+			_pending_units.erase(entity_id)
+
+## A pack died: its loot banks and toasts NOW, mid-run - the delve
+## keeps walking while the pouch fills.
+func _bank_pack(event):
+	var pack = _layout.packs[event.pack_id]
+	var slain = pack.templates
+	var found = LootTable.roll_enemy_drops(
+		slain, event.room,
+		PlayerRoster.known_recipes + PlayerRoster.delve_recipes,
+		PlayerRoster.known_affixes + PlayerRoster.delve_affixes,
+		PlayerRoster.known_lore + PlayerRoster.delve_lore,
+		dungeon(),
+		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps,
+		PlayerRoster.current_tier,
+		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines
+	)
+	PlayerRoster.delve_loot.append_array(found.gear)
+	for material_id in found.materials:
+		PlayerRoster.delve_materials[material_id] = (
+			PlayerRoster.delve_materials.get(material_id, 0)
+			+ found.materials[material_id]
+		)
+	PlayerRoster.delve_recipes.append_array(found.recipes)
+	PlayerRoster.delve_affixes.append_array(found.affixes)
+	PlayerRoster.delve_lore.append_array(found.lore)
+	PlayerRoster.delve_maps.append_array(found.maps)
+	PlayerRoster.delve_doctrines.append_array(found.doctrines)
+
+	# Practice: whoever still stands when the pack falls trains.
+	var alive_indices := []
+	for k in _party_indices.size():
+		var state = actors.get(k + 1)
+		if state and state.mode != "dead":
+			alive_indices.append(_party_indices[k])
+	var boss = event.room >= dungeon().length
+	var star_ups = PlayerRoster.train_party(alive_indices, 4 if boss else 1)
+
+	# Knowledge pity: three dry packs guarantee a recipe.
+	var learned_something = not (found.recipes.is_empty() and found.affixes.is_empty()
+		and found.lore.is_empty() and found.maps.is_empty()
+		and found.doctrines.is_empty())
+	if learned_something:
+		PlayerRoster.rooms_since_knowledge = 0
+	else:
+		PlayerRoster.rooms_since_knowledge += 1
+		if PlayerRoster.rooms_since_knowledge >= 3:
+			var known = PlayerRoster.known_recipes + PlayerRoster.delve_recipes
+			var pool := []
+			for template in slain:
+				for recipe_id in template.recipe_loot:
+					if known.has(recipe_id) or pool.has(recipe_id):
+						continue
+					var recipe = load(RosterSave.RECIPE_PATHS[recipe_id])
+					if recipe.min_tier > PlayerRoster.current_tier:
+						continue
+					pool.append(recipe_id)
+			if not pool.is_empty():
+				var granted = pool.pick_random()
+				found.recipes.append(granted)
+				PlayerRoster.delve_recipes.append(granted)
+				PlayerRoster.rooms_since_knowledge = 0
+
+	PlayerRoster.delve_room = _room_reached
+	if PlayerRoster.autosave:
+		RosterSave.save(PlayerRoster)
+	var entries = _drop_entries(found.gear, found.materials, found.recipes,
+		found.affixes, found.lore, found.maps, star_ups, found.doctrines)
+	if not entries.is_empty():
+		_show_room_toast(event.room, entries)
+
 func _finish_battle():
 	await get_tree().create_timer(1.4).timeout
 
 	var room = maxi(1, PlayerRoster.delve_room)
 	PlayerRoster.battles_fought += 1
 	PlayerRoster.last_battle_won = combat_result.victory
+
+	if _layout != null:
+		# Continuous delve: every pack banked mid-run; only the ending
+		# is left to tell.
+		if combat_result.victory:
+			PlayerRoster.adventures_completed += 1
+			PlayerRoster.record_clear(dungeon().dungeon_id, PlayerRoster.current_tier)
+		if PlayerRoster.autosave:
+			RosterSave.save(PlayerRoster)
+		await _show_battle_result(combat_result.victory)
+		await get_tree().create_timer(1.2).timeout
+		if combat_result.victory:
+			_show_summary(
+				"Delve Complete!",
+				"%s, walked end to end - all %d rooms of it." % [
+					dungeon().dungeon_name, dungeon().length
+				]
+			)
+		else:
+			_show_summary(
+				"The Party Falls...",
+				"They fought as far as room %d. Their spoils make it home." % _room_reached
+			)
+		return
 
 	if not combat_result.victory:
 		if PlayerRoster.autosave:
@@ -1077,6 +1214,9 @@ func _setup_world(arena):
 	ground.position = center
 	add_child(ground)
 
+	# The treeline rings a single clearing; a walked dungeon is its
+	# own place (architecture kit incoming) - walls carry the look.
+	var dressing := _layout == null
 	# The treeline: rings of low-poly firs just beyond the field.
 	var trunk_mat := StandardMaterial3D.new()
 	trunk_mat.albedo_color = Color("32251a")
@@ -1084,7 +1224,7 @@ func _setup_world(arena):
 	# The backdrop ring hugs the visible clearing, but only behind and
 	# beside the fight — the camera's foreground stays clear.
 	var cam_dir = Vector3(CAMERA_OFFSET.x, 0, CAMERA_OFFSET.z).normalized()
-	for i in 30:
+	for i in (30 if dressing else 0):
 		var a = TAU * i / 30.0 + 0.35 * sin(i * 3.1)
 		var ring = 0.35 * ((i * 7) % 4)
 		var offset = Vector3(
@@ -1198,22 +1338,61 @@ func _setup_world(arena):
 	var pillar_mat := StandardMaterial3D.new()
 	pillar_mat.albedo_color = Color("42463e")
 	pillar_mat.roughness = 1.0
+	# Only wall faces the party can see: blocked tiles touching open
+	# ground. Interior rock stays un-meshed.
+	var blocked_set := {}
 	for tile in arena.blocked_tiles:
-		var pillar := BoxMesh.new()
-		var wobble = 0.15 * ((tile.x * 7 + tile.y * 13) % 5) / 4.0
-		pillar.size = Vector3(1.0, 1.3 + wobble, 1.0)
-		var mesh := MeshInstance3D.new()
-		mesh.mesh = pillar
-		mesh.material_override = pillar_mat
-		var base = to_world(Vector2(
-			(tile.x + 0.5) * arena.tile_size,
-			(tile.y + 0.5) * arena.tile_size
-		))
-		mesh.position = base + Vector3(0, pillar.size.y * 0.5, 0)
-		add_child(mesh)
+		blocked_set[tile] = true
+	var shown: Array[Vector2i] = []
+	for tile in arena.blocked_tiles:
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1),
+				Vector2i(0, -1), Vector2i(1, 1), Vector2i(1, -1),
+				Vector2i(-1, 1), Vector2i(-1, -1)]:
+			var n: Vector2i = tile + d
+			if n.x < 0 or n.y < 0 or n.x >= arena.width or n.y >= arena.height:
+				continue
+			if not blocked_set.has(n):
+				shown.append(tile)
+				break
+	if shown.size() > 120:
+		# Dungeon scale: one MultiMesh carries every wall block.
+		var box := BoxMesh.new()
+		box.size = Vector3(1.0, 1.5, 1.0)
+		box.material = pillar_mat
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = box
+		mm.instance_count = shown.size()
+		for i in shown.size():
+			var tile = shown[i]
+			var wobble = 0.15 * ((tile.x * 7 + tile.y * 13) % 5) / 4.0
+			var base = to_world(Vector2(
+				(tile.x + 0.5) * arena.tile_size,
+				(tile.y + 0.5) * arena.tile_size
+			))
+			mm.set_instance_transform(i, Transform3D(
+				Basis.from_scale(Vector3(1.0, 1.0 + wobble, 1.0)),
+				base + Vector3(0, 0.75, 0)))
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		add_child(mmi)
+	else:
+		for tile in shown:
+			var pillar := BoxMesh.new()
+			var wobble = 0.15 * ((tile.x * 7 + tile.y * 13) % 5) / 4.0
+			pillar.size = Vector3(1.0, 1.3 + wobble, 1.0)
+			var mesh := MeshInstance3D.new()
+			mesh.mesh = pillar
+			mesh.material_override = pillar_mat
+			var base = to_world(Vector2(
+				(tile.x + 0.5) * arena.tile_size,
+				(tile.y + 0.5) * arena.tile_size
+			))
+			mesh.position = base + Vector3(0, pillar.size.y * 0.5, 0)
+			add_child(mesh)
 
 	# Deterministic scatter so the field reads as a place.
-	for i in 14:
+	for i in (14 if dressing else 0):
 		var a := i * 2.4 + 0.7
 		var mesh := MeshInstance3D.new()
 		var prop_mat := StandardMaterial3D.new()

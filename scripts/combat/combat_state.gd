@@ -645,15 +645,22 @@ func _check_pack_wakes():
 
 func _activate_pack(pack_id: int):
 	var link: int = layout.packs[pack_id].link
-	var any_woke := false
-	for enemy in enemies:
-		var linked: bool = link >= 0 and enemy.link_id == link
-		if (enemy.pack_id == pack_id or linked) and enemy.dormant:
-			enemy.dormant = false
-			any_woke = true
-	if any_woke:
-		combat_log.add_event(CombatEvent.create_pack_pulled(
-			pack_id, layout.packs[pack_id].room, combat_time))
+	var to_wake := {pack_id: true}
+	if link >= 0:
+		for i in layout.packs.size():
+			if layout.packs[i].link == link:
+				to_wake[i] = true
+	# One event per pack that transitions: the theater wakes actors
+	# and reveals sidebar entries per pack.
+	for wake_id in to_wake:
+		var any_woke := false
+		for enemy in enemies:
+			if enemy.pack_id == wake_id and enemy.dormant:
+				enemy.dormant = false
+				any_woke = true
+		if any_woke:
+			combat_log.add_event(CombatEvent.create_pack_pulled(
+				wake_id, layout.packs[wake_id].room, combat_time))
 
 func _report_defeated_packs():
 	var alive_by_pack := {}
