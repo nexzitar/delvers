@@ -53,6 +53,14 @@ var retarget_at: float = 0.0
 var behavior_tree: Array = []
 ## Imported model scene path ("" = procedural rig in the theater).
 var model_path := ""
+
+## Continuous delve: which pack this enemy belongs to (-1 = none),
+## whether it is still dormant (unaware of the party), and its home
+## for the leash. Packs sharing a link_id >= 0 pull together.
+var pack_id := -1
+var dormant := false
+var link_id := -1
+var home_position := Vector2.ZERO
 ## Armor-type identity trades (set from the worn loadout).
 var threat_mult := 1.0
 var stagger_resist := 0.0

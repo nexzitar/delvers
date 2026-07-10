@@ -13,6 +13,9 @@ enum EventType {
 	FACE,
 	TARGET,
 	TELEGRAPH,
+	PACK_PULLED,
+	PACK_DEFEATED,
+	ROOM_ENTERED,
 }
 
 var entity: CombatEntity
@@ -55,6 +58,10 @@ var crit := false
 var dodged := false
 var blocked := false
 
+## Continuous delve: pack membership and room progress markers.
+var pack_id := -1
+var room := 0
+
 var position: Vector2 = Vector2.ZERO
 var facing: Vector2 = Vector2.RIGHT
 var velocity: Vector2 = Vector2.ZERO
@@ -86,6 +93,7 @@ static func create_spawn(combat_entity):
 
 	event.position = combat_entity.position
 	event.facing = combat_entity.facing
+	event.pack_id = combat_entity.pack_id
 
 	return event
 
@@ -108,6 +116,29 @@ static func create_face(entity_id: int, sim_time: float, dir: Vector2) -> Combat
 	event.facing = dir
 	return event
 
+
+static func create_pack_pulled(the_pack: int, the_room: int, sim_time: float) -> CombatEvent:
+	var event = CombatEvent.new()
+	event.type = EventType.PACK_PULLED
+	event.pack_id = the_pack
+	event.room = the_room
+	event.time = sim_time
+	return event
+
+static func create_pack_defeated(the_pack: int, the_room: int, sim_time: float) -> CombatEvent:
+	var event = CombatEvent.new()
+	event.type = EventType.PACK_DEFEATED
+	event.pack_id = the_pack
+	event.room = the_room
+	event.time = sim_time
+	return event
+
+static func create_room_entered(the_room: int, sim_time: float) -> CombatEvent:
+	var event = CombatEvent.new()
+	event.type = EventType.ROOM_ENTERED
+	event.room = the_room
+	event.time = sim_time
+	return event
 
 static func create_target(source_id: int, target_id: int, sim_time: float) -> CombatEvent:
 	var event = CombatEvent.new()
