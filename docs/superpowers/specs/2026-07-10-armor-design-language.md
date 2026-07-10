@@ -167,3 +167,40 @@ believable, style/color/rarity/material build on top. The
 distinctive claim: "every piece of equipment is procedurally
 constructed from wearable components that actually fit the character
 it was made for."
+
+## Jacket v1.0 verdict + next build order (owner, end of session)
+
+**"Yes, this looks like an actual piece of equipment."** Working:
+shoulders (biggest win — silhouette), readable construction,
+asymmetry (personality without mess), believable volume.
+
+### The next bottleneck is THE REST OF THE OUTFIT
+Detailed jacket over simple belt, simple boots, bare legs — "why
+isn't he wearing pants?" Build next, in order:
+1. Leather trousers / padded pants (needs a Legs culling part)
+2. Better belt system
+3. Knee protection
+4. Gloves (proper, engine-made)
+
+### Jacket refinements (LATER, not another jacket day)
+- Chest seams should SCULPT the torso (guide the eye), not run
+  straight — decorative today, structural tomorrow.
+- Exaggerate shoulder layering one more step (4 → 5+ tiers, wider) —
+  stylized games win on exaggerated silhouettes.
+- Hardware still weakest: more buckles, stitched straps, rivets,
+  leather loops, belt anchors, shoulder fastening — visual RHYTHM,
+  the leatherworker's presence.
+
+### The design rules, as now evolved (reusable for every garment)
+- seams define construction
+- shoulders define silhouette
+- asymmetry defines personality
+- layers define depth
+- hardware defines craftsmanship
+
+### THE PROVING TEST (the real next milestone)
+Don't perfect this jacket. Same construction grammar, different
+garments: a ranger's short coat, a sleeveless brigandine, a hooded
+scout's jerkin, a long duster, a reinforced gambeson. If they all
+belong to the same world while feeling distinct — it's an engine,
+not a jacket.
