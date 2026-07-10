@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bhqh704xnowwk"]
+
+[ext_resource type="Script" path="res://capture/cast.gd" id="1_script"]
+
+[node name="Cast" type="Node" unique_id=259042403]
+script = ExtResource("1_script")

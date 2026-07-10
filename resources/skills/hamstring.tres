@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://cmhygfaqm87ky"]
 
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
-[ext_resource type="Script" path="res://scripts/combat/skills/hamstring.gd" id="2_behavior"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_hamstring.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" uid="uid://ceke2efqonpto" path="res://scripts/combat/skills/hamstring.gd" id="2_behavior"]
+[ext_resource type="Texture2D" uid="uid://dd8iciy0q6nnn" path="res://art/skills/skill_hamstring.png" id="3_icon"]
 
 [resource]
 resource_name = "Hamstring"
@@ -12,6 +12,6 @@ skill_name = "Hamstring"
 icon = ExtResource("3_icon")
 behavior_script = ExtResource("2_behavior")
 range = 48.0
-cooldown = 8.0
 base_min_damage = 1
 base_max_damage = 3
+cooldown = 8.0

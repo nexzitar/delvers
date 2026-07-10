@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://i7w8xh223h5o"]
 
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
-[ext_resource type="Script" path="res://scripts/combat/skills/battle_shout.gd" id="2_behavior"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_battle_shout.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" uid="uid://bmndet4bp02ti" path="res://scripts/combat/skills/battle_shout.gd" id="2_behavior"]
+[ext_resource type="Texture2D" uid="uid://codh7ngv8a4yy" path="res://art/skills/skill_battle_shout.png" id="3_icon"]
 
 [resource]
 resource_name = "Battle Shout"

@@ -68,5 +68,6 @@ static func _apply(roster, unlock_id: String):
 			roster.bonus_skill_slots = 2
 		"third_delver":
 			roster.recruit_hero(
-				["starter_sword", "starter_shield", "starter_helmet"]
+				["starter_sword", "starter_shield", "starter_helmet",
+					"starter_armor"]
 			)

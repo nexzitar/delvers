@@ -52,6 +52,7 @@ const MODEL_CONFIGS := {
 		"facing_fix": -PI / 2,
 		"model_scale": 1.17,
 		"walk_cycle_scale": 1.5,
+		"garment_suffix": "_f",
 		"animation_donor": "res://resources/models/delver_male.glb",
 		"hair_tail": {"color": Color(0.23, 0.17, 0.11), "segment_length": 0.085,
 			"offset": Vector3(0, 0.12, 0.1)},
