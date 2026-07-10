@@ -54,7 +54,7 @@ const GEAR_FITS := {
 	"robe": {"path": "res://resources/models/gear_robe.glb",
 		"bone": "Spine01", "position": Vector3(0, -0.03, 0.015),
 		"rotation": Vector3(-6, 0, 0), "scale": 0.58},
-	"derived_chest": {"path": "res://resources/models/derived_chest.glb",
+	"derived_chest": {"path": "res://resources/models/derived_vest.glb",
 		"bone": "Spine01", "position": Vector3.ZERO,
 		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"derived_skirt": {"path": "res://resources/models/derived_skirt.glb",
