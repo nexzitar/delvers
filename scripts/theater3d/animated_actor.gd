@@ -67,7 +67,7 @@ const GEAR_FITS := {
 		"bone": "R_Upperarm", "position": Vector3.ZERO,
 		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"jacket": {"path": "res://resources/models/derived_jacket.glb",
-		"skinned": true},
+		"skinned": true, "hides": "Torso"},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
 		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
 		"rotation": Vector3(0, 0, 0), "scale": 0.4},
@@ -206,7 +206,7 @@ func _init(scene: PackedScene, opts := {}):
 		for i in _skeleton.get_bone_count():
 			_bones[_skeleton.get_bone_name(i)] = i
 		for child in _skeleton.get_children():
-			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands"]:
+			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands", "Torso"]:
 				_body_parts[String(child.name)] = child
 	# Animation donor: a bare rigged export borrows a sibling's clips -
 	# same skeleton, retargeted by bone name. One animation set can
@@ -461,6 +461,8 @@ func _mount_worn_model(gear_id: String) -> bool:
 			if entry.has("palette"):
 				_recolor(mesh_inst, entry.palette)
 		garment.queue_free()
+		if fit.has("hides") and _body_parts.has(fit.hides):
+			_body_parts[fit.hides].visible = false
 		return not found.is_empty()
 
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
