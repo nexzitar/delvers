@@ -188,5 +188,12 @@ func _run_all():
 		"the sword keeps the owner's grip through a pose")
 	assert(absf(sword_piece.scale.x - 0.44) < 0.001, "the scale holds")
 
+	# The surgery: gear hides the body part it covers.
+	assert(fresh._body_parts.has("Hair") and fresh._body_parts.has("Feet"),
+		"the split parts are found")
+	assert(not fresh._body_parts["Hair"].visible, "the helm hides the hair")
+	assert(not fresh._body_parts["Feet"].visible, "the boots hide the feet")
+	assert(fresh._body_parts["Hands"].visible, "bare hands stay visible")
+
 	print("PASS animated actor")
 	get_tree().quit()

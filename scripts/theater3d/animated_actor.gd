@@ -16,7 +16,8 @@ const SpringTailScene = preload("res://scripts/theater3d/spring_tail.gd")
 ## gear_recolor shader swaps primary/secondary/trim, keeping the baked
 ## shading). Unlisted gear falls back to the procedural boxes.
 const GEAR_FITS := {
-	"helm": {"path": "res://resources/models/starter_helm.glb",
+	"helm": {"hides": "Hair",
+		"path": "res://resources/models/starter_helm.glb",
 		"bone": "Head", "position": Vector3(0, 0.078, -0.012),
 		"rotation": Vector3(0, 180, 0), "scale": 0.27},
 	"chest": {"path": "res://resources/models/starter_chest.glb",
@@ -29,7 +30,8 @@ const GEAR_FITS := {
 		"pair_bones": ["L_Upperarm", "R_Upperarm"],
 		"position": Vector3(0, 0.055, 0),
 		"rotation": Vector3(0, 90, 0), "scale": 0.24},
-	"boot": {"path": "res://resources/models/gear_boot.glb",
+	"boot": {"hides": "Feet",
+		"path": "res://resources/models/gear_boot.glb",
 		"pair_bones": ["L_Foot", "R_Foot"], "mirror": "none",
 		"position": Vector3(0, 0.04, -0.02),
 		"rotation": Vector3(0, 180, 0), "scale": 0.2},
@@ -41,7 +43,8 @@ const GEAR_FITS := {
 		"pair_bones": ["L_Forearm", "R_Forearm"],
 		"position": Vector3(0, 0.12, 0),
 		"rotation": Vector3(0, 0, 0), "scale": 0.12},
-	"gauntlet": {"path": "res://resources/models/gear_gauntlet.glb",
+	"gauntlet": {"hides": "Hands",
+		"path": "res://resources/models/gear_gauntlet.glb",
 		"pair_bones": ["L_Hand", "R_Hand"],
 		"position": Vector3(0, 0.04, 0),
 		"rotation": Vector3(0, 0, 0), "scale": 0.15},
@@ -138,6 +141,9 @@ var _shield_prop: Node3D
 var _sword_node: Node3D
 ## fit_key -> [mounted piece nodes], for live fitting in the Animator.
 var worn_mounts := {}
+## Named body parts (Hair/Feet/Hands), hidden by the gear that covers
+## them - the surgery lives in the GLBs, split via Blender.
+var _body_parts := {}
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -155,6 +161,9 @@ func _init(scene: PackedScene, opts := {}):
 	if _skeleton:
 		for i in _skeleton.get_bone_count():
 			_bones[_skeleton.get_bone_name(i)] = i
+		for child in _skeleton.get_children():
+			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands"]:
+				_body_parts[String(child.name)] = child
 	# Animation donor: a bare rigged export borrows a sibling's clips -
 	# same skeleton, retargeted by bone name. One animation set can
 	# drive the whole cast.
@@ -417,6 +426,8 @@ func _mount_worn_model(gear_id: String) -> bool:
 		worn_mounts[entry.fit].append(piece)
 		if entry.has("palette"):
 			_recolor(piece, entry.palette)
+	if fit.has("hides") and _body_parts.has(fit.hides):
+		_body_parts[fit.hides].visible = false
 	return true
 
 ## The registry fit, with any owner-saved override from the tuning
