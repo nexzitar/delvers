@@ -53,7 +53,7 @@ func _ready():
 		actor.position = Vector3(-1.5 + i * 1.0, 0, 0)
 		actor.rotation.y = 0.15 - i * 0.1
 		add_child(actor)
-		for piece_id in ["leather_jacket"]:
+		for piece_id in ["leather_jacket", "leather_pants"]:
 			actor._mount_worn_model(piece_id)
 		actor._mount_worn_model("iron_shod_boots")
 		# Re-dye everything in this delver's scheme.

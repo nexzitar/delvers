@@ -12,6 +12,11 @@ Notable changes per pull request. Newest first.
   shape-language not a color, and Delvers armor is explorer-built:
   repaired, mismatched, asymmetric. Derive v2 will build
   construction pieces from the body instead of inflated shells.
+- **Leather trousers prove the engine**: `{"garment": "pants"}` —
+  same grammar, different garment: thigh and calf panels, waistband,
+  knee pads with straps, a thigh pouch; the `Legs` body part hides
+  beneath. The delvers are fully dressed, head to toe, in compiled
+  clothing.
 - **THE GARMENT CONSTRUCTION ENGINE** (v5): garments are compiled
   from a spec ({volume, collar, shoulder_layers, buckles, sleeves,
   belt, hem_flaps}) into ASSEMBLED construction — face-partitioned

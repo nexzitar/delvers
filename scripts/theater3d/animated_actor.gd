@@ -68,6 +68,8 @@ const GEAR_FITS := {
 		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"jacket": {"path": "res://resources/models/derived_jacket.glb",
 		"skinned": true, "hides": ["Torso", "RForearm"]},
+	"pants": {"path": "res://resources/models/derived_pants.glb",
+		"skinned": true, "hides": ["Legs"]},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
 		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
 		"rotation": Vector3(0, 0, 0), "scale": 0.4},
@@ -112,6 +114,9 @@ const WORN_MODELS := {
 	"derived_set_sleeve_r": {"fit": "derived_sleeve_r", "palette": {
 		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
 		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
+	"leather_pants": {"fit": "pants", "palette": {
+		"primary": Color(0.3, 0.21, 0.13), "secondary": Color(0.22, 0.16, 0.1),
+		"trim": Color(0.45, 0.36, 0.24), "flatten": 0.9}},
 	"leather_jacket": {"fit": "jacket", "palette": {
 		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
 		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
@@ -214,7 +219,7 @@ func _init(scene: PackedScene, opts := {}):
 		for i in _skeleton.get_bone_count():
 			_bones[_skeleton.get_bone_name(i)] = i
 		for child in _skeleton.get_children():
-			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands", "Torso", "LForearm", "RForearm"]:
+			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands", "Torso", "LForearm", "RForearm", "Legs"]:
 				_body_parts[String(child.name)] = child
 	# Animation donor: a bare rigged export borrows a sibling's clips -
 	# same skeleton, retargeted by bone name. One animation set can
