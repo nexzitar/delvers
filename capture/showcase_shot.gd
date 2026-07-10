@@ -92,7 +92,7 @@ func _ready():
 
 	# The Mystic: pale silk, deep wells.
 	var mystic = _actor("female", {
-		"chest_gear": "showcase_robe", "chest_plate": true,
+		"chest_gear": "oiled_leathers", "chest_plate": true,
 	}, Vector3(1.2, 0, 0.12), -0.35)
 	_extra(mystic, ["silk_bracers"])
 	mystic.pose_spellcast(0.65)

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://pbcrxl6dmkap"
-path="res://.godot/imported/derived_skirt.glb-e55d4202f5069e5e89615fad3c0319f5.scn"
+uid="uid://5yvddfabt22r"
+path="res://.godot/imported/derived_jacket_plain.glb-2ed362f4c8ba140268268ee51747cd8b.scn"
 
 [deps]
 
-source_file="res://resources/models/derived_skirt.glb"
-dest_files=["res://.godot/imported/derived_skirt.glb-e55d4202f5069e5e89615fad3c0319f5.scn"]
+source_file="res://resources/models/derived_jacket_plain.glb"
+dest_files=["res://.godot/imported/derived_jacket_plain.glb-2ed362f4c8ba140268268ee51747cd8b.scn"]
 
 [params]
 

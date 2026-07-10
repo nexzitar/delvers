@@ -82,10 +82,11 @@ the item.**
 
 ![The leather outfit](docs/screenshots/leather_outfit_lineup.png)
 
-*One grammar, two garments — jacket and trousers, compiled from the
-delver's own body: rolled sleeve, knee pads, thigh pouch and all. The
-recolor shader dyes each scheme's palette; the hardware keeps its
-leather and steel.*
+*Real items, compiled: Starter Armor (a plain jacket — humble through
+construction, not color), Oiled Leathers (the clasp-ladder jacket),
+and craftable Leather Trousers with knee pads and a thigh pouch. The
+right two delvers wear the same meshes re-dyed — the recolor lever on
+identical construction.*
 
 ## Features
 

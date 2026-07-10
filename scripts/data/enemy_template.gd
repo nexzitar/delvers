@@ -4,7 +4,6 @@ class_name EnemyDefinition
 @export var enemy_id: String
 @export var enemy_name: String
 @export var template_id : String
-@export var actor_scene : PackedScene
 
 @export var base_health: int
 @export var base_mana: int

@@ -32,7 +32,7 @@ CombatState (fast tick sim) → CombatLog (Array[CombatEvent]) → TheaterContro
 ```
 
 - **`scripts/combat/`** — the simulation. `CombatState` (`combat_state.gd`) owns `heroes`/`enemies` arrays of `CombatEntity`, ticks everyone via `update(delta)` in fixed steps (`SIMULATION_STEP = 0.1`), and loops `while not combat.combat_over`. Every meaningful action appends a `CombatEvent` to `combat_log`. `build_result()` returns a `CombatResult`.
-- **`scripts/theater3d/`** — the presentation. `TheaterController3D` replays the log in real time in a 3D scene: a pre-built timeline dispatches events plus derived animation cues (melee swings start ahead of their `DAMAGE` so contact lands on the beat), `ActorFactory3D` builds procedural rigs from templates/loadouts, and continuous poses are driven from `_process`. (`scripts/theater/` retains only the 2D actor visuals still used by the camp and loadout screens.)
+- **`scripts/theater3d/`** — the presentation. `TheaterController3D` replays the log in real time in a 3D scene: a pre-built timeline dispatches events plus derived animation cues (melee swings start ahead of their `DAMAGE` so contact lands on the beat), `ActorFactory3D` builds procedural rigs from templates/loadouts, and continuous poses are driven from `_process`. (The old 2D `scripts/theater/` actor layer has been removed entirely; all combat presentation is 3D.)
 - **Rule:** the sim must never depend on theater/scene nodes, and anything the theater needs to draw must travel through a field on `CombatEvent`. When you add a combat behavior, you usually (1) add/extend an `EventType` and a `create_*` factory on `combat_event.gd`, (2) emit it from the sim, (3) handle it in the theater.
 
 ## Data-driven content (no code to add units)
