@@ -59,3 +59,37 @@ construction, reading becomes crafted):
 - thickness via solidify 8–10mm + bevel modifier
 - straps/buckles as placed primitives following the surface
 - deliberate asymmetry and wear details
+
+## Derive v4 (owner critique of the jacket, same day)
+
+The jacket wraps, deforms, has collar/opening/silhouette — remaining
+issues are ARTISTIC:
+
+1. **Too skin-tight** (the big one): vacuum-sealed. Garments need
+   volume — shoulders sit 2-3cm (visual) off the body. Differential
+   inflation: more at shoulders/chest, less at waist.
+2. **Everything ends at the same place**: uniform hems read
+   manufactured-by-computer. Break it: one sleeve rolled, one full;
+   front flap longer; one shoulder reinforced. Asymmetry = person.
+3. **The torso reads as ONE object**: it should read as an assembled
+   garment — front-left panel, front-right panel, back panel, collar,
+   shoulder yoke, sleeves, cuffs — each visually identifiable
+   (split with small offsets/edge seams).
+4. **Not enough overlap**: clothing is LAYERS, not seams. Collar over
+   chest flap over belt over skirt. The Blizzard rule: **nothing
+   important is flush — everything sticks out** (shoulders, belts,
+   collars, buckles, pouches).
+5. **Later: structural wrinkles** — not sculpted detail; large folds
+   at shoulder/elbow. Perfectly smooth leather reads as plastic.
+
+## THE GARMENT GENERATOR (owner vision — the strategic payoff)
+
+Stop asking AI to invent armor; ask Blender to DERIVE clothing by
+RULES. A jacket generator: take torso → inflate 10mm differential →
+split into front-L/front-R/back/collar/sleeves/cuffs → add N random
+buckles, stitches, patches, one shoulder reinforcement, random collar
+height / sleeve length / belt position. **Every leather chest unique;
+every single one fits perfectly.** Uniqueness by construction rules,
+not by generation lottery — this is the item-diversity engine for
+the whole loot game (rarity tiers = rule budgets: more panels, more
+hardware, louder silhouette).
