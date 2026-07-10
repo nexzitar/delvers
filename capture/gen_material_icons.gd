@@ -15,6 +15,9 @@ func _init():
 	_save(_coil(), "res://art/materials/mat_bow_string.png")
 	_save(_droplet(Color("32204a"), Color("a06fd0")), "res://art/materials/mat_poison_sac.png")
 	_save(_jelly(), "res://art/materials/mat_royal_jelly.png")
+	_save(_fitting(), "res://art/materials/mat_brass_fitting.png")
+	_save(_droplet(Color("1a1712"), Color("4a4232")), "res://art/materials/mat_engine_oil.png")
+	_save(_cog(), "res://art/materials/mat_cog_wheel.png")
 	_save(_leather(), "res://art/materials/mat_leather.png")
 	_save(_tome(Color("2a3a5e"), Color("18233c"), Color("7fa4d8")), "res://art/tomes/tome_recipe.png")
 	_save(_tome(Color("42285e"), Color("2a173c"), Color("a06fd0")), "res://art/tomes/tome_affix.png")
@@ -263,4 +266,33 @@ func _cloak() -> Image:
 		return absf(p.x - C) < half, Color("b8b2c8"))
 	_paint(img, func(p):
 		return absf(p.y - 14.0) < 2.0 and absf(p.x - C) < 8.0, Color("d8c684"))
+	return img
+
+## A brass elbow-joint fitting.
+func _fitting() -> Image:
+	var img = _tile(Color("2e2416"), Color("1c160c"))
+	_paint(img, func(p):
+		var horizontal = absf(p.y - 36.0) < 5.0 and p.x > 14.0 and p.x < 40.0
+		var vertical = absf(p.x - 36.0) < 5.0 and p.y > 14.0 and p.y < 40.0
+		return horizontal or vertical, Color("b08a42"))
+	_paint(img, func(p):
+		return absf(p.y - 36.0) < 2.0 and p.x > 14.0 and p.x < 40.0, Color("d0aa5c"))
+	return img
+
+## A toothed cog wheel.
+func _cog() -> Image:
+	var img = _tile(Color("26221c"), Color("161310"))
+	_paint(img, func(p):
+		var d = p - Vector2(C, C)
+		var r = d.length()
+		if r > 21.0 or r < 5.0:
+			return false
+		if r > 16.0:
+			var a = fposmod(atan2(d.y, d.x), TAU / 8.0) / (TAU / 8.0)
+			if absf(a - 0.5) > 0.28:
+				return false
+		return not (r > 9.0 and r < 13.0), Color("8a8272"))
+	_paint(img, func(p):
+		var r = (p - Vector2(C, C)).length()
+		return r > 9.0 and r < 13.0, Color("3a352c"))
 	return img

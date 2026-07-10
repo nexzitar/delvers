@@ -10,6 +10,7 @@
 [ext_resource type="Resource" uid="uid://bgidrpuj17ap4" path="res://resources/gear/starter_helmet.tres" id="7_helmet"]
 [ext_resource type="Resource" uid="uid://dm1bhc7wpjrj4" path="res://resources/gear/starter_armor.tres" id="8_armor"]
 [ext_resource type="Texture2D" uid="uid://cvp38yfw8mns7" path="res://art/portraits/icon_delver.png" id="9_icon"]
+[ext_resource type="PackedScene" uid="uid://d0olvmpahe7f5" path="res://resources/models/delver_male.glb" id="9_model"]
 
 [resource]
 resource_name = "HeroTemplate"
@@ -24,5 +25,5 @@ base_attack = 1
 base_attack_interval = 3.0
 portrait = ExtResource("9_icon")
 starting_skills = Array[ExtResource("2_ctke7")]([ExtResource("3_iac65")])
+model_scene = ExtResource("9_model")
 starting_gear = Array[ExtResource("4_gear")]([ExtResource("5_sword"), ExtResource("6_shield"), ExtResource("7_helmet"), ExtResource("8_armor")])
-preferred_slots = null

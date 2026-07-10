@@ -25,6 +25,11 @@ const UNLOCKS := [
 
 ## Names for delvers who answer the fire, in arrival order.
 const COMPANION_NAMES := ["Wren", "Bram", "Kessa", "Tolli"]
+## Which body model each companion wears (default_delver's is male).
+const COMPANION_MODELS := {
+	"Wren": "res://resources/models/delver_female.glb",
+	"Kessa": "res://resources/models/delver_female.glb",
+}
 
 static func unlocked(roster) -> bool:
 	return roster.adventures_completed >= 1

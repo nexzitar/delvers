@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="DungeonDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/dungeon_definition.gd" id="1_dungeon"]
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="2_enemy"]
+[ext_resource type="Resource" path="res://resources/enemies/scrap_sentinel.tres" id="3_sentinel"]
+[ext_resource type="Resource" path="res://resources/enemies/oil_slick.tres" id="4_slick"]
+[ext_resource type="Resource" path="res://resources/enemies/cog_thrower.tres" id="5_thrower"]
+[ext_resource type="Resource" path="res://resources/enemies/rust_mite.tres" id="6_mite"]
+[ext_resource type="Resource" path="res://resources/enemies/foreman.tres" id="7_foreman"]
+
+[resource]
+script = ExtResource("1_dungeon")
+dungeon_id = "sunken_workshop"
+dungeon_name = "The Sunken Workshop"
+flavor = "The old guild\'s flooded engine-halls. The machines never heard the news."
+length = 10
+pool_core = Array[ExtResource("2_enemy")]([ExtResource("6_mite"), ExtResource("6_mite"), ExtResource("4_slick"), ExtResource("5_thrower")])
+pool_deep = Array[ExtResource("2_enemy")]([ExtResource("3_sentinel"), ExtResource("5_thrower")])
+deep_from = 3
+guaranteed = Array[ExtResource("2_enemy")]([ExtResource("3_sentinel"), ExtResource("4_slick")])
+boss_pack = Array[ExtResource("2_enemy")]([ExtResource("7_foreman"), ExtResource("3_sentinel"), ExtResource("6_mite"), ExtResource("6_mite")])
+level_offset = 20
+rare_chance = 0.05
+boss_epic_chance = 0.08
+pack_bonus = 1
+theme = "workshop"
+lore_ids = Array[String](["workshop_log_1", "workshop_log_2", "workshop_log_3", "workshop_log_4"])

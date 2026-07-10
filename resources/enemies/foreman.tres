@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/piston_strike.tres" id="9_piston"]
+[ext_resource type="Resource" path="res://resources/skills/gum_strike.tres" id="4_gum"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "foreman"
+enemy_name = "The Foreman"
+template_id = "foreman"
+base_health = 420
+base_mana = 0
+base_attack = 15
+base_attack_interval = 4.2
+move_speed = 58
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("4_gum"), ExtResource("9_piston")])
+material_loot = Array[String](["brass_fitting", "cog_wheel", "engine_oil"])
+material_drop_count = 2
+recipe_loot = Array[String](["oiled_leathers", "sprung_boots", "engineers_goggles"])
+recipe_drop_chance = 1.0
+affix_loot = Array[String](["quick", "guarding", "flaming", "frostforged", "virulent"])
+affix_drop_chance = 1.0
+doctrine_loot = Array[String](["engineers_slate", "doctrine_capacity_2", "doctrine_capacity_3"])
+doctrine_drop_chance = 1.0
+loot_ids = Array[String](["starter_sword", "starter_bow", "fast_dagger", "heavy_axe"])
+drop_chance = 1.0
+is_boss = true
+armor = 6

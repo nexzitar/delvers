@@ -46,6 +46,7 @@ const STATUS_ICON := {
 	"renew_hot": "res://art/status/status_renew.png",
 	"shield_wall": "res://art/status/status_fortify.png",
 	"battle_shout": "res://art/status/status_empower.png",
+	"gum_strike": "res://art/status/status_daze.png",
 }
 
 const STATUS_TEXT := {
@@ -60,6 +61,7 @@ const STATUS_TEXT := {
 	"shield_wall": "Shield Wall!",
 	"thunderclap_daze": "Dazed!",
 	"battle_shout": "Emboldened!",
+	"gum_strike": "Gummed!",
 }
 
 var actors := {}
@@ -1025,15 +1027,19 @@ func _setup_world(arena):
 	# Each dungeon dresses its own stage: the Darkwood is a moonlit
 	# forest clearing; the Nest a warm webbed cavern.
 	var nest: bool = dungeon().theme == "nest"
+	var workshop: bool = dungeon().theme == "workshop"
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("140e14") if nest else Color("0d1118")
+	env.background_color = Color("16120a") if workshop \
+		else Color("140e14") if nest else Color("0d1118")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("7a5e6e") if nest else Color("66748e")
+	env.ambient_light_color = Color("8a7450") if workshop \
+		else Color("7a5e6e") if nest else Color("66748e")
 	env.ambient_light_energy = 0.6
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.fog_enabled = true
-	env.fog_light_color = Color("1c1218") if nest else Color("131a22")
+	env.fog_light_color = Color("1d160c") if workshop \
+		else Color("1c1218") if nest else Color("131a22")
 	env.fog_density = 0.014 if nest else 0.011
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
@@ -1042,14 +1048,16 @@ func _setup_world(arena):
 	var moon := DirectionalLight3D.new()
 	moon.rotation_degrees = Vector3(-52, -30, 0)
 	moon.light_energy = 0.9 if nest else 1.0
-	moon.light_color = Color(1.0, 0.86, 0.72) if nest else Color(0.82, 0.88, 1.0)
+	moon.light_color = Color(1.0, 0.8, 0.55) if workshop \
+		else Color(1.0, 0.86, 0.72) if nest else Color(0.82, 0.88, 1.0)
 	moon.shadow_enabled = true
 	add_child(moon)
 
 	var fill := DirectionalLight3D.new()
 	fill.rotation_degrees = Vector3(-18, 140, 0)
 	fill.light_energy = 0.22
-	fill.light_color = Color(0.6, 0.45, 0.6) if nest else Color(0.55, 0.7, 0.55)
+	fill.light_color = Color(0.7, 0.55, 0.3) if workshop \
+		else Color(0.6, 0.45, 0.6) if nest else Color(0.55, 0.7, 0.55)
 	add_child(fill)
 
 	var center = to_world(Vector2(
@@ -1062,7 +1070,8 @@ func _setup_world(arena):
 	plane.size = Vector2(arena.width + 40, arena.height + 40)
 	ground.mesh = plane
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("332631") if nest else Color("2c3626")
+	mat.albedo_color = Color("241f16") if workshop \
+		else Color("332631") if nest else Color("2c3626")
 	mat.roughness = 1.0
 	ground.material_override = mat
 	ground.position = center
@@ -1089,6 +1098,32 @@ func _setup_world(arena):
 		var height = 1.0 + 0.5 * ((i * 5) % 4) / 3.0
 		tree.scale = Vector3.ONE * height
 		add_child(tree)
+		if workshop:
+			# Brass columns and dead engine housings ring the hall.
+			var column := CylinderMesh.new()
+			column.top_radius = 0.16
+			column.bottom_radius = 0.2
+			column.height = 2.6
+			column.radial_segments = 8
+			var column_mesh := MeshInstance3D.new()
+			column_mesh.mesh = column
+			var brass := StandardMaterial3D.new()
+			brass.albedo_color = Color(0.4, 0.31, 0.17) * (0.85 + 0.3 * ((i * 11) % 3) / 2.0)
+			brass.roughness = 0.8
+			column_mesh.material_override = brass
+			column_mesh.position.y = 1.3
+			tree.add_child(column_mesh)
+			var housing := BoxMesh.new()
+			housing.size = Vector3(0.6, 0.5, 0.5)
+			var housing_mesh := MeshInstance3D.new()
+			housing_mesh.mesh = housing
+			var gunmetal := StandardMaterial3D.new()
+			gunmetal.albedo_color = Color(0.3, 0.27, 0.22)
+			gunmetal.roughness = 1.0
+			housing_mesh.material_override = gunmetal
+			housing_mesh.position = Vector3(0.35, 0.25, 0)
+			tree.add_child(housing_mesh)
+			continue
 		if nest:
 			# Stalagmite columns wrapped in pale silk, egg sacs at the base.
 			var spire := CylinderMesh.new()

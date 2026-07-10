@@ -21,6 +21,9 @@ func _init():
 	_save(_battle_shout(), "res://art/skills/skill_battle_shout.png")
 	_save(_rally(), "res://art/skills/skill_rally.png")
 	_save(_badge_empower(), "res://art/status/status_empower.png")
+	_save(_oiled_leathers(), "res://art/gear/gear_oiled_leathers.png")
+	_save(_sprung_boots(), "res://art/gear/gear_sprung_boots.png")
+	_save(_goggles(), "res://art/gear/gear_engineers_goggles.png")
 	_save(_badge_poison(), "res://art/status/status_poison.png")
 	_save(_badge_daze(), "res://art/status/status_daze.png")
 	_save(_badge_stun(), "res://art/status/status_stun.png")
@@ -335,3 +338,42 @@ func _badge_empower() -> Image:
 		if up or left or right:
 			return Color("f0a04a")
 		return null)
+
+## Dark leathers with an oil sheen.
+func _oiled_leathers() -> Image:
+	var img = _tile(Color("241c12"), Color("140f08"), Color("453626"))
+	_paint(img, func(p):
+		var torso = absf(p.x - C) < 13.0 and p.y > 16.0 and p.y < 46.0
+		var arms = absf(p.y - 22.0) < 5.0 and absf(p.x - C) < 19.0
+		return torso or arms, Color("3c2e1c"))
+	_paint(img, func(p):
+		return absf(p.x - C + (p.y - 30.0) * 0.3) < 1.6 and p.y > 18.0 and p.y < 44.0,
+		Color("6a5a3a"))
+	return img
+
+## Boots on coil springs.
+func _sprung_boots() -> Image:
+	var img = _tile(Color("241c12"), Color("140f08"), Color("453626"))
+	for off in [-9.0, 9.0]:
+		_paint(img, func(p):
+			var shaft = absf(p.x - C - off) < 4.5 and p.y > 14.0 and p.y < 34.0
+			var foot = p.y > 30.0 and p.y < 38.0 and p.x - C - off > -5.0 and p.x - C - off < 8.0
+			return shaft or foot, Color("4a3826"))
+		for k in 3:
+			_paint(img, func(p):
+				return absf(p.y - (40.0 + k * 3.0)) < 1.2 and absf(p.x - C - off) < 5.0,
+				Color("b08a42"))
+	return img
+
+## Round brass goggles.
+func _goggles() -> Image:
+	var img = _tile(Color("26221c"), Color("161310"), Color("4a4238"))
+	for off in [-10.0, 10.0]:
+		_paint(img, func(p):
+			var r = p.distance_to(Vector2(C + off, 30.0))
+			return r >= 6.0 and r < 8.5, Color("b08a42"))
+		_paint(img, func(p):
+			return p.distance_to(Vector2(C + off, 30.0)) < 6.0, Color("8ab0a0"))
+	_paint(img, func(p):
+		return absf(p.y - 30.0) < 1.5 and absf(p.x - C) < 3.0, Color("b08a42"))
+	return img

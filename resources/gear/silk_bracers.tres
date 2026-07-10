@@ -7,6 +7,7 @@
 script = ExtResource("1_gear")
 gear_id = "silk_bracers"
 gear_name = "Silk-Wrapped Bracers"
+armor_type = "cloth"
 slot = 7
 icon = ExtResource("2_tex")
 health_bonus = 4

@@ -25,6 +25,9 @@ class_name HeroTemplate
 ## Empty = the chosen tactic's pre-authored tree. Budgeted by the
 ## guild's recovered doctrine capacity.
 @export var custom_tree: Array = []
+## Imported character model (glTF scene). Null = the procedural rig.
+## Ungeared base; worn gear attaches over it.
+@export var model_scene: PackedScene = null
 @export var starting_gear: Array[GearDefinition]
 @export var preferred_row: Formation.Row = Formation.Row.FRONT
 

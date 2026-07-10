@@ -21,10 +21,10 @@ const LOG_TOP := 0.3
 ## "menu" frames the clearing wide; "camp" sits closer to the fire.
 @export var framing := "menu"
 
-const MENU_CAMERA := {"position": Vector3(0, 2.6, 7.2), "look": Vector3(0, 0.7, 0)}
+const MENU_CAMERA := {"position": Vector3(-1.9, 2.6, 7.0), "look": Vector3(-1.6, 0.7, 0)}
 const CAMP_CAMERA := {"position": Vector3(0, 3.1, 5.2), "look": Vector3(0, 0.4, 0)}
 
-var camera: Camera3D
+var camera: OrbitCamera
 var _flames: Array = []
 var _embers: Array = []
 var _fire_light: OmniLight3D
@@ -54,10 +54,18 @@ func apply_framing(which: String):
 	var preset = CAMP_CAMERA if which == "camp" else MENU_CAMERA
 	camera.position = preset.position
 	camera.look_at(preset.look)
+	# At camp the player may circle the fire: right-drag orbits, the
+	# wheel zooms. The menu stays scripted.
+	camera.enabled = which == "camp"
+	if camera.enabled:
+		camera.target = preset.look
+		camera.orbit_button = MOUSE_BUTTON_RIGHT
+		camera.adopt_current()
 
 ## Menu -> camp: glide the camera to the camp framing (the party keeps
 ## their seats via PlayerRoster.keep_seating).
 func transition_to_camp(duration: float) -> Tween:
+	camera.enabled = false
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(camera, "position", CAMP_CAMERA.position, duration) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -67,6 +75,12 @@ func transition_to_camp(duration: float) -> Tween:
 			camera.look_at(start_look.lerp(CAMP_CAMERA.look, k)),
 		0.0, 1.0, duration
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.chain().tween_callback(func():
+		framing = "camp"
+		camera.enabled = true
+		camera.target = CAMP_CAMERA.look
+		camera.orbit_button = MOUSE_BUTTON_RIGHT
+		camera.adopt_current())
 	return tween
 
 # --- Party ---------------------------------------------------------------
@@ -126,7 +140,8 @@ func refresh_hero(hero_index: int):
 
 func _spawn_seated(seat_name: String, seat_pos: Vector3, hero_index: int):
 	var template = PlayerRoster.heroes[hero_index]
-	var rig = ActorFactory3D.build_hero(template.equipped)
+	var rig = ActorFactory3D.build_hero(template.equipped,
+		template.model_scene.resource_path if template.model_scene else "")
 	add_child(rig)
 	# Perched on the log, facing the fire.
 	rig.position = seat_pos + Vector3(0, LOG_TOP - 0.06, 0)
@@ -542,6 +557,6 @@ func _setup_world():
 		)
 		add_child(mesh)
 
-	camera = Camera3D.new()
+	camera = OrbitCamera.new()
 	camera.fov = 38
 	add_child(camera)

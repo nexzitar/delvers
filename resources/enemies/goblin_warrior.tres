@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://cdwnu2yug1aih"]
 
-[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
-[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Script" uid="uid://n275q522x8hb" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_slash"]
 
 [resource]
 script = ExtResource("1_enemy")
@@ -14,11 +14,9 @@ base_attack_interval = 2.6
 move_speed = 85.0
 skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
 material_loot = Array[String](["iron_scrap", "iron_scrap", "iron_scrap", "leather"])
-material_drop_chance = 1.0
 recipe_loot = Array[String](["reinforced_shield", "iron_helm", "studded_belt", "iron_greaves", "wardens_pauldrons"])
 affix_loot = Array[String](["guarding"])
 doctrine_loot = Array[String](["guard"])
 loot_ids = Array[String](["starter_sword", "starter_shield", "starter_armor"])
-preferred_row = 0
 armor = 1
 block_rating = 0.12

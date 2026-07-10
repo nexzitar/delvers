@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://8uilxtjec0jv"]
+
+[ext_resource type="Script" uid="uid://bkw8ao784m43n" path="res://capture/guild_animator.gd" id="1"]
+
+[node name="GuildAnimator" type="Node3D" unique_id=1510447005]
+script = ExtResource("1")
+pose = "swing"
+speed = 0.55
+stroke_scale = 2.0
+delver_position = Vector3(0, 0.2, -0.1)
+shield_tilt = Vector3(32, 70, 60)
+grip_rotation = Vector3(-50, 0, -40)
+right_shoulder = Vector3(-10, 0, -20)
+right_elbow = Vector3(10, -20, -10)
+right_hand = Vector3(120, -40, 0)
+left_shoulder = Vector3(10, 10, -20)
+left_elbow = Vector3(-30, 20, -20)
+head = Vector3(-20, 0, 0)

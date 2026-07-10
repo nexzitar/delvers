@@ -2,13 +2,197 @@
 
 Notable changes per pull request. Newest first.
 
+## PR #13 — The generated armory *(open)*
+
+### Added
+- **Armor design language** (owner doctrine, spec:
+  2026-07-10-armor-design-language.md): the pipeline works, the
+  design doesn't — armor needs CONSTRUCTION (panels, thickness,
+  straps, layers, broken silhouettes), each material has a
+  shape-language not a color, and Delvers armor is explorer-built:
+  repaired, mismatched, asymmetric. Derive v2 will build
+  construction pieces from the body instead of inflated shells.
+- **Leather trousers prove the engine**: `{"garment": "pants"}` —
+  same grammar, different garment: thigh and calf panels, waistband,
+  knee pads with straps, a thigh pouch; the `Legs` body part hides
+  beneath. The delvers are fully dressed, head to toe, in compiled
+  clothing.
+- **THE GARMENT CONSTRUCTION ENGINE** (v5): garments are compiled
+  from a spec ({volume, collar, shoulder_layers, buckles, sleeves,
+  belt, hem_flaps}) into ASSEMBLED construction — face-partitioned
+  panels (front-left/front-right/back/yoke/sleeves, each with its
+  own thickness and bevel, sharing one drape so seams align),
+  layered shoulder flanges, a clasp ladder in rhythm, waist
+  compression with flare, asymmetric sleeves, and per-part culling.
+  Items can store the spec instead of the mesh: procedural loot
+  where every garment is genuinely unique. Iterations en route:
+  inflated shell → constructed vest → skinned jacket → sealed →
+  draped → assembled.
+- **Body-derived armor works end to end**: the first chest piece is
+  Garrick's own torso — spine-weighted faces duplicated in Blender,
+  inflated off the skin, solidified, exported, rest-aligned onto his
+  skeleton, and dyed leather by the recolor shader. Perfect fit by
+  construction; every future body revision regenerates its wardrobe
+  by re-running scripts. (Three bugs on the way: Blender's exporter
+  silently drops the importer's glTF_not_exported collection, a stray
+  icosphere artifact lives inside the Tripo body, and skin-textured
+  shells need luma-flattened dyeing.)
+- **Split-part hiding**: both delver GLBs carry separate
+  Body/Hair/Feet/Hands meshes (Blender surgery); helms hide hair,
+  boots hide feet, gauntlets hide hands.
+- **The batch**: eight more generated pieces in one session — shield
+  (wood and iron boss, replacing the procedural disc everywhere,
+  including the campfire lean), arming sword (replacing the
+  procedural blade), boots, greaves, bracers, gauntlets, a leather
+  jerkin (the leather chest silhouette), and a cloth robe (the cloth
+  silhouette) — all fitted, all recolorable. The guild portrait
+  (docs/screenshots/guild_portrait.png): Warden in plate, Vanguard
+  in chitin, Scout in oiled leather, Mystic in pale silk.
+- **Claude generates gear now**: the Tripo API pipeline is wired end
+  to end (SDK in a local venv, Blender addon + MCP bridge installed
+  for interactive work). First generated asset: **iron pauldrons** —
+  prompt → GLB → paired shoulder mounts (mirrored) → fitted, in
+  minutes. The Warden's Pauldrons wear them.
+
 ## PR #12 — Guild Engineering & the Sunken Workshop *(open)*
 
 ### Added
-- **The Engineer's Slate** (recovered knowledge, data-complete): turns
-  the Doctrine Editor into snap-together colored blocks — gold WHEN
-  blocks, blue target blocks, violet cast blocks — the same trees
-  underneath.
+- **The leather belt** (`leather_belt.glb`): the studded belt wears a
+  sculpted model on the waist bone. Design rule recorded: belts are
+  leather, whatever the rest of the set — a belt of plate is a
+  strange object.
+- **Armor types** (owner design: armor shapes HOW you fight, never
+  what you may wear): every armor piece is Plate, Leather, or Cloth.
+  Per piece worn — Plate: +6% threat, +8% stagger resistance (stuns
+  and gum shrug off sooner), −1.5% dodge, −3% speed. Leather: +1%
+  crit, +2% swing speed, +1.5% move. Cloth: +2 mana, 5% faster casts,
+  +1 spell power. A paladin in plate is a different caster, not a
+  worse one; plate on a healer is a build, not an error. Armor
+  Proficiency mastery (Plate Training I/II, Plate Master) and the
+  tier visual language (common→legendary silhouettes) are recorded
+  design, coming later.
+- **Gear recolor shader** (one sculpt, many armors): a palette-swap
+  shader classifies each texel of a gear model against its three
+  source materials (by chroma, ignoring baked shading) and remaps to
+  a primary/secondary/trim palette per gear id — Chitin Armor now
+  wears the chest sculpt in dark chitin with pale silk trim. Leather
+  and cloth silhouettes still need their own sculpts.
+- **Sculpted gear models arrive** (TripoAI): `starter_helm.glb` and
+  `starter_chest.glb` mount on the skeleton through a worn-model
+  registry keyed by slot — helm fitted with the face open, chest
+  wrapping the torso. Slots without a sculpted model keep their
+  procedural boxes; per-gear-id models (iron vs starter vs chitin)
+  are the natural next step of the same table.
+- **The Guild Animator saves** (`save_tuning` toggle acts as a
+  button): the sit values write to `resources/tuning/pose_tuning.json`
+  and the game reads that file — tune, save, done, no screenshots.
+  The knobs load from the file on start, sit knobs ARE the tuning
+  (single source of truth), and the owner's latest session ships as
+  the defaults.
+- **The Guild Animator** (`capture/guild_animator.tscn`, formerly the
+  pose tuner): any pose, scrub/play, live sword-grip fitting,
+  per-joint degree offsets — and now a **free camera**: left-drag
+  orbits, wheel zooms, middle-drag (or shift+drag) pans.
+- **The camp camera orbits**: right-drag circles the fire, the wheel
+  zooms — inspect the party from any angle; left-click hero picking
+  is untouched. The menu stays scripted.
+- **Camp scene polish round three**: the menu camera pans left so
+  seated delvers never hide behind the panel; the resting shield
+  leans against the log instead of standing on it; the lap-sword
+  angle improved; and `capture/pose_tuner.tscn` lets the owner tune
+  the sit pose live — run it, open the Remote scene tree, drag the
+  exported sliders, report the numbers.
+- **Crowd navigation** (playtest, the big one): paths are
+  crowd-aware — tiles held by other units cost extra, so attackers
+  **fan out around a queue** instead of forming one, and a unit
+  heading for a target behind a blocker **flanks instead of
+  bulldozing** (measured: six swarmers now land five in range where
+  they used to queue; a blocker is displaced 12px instead of shoved
+  across the field). Stall detection forces a fresh path when a unit
+  is walking but going nowhere.
+- **Pose corrections round two**: helmet turned around (the nose
+  guard was at the nape) and fitted; the head-lift sign flipped (he
+  was looking *more* down); the swing crest lowered and tilted
+  outward so the blade clears the head; the lap-sword lies flatter;
+  and at the campfire **the shield comes off the arm** and leans
+  beside him while he tends the blade.
+- **The delvers get dressed** (worn gear on imported models): every
+  worn slot mounts on the skeleton — helmet (fitted), pauldrons,
+  chest plate, gold-buckled belt, gauntlets, bracers, greaves, boots,
+  the bow in the archer's grip — reading the exact same opt keys the
+  procedural rigs dress with. The **cloak is a SpringTail**: it sways
+  with movement, exactly as promised.
+- **The campfire polish**: seated with a sword, the blade now rests
+  across the lap and the off hand works it in slow strokes — the
+  guild's quietest storytelling.
+- **Wren's hair moves** (`SpringTail`): a verlet spring chain hangs
+  from her head bone — the ponytail trails her movement, swings
+  through on stops, and settles under gravity, never glued to the
+  skull. Presentation-only physics (the sim never sees it), and the
+  same system will drive cloaks.
+- **Wren has a body** (`delver_female.glb`): her export came as a
+  bare rig, so the adapter grew an **animation donor** system — she
+  borrows the male's clips, retargeted onto her skeleton by bone name
+  (one animation set can drive the whole same-skeleton cast; future
+  models need no animation export at all). Companions carry their
+  bodies by name (Wren and Kessa are women), persisted in the save,
+  backfilled for pre-model saves.
+- **Pose corrections** (playtest): the sit folds the legs *forward*
+  (they were tucked behind, through the log), the sword rests
+  forward-and-up from the fist instead of hanging straight down, the
+  shield angles toward the line of advance, and every pose lifts the
+  chin — he no longer studies the ground.
+- **Model animation polish** (playtest): the idle scrubs only its
+  calm first stretch (the 15s capture had wandering feet), the walk
+  runs at stride pacing (the theater's radian phase was cycling the
+  clip seven times a second), and the wood-chop is retired from
+  combat — the one-handed swing is now **authored directly on the
+  skeleton** (probe-verified bone axes: windup overhead, cut to a
+  forward strike, contact on the theater's beat), the same
+  deterministic pose-function shape as the procedural rigs. The camp
+  went imported too: models reach the fire and **sit** via an
+  authored bone pose (hips folded, hands on knees, gentle sway).
+- **The first TripoAI delver walks** (`resources/models/delver_male.glb`):
+  the male delver model is live in battle — clips identified by
+  render-inspection and mapped explicitly (idle/walk/run/chop/defeat/
+  cast; Tripo strips names to NlaTrack_*), geometry-decal eyes placed
+  on the head bone via a marker-sweep render (the texture's ghost
+  eyes, answered), sword and shield gripped by the hand bones (the
+  same meshes the procedural rigs carry), scale and facing tuned to
+  the world. Procedural rigs remain for everyone else — the two cast
+  systems coexist per-actor.
+- **Imported-model landing zone** (for the TripoAI delvers): heroes
+  can carry a glTF `model_scene` on their template; the path travels
+  through the SPAWN event, and a new `AnimatedActor` wraps the
+  imported scene to speak the exact pose contract the procedural rigs
+  do — clips discovered by name (walk/attack/idle/death), driven by
+  deterministic scrubbing (replay-safe), missing clips borrowing
+  gracefully. No model set = procedural rig, unchanged. Drop a GLB
+  in, point a template at it, done.
+- **The Sunken Workshop** (dungeon three): the old guild's flooded
+  engine-halls, below the Nest — the Broodmother guards the map. Its
+  threat: constructs whose **Piston Strikes pierce armor entirely**
+  ("DO NOT BE WHERE IT LANDS"); its answer, found inside: the evasion
+  set (Oiled Leathers, Sprung Boots, Engineer's Goggles — dodge slips
+  a piston whole); its lesson: don't trade blows with machines.
+  Scrap Sentinels, Oil Slicks (Gum Strike slows your swings), Cog
+  Throwers, Rust Mite swarms, and **The Foreman**, who walks the
+  assembly floor still and teaches the Engineer's Slate, then
+  Battlefield Doctrine II and III. Brass-and-oil theater theme, four
+  workshop-log fragments, three new materials and recipes.
+- **The Engineer's Slate** IS the Doctrine Editor now (owner call:
+  capacity before the editor was backwards): no custom doctrine at
+  all until the Foreman teaches the Slate, which opens the editor as
+  snap-together colored blocks — gold WHEN, blue target, violet cast,
+  green move — holding four marks. Battlefield Doctrine II (8 nodes)
+  and III (16) follow from the same teacher, in order.
+- **Movement joins the doctrine engine**: trees gained a move channel
+  ("A melee foe closes in" → "Move: Keep Distance"), the sim gained
+  real kiting (fall back to open ground, shoot from the new range —
+  classic stutter-kite), and the **Skirmisher's Step** doctrine
+  teaches it as a built-in tactic — recovered from the Cog Thrower,
+  who has always fought that way. *"Loose, step, loose. The ground
+  you give away is ammunition."*
 - **The Engineer's Annotations** (recovered knowledge, data-complete):
   adds the **View Code** button — the doctrine shown as the Python it
   always was ("The blocks were always words."). Its teacher waits in

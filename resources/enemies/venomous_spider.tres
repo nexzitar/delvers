@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://kq5iixkf0ynw"]
 
-[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
-[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Script" uid="uid://n275q522x8hb" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_slash"]
 [ext_resource type="Resource" path="res://resources/skills/venom_bite.tres" id="4_venom"]
 
 [resource]
@@ -19,5 +19,4 @@ recipe_loot = Array[String](["leather_hood", "iron_shod_boots"])
 affix_loot = Array[String](["virulent"])
 doctrine_loot = Array[String](["spread"])
 loot_ids = Array[String](["fast_dagger"])
-preferred_row = 0
 dodge_rating = 0.15

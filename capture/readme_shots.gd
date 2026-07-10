@@ -127,6 +127,18 @@ func _run():
 	await get_tree().create_timer(9.0).timeout
 	await _snap("battle_nest")
 
+	# The Workshop, pistons falling.
+	nest.queue_free()
+	await _settle()
+	PlayerRoster.unlocked_dungeons = ["darkwood", "spider_nest", "sunken_workshop"]
+	PlayerRoster.start_delve("sunken_workshop", 1)
+	PlayerRoster.delve_room = 5
+	var workshop = load("res://scenes/theater/battle_theater_3d.tscn").instantiate()
+	add_child(workshop)
+	get_tree().current_scene = workshop
+	await get_tree().create_timer(8.0).timeout
+	await _snap("battle_workshop")
+
 	print("README SHOTS DONE")
 	get_tree().quit()
 

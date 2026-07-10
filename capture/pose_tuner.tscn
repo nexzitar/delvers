@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bv010lk62nnnq"]
+
+[ext_resource type="Script" path="res://capture/pose_tuner.gd" id="1"]
+
+[node name="PoseTuner" type="Node3D" unique_id=916326619]
+script = ExtResource("1")

@@ -1,0 +1,44 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://bjcejfepw7pih"
+path.s3tc="res://.godot/imported/gear_greave_NormalGL_0de91fd6-26b3-4c9d-a471-e4b7e348b4c5.jpg-a5f939dbad145cab52f58c4b4c518f3b.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "403774393fdda8d80c7bf550f2ceb6ae"
+}
+
+[deps]
+
+source_file="res://resources/models/gear_greave_NormalGL_0de91fd6-26b3-4c9d-a471-e4b7e348b4c5.jpg"
+dest_files=["res://.godot/imported/gear_greave_NormalGL_0de91fd6-26b3-4c9d-a471-e4b7e348b4c5.jpg-a5f939dbad145cab52f58c4b4c518f3b.s3tc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/normal_map=1
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=1
+roughness/src_normal="res://resources/models/gear_greave_NormalGL_0de91fd6-26b3-4c9d-a471-e4b7e348b4c5.jpg"
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

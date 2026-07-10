@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://d05ku44xhs5p3"]
 
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
-[ext_resource type="Script" path="res://scripts/combat/skills/heal.gd" id="2_behavior"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_heal.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" uid="uid://3wkltmmq7eqx" path="res://scripts/combat/skills/heal.gd" id="2_behavior"]
+[ext_resource type="Texture2D" uid="uid://dxvm3m6cr845d" path="res://art/skills/skill_heal.png" id="3_icon"]
 
 [resource]
 resource_name = "Heal"
@@ -12,9 +12,8 @@ skill_name = "Heal"
 icon = ExtResource("3_icon")
 behavior_script = ExtResource("2_behavior")
 skill_type = 2
-range = 320.0
-cooldown = 0.0
-mana_cost = 4
 cast_type = 1
+range = 320.0
+mana_cost = 4
 base_min_damage = 8
 base_max_damage = 12

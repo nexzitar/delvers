@@ -70,7 +70,11 @@ func has_tool(tool_id: String) -> bool:
 	return known_engineering.has(tool_id)
 
 func doctrine_capacity() -> int:
-	var nodes := 0
+	# The Slate is the editor itself and holds four marks; the
+	# Battlefield Doctrine tomes extend what it can carry.
+	if not has_tool("engineers_slate"):
+		return 0
+	var nodes := 4
 	for entry_id in known_engineering:
 		if Doctrines.CAPACITY.has(entry_id):
 			nodes = maxi(nodes, int(Doctrines.CAPACITY[entry_id].nodes))
@@ -213,6 +217,8 @@ func recruit_hero(kit_ids: Array):
 	for candidate in GuildUnlocks.COMPANION_NAMES:
 		if not used.has(candidate):
 			hero.hero_name = candidate
+			if GuildUnlocks.COMPANION_MODELS.has(candidate):
+				hero.model_scene = load(GuildUnlocks.COMPANION_MODELS[candidate])
 			break
 	hero.bonus_skills = [null, null, null, null, null]
 	var kit := []

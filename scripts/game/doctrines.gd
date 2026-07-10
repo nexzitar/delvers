@@ -30,16 +30,16 @@ const ALL := {
 		"tome": "Doctrine of the Shield-Line",
 		"lore": "Strike the one who is not looking at you, until every one of them is.",
 	},
+	"skirmish": {
+		"name": "Skirmisher's Step",
+		"tome": "Doctrine of the Longer Road",
+		"lore": "Loose, step, loose. The ground you give away is ammunition.",
+	},
 }
 
 ## Doctrine complexity: how many nodes a custom battlefield doctrine
 ## may hold. Recovered knowledge, like everything else.
 const CAPACITY := {
-	"doctrine_capacity_1": {
-		"nodes": 4,
-		"tome": "Battlefield Doctrine I",
-		"lore": "Four marks on the field slate. The old guild started every recruit here.",
-	},
 	"doctrine_capacity_2": {
 		"nodes": 8,
 		"tome": "Battlefield Doctrine II",

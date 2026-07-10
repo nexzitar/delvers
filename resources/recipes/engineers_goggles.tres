@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "engineers_goggles"
+recipe_name = "Engineer's Goggles"
+tome_name = "Sight-Glass Schematics"
+tome_lore = "See the swing before it starts. The lenses were ground for exactly that."
+result_gear_id = "engineers_goggles"
+result_item_level = 24
+result_quality = 1
+costs = {"brass_fitting": 3, "engine_oil": 2, "cog_wheel": 1}
+min_tier = 3

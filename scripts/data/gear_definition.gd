@@ -36,6 +36,10 @@ enum HeadStyle {
 @export var gear_id: String
 @export var gear_name: String
 @export var slot: Slot
+## Armor identity: "plate", "leather", "cloth", or "" (weapons etc).
+## Types trade in HOW you fight - plate holds and threatens, leather
+## moves and crits, cloth casts - never in what you may wear.
+@export var armor_type := ""
 @export var weapon_type: WeaponType = WeaponType.NONE
 @export var quality: ItemQuality.Tier = ItemQuality.Tier.COMMON
 ## Drop level: stats scale from the authored (level 1) values via

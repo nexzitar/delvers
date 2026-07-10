@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="Resource" path="res://resources/skills/piston_strike.tres" id="9_piston"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "scrap_sentinel"
+enemy_name = "Scrap Sentinel"
+template_id = "scrap_sentinel"
+base_health = 85
+base_mana = 0
+base_attack = 10
+base_attack_interval = 3.8
+move_speed = 62
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash"), ExtResource("9_piston")])
+material_loot = Array[String](["brass_fitting", "iron_scrap"])
+material_drop_count = 1
+recipe_loot = Array[String](["oiled_leathers", "sprung_boots"])
+recipe_drop_chance = 0.05
+doctrine_loot = Array[String](["guard"])
+armor = 5

@@ -38,6 +38,8 @@ var path_index: int = 0
 var path_goal: Vector2i = Vector2i(-9999, -9999)
 ## Failed searches retry after a short delay instead of caching forever.
 var path_retry_at: float = 0.0
+var stall_check_at: float = 0.0
+var stall_anchor := Vector2.ZERO
 var moving: bool = false
 var last_logged_facing: Vector2 = Vector2.RIGHT
 var target_id: int = -1
@@ -49,6 +51,12 @@ var retarget_at: float = 0.0
 ## Custom behaviour tree (see BehaviorTree). Empty = the tactic's
 ## pre-authored tree. This is what Scratch and Python will write.
 var behavior_tree: Array = []
+## Imported model scene path ("" = procedural rig in the theater).
+var model_path := ""
+## Armor-type identity trades (set from the worn loadout).
+var threat_mult := 1.0
+var stagger_resist := 0.0
+var cast_speed_mult := 1.0
 ## Entity that summoned this one (Brood Tenders cap their brood).
 var spawned_by: int = -1
 var in_combat: bool = false
@@ -172,6 +180,13 @@ func update(delta, combat_state):
 	if _try_special_skills(combat_state):
 		return
 
+	# Movement doctrine: a skirmisher falls back while melee closes,
+	# and shoots from the new ground (classic stutter-kite).
+	if BehaviorTree.move_directive(combat_state, self) == "kite" \
+			and combat_state.tick_kite(self, delta):
+		attack_timer -= delta * attack_speed_multiplier()
+		return
+
 	# Attacks fire anywhere inside range, but melee keeps closing to
 	# comfortable striking distance before settling.
 	var in_range = combat_state.in_attack_range(self, target)
@@ -241,7 +256,7 @@ func start_behavior_cast(combat_state, skill, duration: float):
 	is_casting = true
 	casting_skill = skill
 	casting_behavior = skill.behavior_script
-	cast_remaining = duration
+	cast_remaining = duration * cast_speed_mult
 	combat_state.stop_movement(self)
 	combat_state.combat_log.add_event(CombatEvent.create_cast_start(
 		entity_id, target_id, combat_state.combat_time, skill

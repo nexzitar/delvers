@@ -44,6 +44,8 @@ var team: int
 
 var gear := []
 var equipped := {}
+## Imported model scene path ("" = procedural rig).
+var model_path := ""
 var off_hand := false
 ## Damage-over-time tick: the theater shows the number but plays no
 ## swing or hit sound for it.
@@ -80,6 +82,7 @@ static func create_spawn(combat_entity):
 	event.max_mana = combat_entity.template.base_mana
 	event.gear = combat_entity.gear
 	event.equipped = combat_entity.equipped
+	event.model_path = combat_entity.model_path
 
 	event.position = combat_entity.position
 	event.facing = combat_entity.facing
