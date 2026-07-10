@@ -5,6 +5,18 @@ Notable changes per pull request. Newest first.
 ## PR #13 — The generated armory *(open)*
 
 ### Added
+- **Body-derived armor works end to end**: the first chest piece is
+  Garrick's own torso — spine-weighted faces duplicated in Blender,
+  inflated off the skin, solidified, exported, rest-aligned onto his
+  skeleton, and dyed leather by the recolor shader. Perfect fit by
+  construction; every future body revision regenerates its wardrobe
+  by re-running scripts. (Three bugs on the way: Blender's exporter
+  silently drops the importer's glTF_not_exported collection, a stray
+  icosphere artifact lives inside the Tripo body, and skin-textured
+  shells need luma-flattened dyeing.)
+- **Split-part hiding**: both delver GLBs carry separate
+  Body/Hair/Feet/Hands meshes (Blender surgery); helms hide hair,
+  boots hide feet, gauntlets hide hands.
 - **The batch**: eight more generated pieces in one session — shield
   (wood and iron boss, replacing the procedural disc everywhere,
   including the campfire lean), arming sword (replacing the

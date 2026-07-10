@@ -1,7 +1,7 @@
 extends Node
 func _ready():
-	for who in ["male", "female"]:
-		var model = load("res://resources/models/delver_%s.glb" % who).instantiate()
+	for who in ["male"]:
+		var model = load("res://resources/models/derived_chest.glb").instantiate()
 		add_child(model)
 		var names := []
 		var player: AnimationPlayer = null
