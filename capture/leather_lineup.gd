@@ -53,8 +53,7 @@ func _ready():
 		actor.position = Vector3(-1.5 + i * 1.0, 0, 0)
 		actor.rotation.y = 0.15 - i * 0.1
 		add_child(actor)
-		for piece_id in ["derived_leathers",
-				"derived_set_sleeve_l", "derived_set_sleeve_r"]:
+		for piece_id in ["leather_jacket"]:
 			actor._mount_worn_model(piece_id)
 		actor._mount_worn_model("iron_shod_boots")
 		# Re-dye everything in this delver's scheme.
@@ -63,7 +62,10 @@ func _ready():
 				continue
 			for piece in actor.worn_mounts[fit_key]:
 				actor._recolor(piece, scheme)
-		actor.pose_idle(1.0 + i * 1.7)
+		if i == 2:
+			actor.pose_swing(0.5)
+		else:
+			actor.pose_idle(1.0 + i * 1.7)
 	await get_tree().create_timer(0.5).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(

@@ -66,6 +66,8 @@ const GEAR_FITS := {
 	"derived_sleeve_r": {"path": "res://resources/models/derived_sleeve_r.glb",
 		"bone": "R_Upperarm", "position": Vector3.ZERO,
 		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
+	"jacket": {"path": "res://resources/models/derived_jacket.glb",
+		"skinned": true},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
 		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
 		"rotation": Vector3(0, 0, 0), "scale": 0.4},
@@ -108,6 +110,9 @@ const WORN_MODELS := {
 		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
 		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
 	"derived_set_sleeve_r": {"fit": "derived_sleeve_r", "palette": {
+		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
+		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
+	"leather_jacket": {"fit": "jacket", "palette": {
 		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
 		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
 	"derived_leathers": {"fit": "derived_chest", "palette": {
@@ -435,6 +440,29 @@ func _mount_worn_model(gear_id: String) -> bool:
 	var fit = fit_for(entry.fit)
 	if not ResourceLoader.exists(fit.path):
 		return false
+	# Skinned garments wear the body's own skeleton: reparent their
+	# meshes under it and they deform with him - sleeves follow arms.
+	if fit.get("skinned", false):
+		var garment = load(fit.path).instantiate()
+		var found := []
+		var stack := [garment]
+		while not stack.is_empty():
+			var node = stack.pop_back()
+			if node is MeshInstance3D:
+				found.append(node)
+			stack.append_array(node.get_children())
+		for mesh_inst in found:
+			mesh_inst.get_parent().remove_child(mesh_inst)
+			_skeleton.add_child(mesh_inst)
+			mesh_inst.skeleton = NodePath("..")
+			if not worn_mounts.has(entry.fit):
+				worn_mounts[entry.fit] = []
+			worn_mounts[entry.fit].append(mesh_inst)
+			if entry.has("palette"):
+				_recolor(mesh_inst, entry.palette)
+		garment.queue_free()
+		return not found.is_empty()
+
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
 	var saved_pieces: Array = tuning.get("fits", {}).get(entry.fit, {}).get("pieces", [])
 	for i in bones.size():
