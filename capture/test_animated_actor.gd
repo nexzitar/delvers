@@ -152,5 +152,29 @@ func _run_all():
 	assert(absf(tip.x - tail.global_position.x) < 0.2, "the swing settles")
 	tail.free()
 
+	# The Fitting Room round trip: a saved fit survives a rebuild
+	# exactly - position, rotation, scale, even on the sword (whose
+	# grip every pose restores).
+	var room_config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
+	room_config.merge({"sword": true, "main_gear": "starter_sword",
+		"helmet": true, "helmet_gear": "starter_helmet"}, true)
+	var fitted = AnimatedActor.new(load("res://resources/models/delver_male.glb"), room_config)
+	add_child(fitted)
+	fitted.tuning["fits"] = {
+		"sword_m": {"position": [0.01, 0.07, -0.02], "rotation": [-70, 12, -5], "scale": 0.44},
+		"helm": {"position": [0, 0.09, -0.02], "rotation": [3, 180, 0], "scale": 0.26},
+	}
+	# Re-dress from tuning (what rebuild does) and pose (what reverted the sword).
+	var fresh = AnimatedActor.new(load("res://resources/models/delver_male.glb"), room_config)
+	fresh.tuning = fitted.tuning.duplicate(true)
+	add_child(fresh)
+	fresh.worn_mounts.clear()
+	fresh._mount_worn_model("starter_sword")
+	fresh.pose_idle(0.0)
+	var sword_piece = fresh.worn_mounts["sword_m"][0]
+	assert(sword_piece.rotation_degrees.is_equal_approx(Vector3(-70, 12, -5)),
+		"the sword keeps the owner's grip through a pose")
+	assert(absf(sword_piece.scale.x - 0.44) < 0.001, "the scale holds")
+
 	print("PASS animated actor")
 	get_tree().quit()

@@ -393,10 +393,16 @@ func _mount_worn_model(gear_id: String) -> bool:
 		var piece = load(fit.path).instantiate()
 		piece.position = fit.position
 		piece.rotation_degrees = fit.rotation
-		if i == 1:
-			# The mirrored side wears it turned around.
-			piece.rotation_degrees.y += 180
 		piece.scale = Vector3.ONE * fit.scale
+		if i == 1:
+			# The mirrored side is a true reflection: a right glove
+			# becomes a left one. Culling flips with the winding, so
+			# the mirrored piece renders both faces.
+			piece.scale.x = -piece.scale.x
+			piece.rotation_degrees.y = -piece.rotation_degrees.y
+			piece.rotation_degrees.z = -piece.rotation_degrees.z
+			piece.position.x = -piece.position.x
+			_disable_cull(piece)
 		mount.add_child(piece)
 		if not worn_mounts.has(entry.fit):
 			worn_mounts[entry.fit] = []
@@ -417,6 +423,18 @@ func fit_for(fit_key: String) -> Dictionary:
 	if saved.has("scale"):
 		fit.scale = float(saved.scale)
 	return fit
+
+func _disable_cull(piece: Node):
+	var stack = [piece]
+	while not stack.is_empty():
+		var node = stack.pop_back()
+		if node is MeshInstance3D:
+			var base = node.get_active_material(0)
+			if base is BaseMaterial3D:
+				var mat = base.duplicate()
+				mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+				node.material_override = mat
+		stack.append_array(node.get_children())
 
 ## Swap the sculpt's palette: same model, different armor.
 func _recolor(piece: Node, palette: Dictionary):
@@ -482,8 +500,10 @@ func _pose(role: String, fraction: float, looped := false):
 	_model.position = Vector3.ZERO
 	_set_shield_grounded(false)
 	if _sword_node:
-		_sword_node.position = Vector3(0.0, 0.05, 0.0)
-		_sword_node.rotation_degrees = Vector3(-115, 0, 0)
+		var grip = fit_for("sword_m")
+		_sword_node.position = grip.position
+		_sword_node.rotation_degrees = grip.rotation
+		_sword_node.scale = Vector3.ONE * grip.scale
 	# The captures carry the chin low; lift the gaze off the ground.
 	_rotate_bone("Head", Vector3.RIGHT, 0.25)
 
