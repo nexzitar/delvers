@@ -93,3 +93,43 @@ every single one fits perfectly.** Uniqueness by construction rules,
 not by generation lottery — this is the item-diversity engine for
 the whole loot game (rarity tiers = rule budgets: more panels, more
 hardware, louder silhouette).
+
+## v5 — THE GARMENT CONSTRUCTION ENGINE (synthesis, 2026-07-10)
+
+Stop thinking "generate a jacket"; think **"generate wearable
+construction."** The reference's gold standard: every visible
+feature answers "how was this garment built?"
+
+### The compiler framing
+Input is a garment SPEC, not a request:
+    Leather Jacket { volume: 0.8, panels: 8, collar: tall,
+      shoulders: layered=4, buckles: 9, sleeves: rolled_left,
+      bracers: plated, edge_wear: medium }
+Output: rigged mesh, weights, materials, hide lists, metadata.
+**Procedural loot follows**: items STORE the spec, not the mesh —
+every leather chest actually unique, compiled on demand.
+
+### What v5 derives (vs v4's inflated shell + seams)
+TEN independent construction pieces, each with own thickness, bevel,
+edge wear, material ID, color region:
+  Collar / Front-Left / Front-Right / Back / Shoulder-Yoke-L /
+  Shoulder-Yoke-R / Sleeve-L / Sleeve-R / Waist-Belt / Hardware.
+
+### Reference lessons Claude under-weighted (per critique)
+- Hardware as STRUCTURE: 15-20 clasps in a rhythm, not 6.
+- Shoulders = layered leather FLANGES (overlapping scales), widening
+  the silhouette without reading as plate.
+- Bracers are SEPARATE objects (own thickness/material), not sleeves.
+- Waist COMPRESSION: wider above the belt, flared below.
+- Exaggerate for stylization: seams deeper than reality, edges
+  thicker, panels prouder — readable at thirty meters.
+- Asymmetry menu for generation: rolled sleeve L/R, shoulder patch
+  L/R, knife sheath, extra buckle, torn hem, repaired elbow.
+
+### The grammar scales
+Same body-derivation pipeline, different construction grammar per
+material: leather = stitched/folded/strapped/layered; plate =
+overlapping plates/rivets/hinges; cloth = folds/hems/embroidery/
+hanging fabric. Once it compiles jackets it compiles robes, cloaks,
+gambesons, brigandines, tabards — a foundational content engine,
+not an asset pipeline.
