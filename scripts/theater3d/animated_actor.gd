@@ -67,7 +67,7 @@ const GEAR_FITS := {
 		"bone": "R_Upperarm", "position": Vector3.ZERO,
 		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"jacket": {"path": "res://resources/models/derived_jacket.glb",
-		"skinned": true, "hides": "Torso"},
+		"skinned": true, "hides": ["Torso", "RForearm"]},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
 		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
 		"rotation": Vector3(0, 0, 0), "scale": 0.4},
@@ -183,6 +183,14 @@ func _ready():
 		_align_world_rest(fit_key)
 	_world_rest_pending.clear()
 
+func _hide_covered(fit: Dictionary):
+	if not fit.has("hides"):
+		return
+	var names = fit.hides if fit.hides is Array else [fit.hides]
+	for part_name in names:
+		if _body_parts.has(part_name):
+			_body_parts[part_name].visible = false
+
 func _align_world_rest(fit_key: String):
 	for piece in worn_mounts.get(fit_key, []):
 		var mount = piece.get_parent()
@@ -206,7 +214,7 @@ func _init(scene: PackedScene, opts := {}):
 		for i in _skeleton.get_bone_count():
 			_bones[_skeleton.get_bone_name(i)] = i
 		for child in _skeleton.get_children():
-			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands", "Torso"]:
+			if child is MeshInstance3D and child.name in ["Hair", "Feet", "Hands", "Torso", "LForearm", "RForearm"]:
 				_body_parts[String(child.name)] = child
 	# Animation donor: a bare rigged export borrows a sibling's clips -
 	# same skeleton, retargeted by bone name. One animation set can
@@ -461,8 +469,7 @@ func _mount_worn_model(gear_id: String) -> bool:
 			if entry.has("palette"):
 				_recolor(mesh_inst, entry.palette)
 		garment.queue_free()
-		if fit.has("hides") and _body_parts.has(fit.hides):
-			_body_parts[fit.hides].visible = false
+		_hide_covered(fit)
 		return not found.is_empty()
 
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
@@ -495,8 +502,7 @@ func _mount_worn_model(gear_id: String) -> bool:
 		worn_mounts[entry.fit].append(piece)
 		if entry.has("palette"):
 			_recolor(piece, entry.palette)
-	if fit.has("hides") and _body_parts.has(fit.hides):
-		_body_parts[fit.hides].visible = false
+	_hide_covered(fit)
 	if fit.get("world_rest", false):
 		if is_inside_tree():
 			_align_world_rest(entry.fit)
