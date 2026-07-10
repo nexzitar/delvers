@@ -576,22 +576,45 @@ func _recolor(piece: Node, palette: Dictionary):
 	var stack = [piece]
 	while not stack.is_empty():
 		var node = stack.pop_back()
-		if node is MeshInstance3D:
-			var base = node.get_active_material(0)
-			var mat: ShaderMaterial
-			if base is ShaderMaterial:
-				mat = base
-			elif base is StandardMaterial3D and base.albedo_texture:
-				mat = ShaderMaterial.new()
-				mat.shader = load(RECOLOR_SHADER)
-				mat.set_shader_parameter("base_tex", base.albedo_texture)
-				node.material_override = mat
-			if mat:
-				mat.set_shader_parameter("col_primary", palette.primary)
-				mat.set_shader_parameter("col_secondary", palette.secondary)
-				mat.set_shader_parameter("col_trim", palette.trim)
-				mat.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
+		if node is MeshInstance3D and node.mesh:
+			for si in node.mesh.get_surface_count():
+				_recolor_surface(node, si, palette)
 		stack.append_array(node.get_children())
+
+## Per-surface dyeing. Engine-compiled garments carry solid two-tone
+## materials (GarmentPrimary/GarmentSecondary) tinted directly - no
+## texture, no classification noise. Textured sculpts keep the
+## chroma-classifying recolor shader. Hardware (straps, clasps) keeps
+## its leather and steel.
+func _recolor_surface(node: MeshInstance3D, si: int, palette: Dictionary):
+	var base = node.get_surface_override_material(si)
+	if base == null:
+		base = node.material_override
+	if base == null:
+		base = node.mesh.surface_get_material(si)
+	if base is ShaderMaterial:
+		base.set_shader_parameter("col_primary", palette.primary)
+		base.set_shader_parameter("col_secondary", palette.secondary)
+		base.set_shader_parameter("col_trim", palette.trim)
+		base.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
+		return
+	if not (base is StandardMaterial3D):
+		return
+	var mat_name := String(base.resource_name)
+	if mat_name.begins_with("Garment"):
+		var tinted: StandardMaterial3D = base.duplicate()
+		tinted.albedo_color = palette.secondary \
+			if mat_name.contains("Secondary") else palette.primary
+		node.set_surface_override_material(si, tinted)
+	elif base.albedo_texture:
+		var mat := ShaderMaterial.new()
+		mat.shader = load(RECOLOR_SHADER)
+		mat.set_shader_parameter("base_tex", base.albedo_texture)
+		mat.set_shader_parameter("col_primary", palette.primary)
+		mat.set_shader_parameter("col_secondary", palette.secondary)
+		mat.set_shader_parameter("col_trim", palette.trim)
+		mat.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
+		node.set_surface_override_material(si, mat)
 
 static func _vec(arr) -> Vector3:
 	return Vector3(arr[0], arr[1], arr[2]) if arr is Array and arr.size() == 3 else Vector3.ZERO
