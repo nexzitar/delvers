@@ -133,3 +133,37 @@ overlapping plates/rivets/hinges; cloth = folds/hems/embroidery/
 hanging fabric. Once it compiles jackets it compiles robes, cloaks,
 gambesons, brigandines, tabards — a foundational content engine,
 not an asset pipeline.
+
+## The capstone synthesis (2026-07-10, end of session)
+
+### The spec is the item — as LOOT ARCHITECTURE
+Items store construction specs, not meshes:
+  material, construction{panels, yokes, collar, belt},
+  hardware{buckles, straps, rivets}, wear{scratches, repairs, dirt},
+  style{rolled_sleeve, asymmetry}, palette{primary, trim}.
+
+### Construction knowledge is the crafting economy
+This EXTENDS the founding pillar (monsters drop resources and
+knowledge) into geometry:
+- Salvaging a coat yields COMPONENTS: brass buckles ×6, a shoulder
+  pattern, a tailored collar, reinforced stitching.
+- Crafting inherits construction across items: the new Ranger's Coat
+  takes this one's collar, that one's buckles, a third's shoulders.
+- Elite enemies drop **Master Tailor Patterns** ("Layered Shoulder
+  Construction") — permanent construction knowledge, usable in every
+  later garment. Far more memorable than a stat stick.
+
+### The practicality rule (never violate)
+"Can this still generate 10,000 items quickly?" Blender per-drop is
+too slow. Architecture:
+1. OFFLINE (Blender, the engine): generate a LIBRARY of modular
+   pieces — panels, collars, sleeves, yokes, flanges, hardware.
+2. RUNTIME (Godot): assemble + recolor pre-generated modules
+   instantly per spec. Near-full variety, zero per-drop cost.
+
+### The principle, named
+**Construction first, appearance second.** Once construction is
+believable, style/color/rarity/material build on top. The
+distinctive claim: "every piece of equipment is procedurally
+constructed from wearable components that actually fit the character
+it was made for."
