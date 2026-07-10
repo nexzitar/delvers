@@ -86,6 +86,18 @@ const WORN_MODELS := {
 	"leather_trousers": {"fit": "pants", "palette": {
 		"primary": Color(0.27, 0.19, 0.12), "secondary": Color(0.2, 0.14, 0.09),
 		"trim": Color(0.36, 0.28, 0.18), "flatten": 0.9}},
+	"starter_trousers": {"fit": "pants", "palette": {
+		"primary": Color(0.35, 0.28, 0.19), "secondary": Color(0.28, 0.22, 0.15),
+		"trim": Color(0.4, 0.33, 0.24), "flatten": 0.9}},
+	"starter_boots": {"fit": "boot", "palette": {
+		"primary": Color(0.3, 0.22, 0.14), "secondary": Color(0.38, 0.34, 0.28),
+		"trim": Color(0.42, 0.33, 0.22), "flatten": 0.9}},
+	"starter_gloves": {"fit": "gauntlet", "palette": {
+		"primary": Color(0.34, 0.26, 0.17), "secondary": Color(0.27, 0.2, 0.13),
+		"trim": Color(0.42, 0.34, 0.23), "flatten": 0.9}},
+	"starter_belt": {"fit": "belt", "palette": {
+		"primary": Color(0.3, 0.22, 0.14), "secondary": Color(0.24, 0.18, 0.11),
+		"trim": Color(0.45, 0.38, 0.26), "flatten": 0.9}},
 	"starter_shield": {"fit": "shield_m"},
 	"chitin_shield": {"fit": "shield_m", "palette": {
 		"primary": Color(0.3, 0.22, 0.13), "secondary": Color(0.16, 0.11, 0.07),

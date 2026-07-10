@@ -5,10 +5,13 @@ extends Node3D
 ## two dye variants showing the recolor lever on the same meshes.
 
 const OUTFITS = [
-	{"chest": "starter_armor"},
-	{"chest": "oiled_leathers"},
-	{"chest": "starter_armor", "dye": {"name": "forest", "primary": Color(0.2, 0.3, 0.16), "secondary": Color(0.12, 0.18, 0.1), "trim": Color(0.5, 0.45, 0.28), "flatten": 0.9}},
-	{"chest": "oiled_leathers", "dye": {"name": "oxblood", "primary": Color(0.36, 0.14, 0.12), "secondary": Color(0.2, 0.09, 0.08), "trim": Color(0.6, 0.5, 0.34), "flatten": 0.9}},
+	{"pieces": ["starter_armor", "starter_trousers", "starter_boots",
+		"starter_gloves", "starter_belt"]},
+	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"]},
+	{"pieces": ["starter_armor", "leather_trousers", "iron_shod_boots"],
+		"dye": {"name": "forest", "primary": Color(0.2, 0.3, 0.16), "secondary": Color(0.12, 0.18, 0.1), "trim": Color(0.5, 0.45, 0.28), "flatten": 0.9}},
+	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"],
+		"dye": {"name": "oxblood", "primary": Color(0.36, 0.14, 0.12), "secondary": Color(0.2, 0.09, 0.08), "trim": Color(0.6, 0.5, 0.34), "flatten": 0.9}},
 ]
 const GARMENT_FITS = ["jacket", "jacket_plain", "pants"]
 
@@ -55,7 +58,7 @@ func _ready():
 		actor.position = Vector3(-1.5 + i * 1.0, 0, 0)
 		actor.rotation.y = 0.15 - i * 0.1
 		add_child(actor)
-		for piece_id in [outfit.chest, "leather_trousers", "iron_shod_boots"]:
+		for piece_id in outfit.pieces:
 			actor._mount_worn_model(piece_id)
 		# Dye variants: re-dye the compiled garments over their item palette.
 		if outfit.has("dye"):

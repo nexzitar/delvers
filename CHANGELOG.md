@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added
+- **The full basic starter set**: Starter Trousers, Boots, Gloves and
+  Belt — zero-stat leather basics dropped by Darkwood normals, so a
+  fresh delver can finish dressing without power creep. Delvers still
+  BEGIN without trousers; the trousers' flavor line explains the
+  guild's first provision ("ever since the founder was recovered from
+  a hedge maze wearing nothing at all") — a nod to a certain
+  outworlder.
+- **Gear flavor lines**: GearDefinition gains a `flavor` field shown
+  at the foot of the loadout tooltip — a lore channel on the item
+  itself.
 - **Real items wear the engine's garments**: Starter Armor is a newly
   compiled plain jacket (low volume, short collar, five clasps, no
   belt — humble through CONSTRUCTION, not color), Oiled Leathers is

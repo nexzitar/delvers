@@ -82,11 +82,12 @@ the item.**
 
 ![The leather outfit](docs/screenshots/leather_outfit_lineup.png)
 
-*Real items, compiled: Starter Armor (a plain jacket — humble through
-construction, not color), Oiled Leathers (the clasp-ladder jacket),
-and craftable Leather Trousers with knee pads and a thigh pouch. The
-right two delvers wear the same meshes re-dyed — the recolor lever on
-identical construction.*
+*Real items, compiled. Left: a day-one delver in the full zero-stat
+starter set (plain jacket, trousers, boots, gloves, belt). Then Oiled
+Leathers with crafted Leather Trousers, and the same meshes re-dyed —
+the recolor lever on identical construction. Fresh recruits still
+arrive without trousers; the guild has issued them ever since the
+founder was recovered from a hedge maze wearing nothing at all.*
 
 ## Features
 

@@ -48,6 +48,9 @@ enum HeadStyle {
 ## Applied enchantment (AffixDefinition id), baked in at craft time.
 @export var affix_id: String = ""
 
+## Flavor line shown at the foot of the tooltip. Lore, not stats.
+@export_multiline var flavor := ""
+
 @export_group("Visuals")
 ## Sprite drawn on the character (paper-doll layer).
 @export var texture: Texture2D
