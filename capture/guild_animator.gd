@@ -10,6 +10,11 @@ extends Node3D
 ## resources/tuning/pose_tuning.json - the game reads that file, so
 ## the camp updates on its next load. No screenshots needed.
 ##
+## GEAR FITTER: the delver wears the full sculpted kit. Every piece
+## has position/rotation/scale knobs under "Fit: ..." groups, applied
+## live. Adjust until it sits right, toggle save_tuning, and the game
+## wears your fit. wear_robe swaps the chest for the cloth robe.
+##
 ## - pose: which animation plays (authored poses and baked clips both)
 ## - scrub + playing: freeze at a moment or let it run
 ## - grip: seat the sword in the fist (position in hand-space, meters)
@@ -24,9 +29,14 @@ extends Node3D
 			_save()
 
 @export_enum("sit", "swing", "idle", "walk", "shoot", "cast", "spin", "death") \
-	var pose := "sit":
+	var pose := "idle":
 	set(value):
 		pose = value
+@export var wear_robe := false:
+	set(value):
+		wear_robe = value
+		if garrick:
+			_rebuild_actor()
 @export var playing := true
 ## Freeze-frame position when playing is OFF (works for every pose).
 @export_range(0.0, 1.0, 0.01) var scrub := 0.5
@@ -45,6 +55,55 @@ extends Node3D
 @export var grip_position := Vector3(0.0, 0.05, 0.0)
 @export var grip_rotation := Vector3(-115, 0, 0)
 
+@export_group("Fit: helm")
+@export var helm_pos := Vector3.ZERO
+@export var helm_rot := Vector3.ZERO
+@export var helm_scale := 0.0
+@export_group("Fit: chest (chitin)")
+@export var chest_pos := Vector3.ZERO
+@export var chest_rot := Vector3.ZERO
+@export var chest_scale := 0.0
+@export_group("Fit: leather chest")
+@export var chest_leather_pos := Vector3.ZERO
+@export var chest_leather_rot := Vector3.ZERO
+@export var chest_leather_scale := 0.0
+@export_group("Fit: robe")
+@export var robe_pos := Vector3.ZERO
+@export var robe_rot := Vector3.ZERO
+@export var robe_scale := 0.0
+@export_group("Fit: belt")
+@export var belt_pos := Vector3.ZERO
+@export var belt_rot := Vector3.ZERO
+@export var belt_scale := 0.0
+@export_group("Fit: pauldron")
+@export var pauldron_pos := Vector3.ZERO
+@export var pauldron_rot := Vector3.ZERO
+@export var pauldron_scale := 0.0
+@export_group("Fit: boot")
+@export var boot_pos := Vector3.ZERO
+@export var boot_rot := Vector3.ZERO
+@export var boot_scale := 0.0
+@export_group("Fit: greave")
+@export var greave_pos := Vector3.ZERO
+@export var greave_rot := Vector3.ZERO
+@export var greave_scale := 0.0
+@export_group("Fit: bracer")
+@export var bracer_pos := Vector3.ZERO
+@export var bracer_rot := Vector3.ZERO
+@export var bracer_scale := 0.0
+@export_group("Fit: gauntlet")
+@export var gauntlet_pos := Vector3.ZERO
+@export var gauntlet_rot := Vector3.ZERO
+@export var gauntlet_scale := 0.0
+@export_group("Fit: shield")
+@export var shield_m_pos := Vector3.ZERO
+@export var shield_m_rot := Vector3.ZERO
+@export var shield_m_scale := 0.0
+@export_group("Fit: sword")
+@export var sword_m_pos := Vector3.ZERO
+@export var sword_m_rot := Vector3.ZERO
+@export var sword_m_scale := 0.0
+
 @export_group("Joint offsets (degrees)")
 @export var right_shoulder := Vector3.ZERO
 @export var right_elbow := Vector3.ZERO
@@ -57,6 +116,35 @@ extends Node3D
 
 var garrick: AnimatedActor
 var clock := 0.0
+
+func _rebuild_actor():
+	if garrick:
+		garrick.queue_free()
+	var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
+	config.merge({
+		"sword": true, "shield": true, "helmet": true,
+		"helmet_gear": "starter_helmet", "main_gear": "starter_sword",
+		"off_gear": "starter_shield", "shoulders": true,
+		"shoulder_gear": "wardens_pauldrons",
+		"chest_plate": true,
+		"chest_gear": "showcase_robe" if wear_robe else "chitin_armor",
+		"belt_trim": true, "belt_gear": "studded_belt",
+	}, true)
+	garrick = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
+	add_child(garrick)
+	for extra in ["iron_shod_boots", "iron_greaves", "silk_bracers",
+			"goblin_work_gauntlets"]:
+		garrick._mount_worn_model(extra)
+	if wear_robe:
+		garrick._mount_worn_model("showcase_robe")
+	_seed_fit_knobs()
+
+func _seed_fit_knobs():
+	for fit_key in FITS:
+		var fit = garrick.fit_for(fit_key)
+		set(fit_key + "_pos", fit.position)
+		set(fit_key + "_rot", fit.rotation)
+		set(fit_key + "_scale", fit.scale)
 
 func _sync_from_tuning():
 	var sit = garrick.tuning.get("sit", {})
@@ -91,11 +179,24 @@ func _apply_to_tuning():
 
 func _save():
 	_apply_to_tuning()
+	var fits := {}
+	for fit_key in FITS:
+		var pos: Vector3 = get(fit_key + "_pos")
+		var rot: Vector3 = get(fit_key + "_rot")
+		fits[fit_key] = {
+			"position": [pos.x, pos.y, pos.z],
+			"rotation": [rot.x, rot.y, rot.z],
+			"scale": get(fit_key + "_scale"),
+		}
+	garrick.tuning["fits"] = fits
 	var file = FileAccess.open(AnimatedActor.TUNING_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify(garrick.tuning, "\t"))
 	file = null
 	AnimatedActor._tuning_cache = null
 	print("TUNING SAVED to ", AnimatedActor.TUNING_PATH)
+
+const FITS := ["helm", "chest", "chest_leather", "robe", "belt", "pauldron",
+	"boot", "greave", "bracer", "gauntlet", "shield_m", "sword_m"]
 
 const JOINTS := {
 	"right_shoulder": "R_Upperarm", "right_elbow": "R_Forearm",
@@ -139,10 +240,7 @@ func _ready():
 	log_mesh.material_override = bark
 	add_child(log_mesh)
 
-	var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
-	config.merge({"sword": true, "shield": true, "helmet": true}, true)
-	garrick = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
-	add_child(garrick)
+	_rebuild_actor()
 	_sync_from_tuning()
 	delver_position = Vector3(0, 0.31, 0) \
 		+ AnimatedActor._vec(garrick.tuning.get("sit", {}).get("seat_offset", [0, 0, 0]))
@@ -163,6 +261,24 @@ func _process(delta):
 		"cast": garrick.pose_spellcast(shot)
 		"spin": garrick.pose_spin(shot)
 		"death": garrick.pose_death(clampf(fposmod(clock * 0.4, 1.4), 0.0, 1.0) if playing else scrub)
+
+	# Gear fitting: knobs drive every mounted piece live.
+	for fit_key in FITS:
+		if not garrick.worn_mounts.has(fit_key):
+			continue
+		var pos: Vector3 = get(fit_key + "_pos")
+		var rot: Vector3 = get(fit_key + "_rot")
+		var fit_scale: float = get(fit_key + "_scale")
+		var pieces: Array = garrick.worn_mounts[fit_key]
+		for i in pieces.size():
+			var piece = pieces[i]
+			if not is_instance_valid(piece):
+				continue
+			piece.position = pos
+			piece.rotation_degrees = rot
+			if i == 1:
+				piece.rotation_degrees.y += 180
+			piece.scale = Vector3.ONE * maxf(fit_scale, 0.01)
 
 	if pose == "sit":
 		# The knobs ARE the tuning: pose_sit consumes them next frame.

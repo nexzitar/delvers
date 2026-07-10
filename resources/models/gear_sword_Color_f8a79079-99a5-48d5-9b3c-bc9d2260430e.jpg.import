@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5qcphlp10hl3"
-path="res://.godot/imported/gear_sword_Color_f8a79079-99a5-48d5-9b3c-bc9d2260430e.jpg-e9741193a28d9009c2d4408ffcc5f970.ctex"
+path.s3tc="res://.godot/imported/gear_sword_Color_f8a79079-99a5-48d5-9b3c-bc9d2260430e.jpg-e9741193a28d9009c2d4408ffcc5f970.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "755f9d3e46dbb5d92856433f676694ed"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/gear_sword_Color_f8a79079-99a5-48d5-9b3c-bc9d2260430e.jpg"
-dest_files=["res://.godot/imported/gear_sword_Color_f8a79079-99a5-48d5-9b3c-bc9d2260430e.jpg-e9741193a28d9009c2d4408ffcc5f970.ctex"]
+dest_files=["res://.godot/imported/gear_sword_Color_f8a79079-99a5-48d5-9b3c-bc9d2260430e.jpg-e9741193a28d9009c2d4408ffcc5f970.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

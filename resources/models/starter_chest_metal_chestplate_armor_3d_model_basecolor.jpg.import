@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cxiwiwqo5ap7m"
-path="res://.godot/imported/starter_chest_metal_chestplate_armor_3d_model_basecolor.jpg-a3c05b11bb0245f61eb038c81ed58f74.ctex"
+path.s3tc="res://.godot/imported/starter_chest_metal_chestplate_armor_3d_model_basecolor.jpg-a3c05b11bb0245f61eb038c81ed58f74.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7b4ff6e105d2bba54a3cf49af7a55bdd"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/starter_chest_metal_chestplate_armor_3d_model_basecolor.jpg"
-dest_files=["res://.godot/imported/starter_chest_metal_chestplate_armor_3d_model_basecolor.jpg-a3c05b11bb0245f61eb038c81ed58f74.ctex"]
+dest_files=["res://.godot/imported/starter_chest_metal_chestplate_armor_3d_model_basecolor.jpg-a3c05b11bb0245f61eb038c81ed58f74.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

@@ -7,8 +7,8 @@
 resource_name = "Starter Helmet"
 script = ExtResource("1_gear")
 gear_id = "starter_helmet"
-armor_type = "plate"
 gear_name = "Starter Helmet"
+armor_type = "plate"
 texture = ExtResource("2_tex")
 icon = ExtResource("2_tex")
 offset = Vector2(15, -350)

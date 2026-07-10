@@ -135,6 +135,8 @@ static func _load_tuning() -> Dictionary:
 var _shield_arm: BoneAttachment3D
 var _shield_prop: Node3D
 var _sword_node: Node3D
+## fit_key -> [mounted piece nodes], for live fitting in the Animator.
+var worn_mounts := {}
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -381,7 +383,7 @@ func _mount_worn_model(gear_id: String) -> bool:
 	if not WORN_MODELS.has(gear_id):
 		return false
 	var entry = WORN_MODELS[gear_id]
-	var fit = GEAR_FITS[entry.fit]
+	var fit = fit_for(entry.fit)
 	if not ResourceLoader.exists(fit.path):
 		return false
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
@@ -395,9 +397,25 @@ func _mount_worn_model(gear_id: String) -> bool:
 			piece.rotation_degrees.y += 180
 		piece.scale = Vector3.ONE * fit.scale
 		mount.add_child(piece)
+		if not worn_mounts.has(entry.fit):
+			worn_mounts[entry.fit] = []
+		worn_mounts[entry.fit].append(piece)
 		if entry.has("palette"):
 			_recolor(piece, entry.palette)
 	return true
+
+## The registry fit, with any owner-saved override from the tuning
+## file laid over it (the Guild Animator's Gear Fitter writes these).
+func fit_for(fit_key: String) -> Dictionary:
+	var fit = GEAR_FITS[fit_key].duplicate()
+	var saved = tuning.get("fits", {}).get(fit_key, {})
+	if saved.has("position"):
+		fit.position = _vec(saved.position)
+	if saved.has("rotation"):
+		fit.rotation = _vec(saved.rotation)
+	if saved.has("scale"):
+		fit.scale = float(saved.scale)
+	return fit
 
 ## Swap the sculpt's palette: same model, different armor.
 func _recolor(piece: Node, palette: Dictionary):

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bqhori4k4ip0u"
-path="res://.godot/imported/gear_robe_ORM_7a86777a-2e87-4131-8973-d6d5c13e3048.jpg-b26c54f3caeb62dedbbfd934b57117ae.ctex"
+path.s3tc="res://.godot/imported/gear_robe_ORM_7a86777a-2e87-4131-8973-d6d5c13e3048.jpg-b26c54f3caeb62dedbbfd934b57117ae.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c54af07cca6db4a7eb3ac9270c254a5e"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/gear_robe_ORM_7a86777a-2e87-4131-8973-d6d5c13e3048.jpg"
-dest_files=["res://.godot/imported/gear_robe_ORM_7a86777a-2e87-4131-8973-d6d5c13e3048.jpg-b26c54f3caeb62dedbbfd934b57117ae.ctex"]
+dest_files=["res://.godot/imported/gear_robe_ORM_7a86777a-2e87-4131-8973-d6d5c13e3048.jpg-b26c54f3caeb62dedbbfd934b57117ae.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

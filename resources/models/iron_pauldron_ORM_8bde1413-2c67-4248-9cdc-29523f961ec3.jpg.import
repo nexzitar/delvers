@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://wihqk4gurt5p"
-path="res://.godot/imported/iron_pauldron_ORM_8bde1413-2c67-4248-9cdc-29523f961ec3.jpg-7b933de32297f6aed7dc5ab1210e501f.ctex"
+path.s3tc="res://.godot/imported/iron_pauldron_ORM_8bde1413-2c67-4248-9cdc-29523f961ec3.jpg-7b933de32297f6aed7dc5ab1210e501f.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "bee302807d7bc3a965955b048fb23cce"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/iron_pauldron_ORM_8bde1413-2c67-4248-9cdc-29523f961ec3.jpg"
-dest_files=["res://.godot/imported/iron_pauldron_ORM_8bde1413-2c67-4248-9cdc-29523f961ec3.jpg-7b933de32297f6aed7dc5ab1210e501f.ctex"]
+dest_files=["res://.godot/imported/iron_pauldron_ORM_8bde1413-2c67-4248-9cdc-29523f961ec3.jpg-7b933de32297f6aed7dc5ab1210e501f.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

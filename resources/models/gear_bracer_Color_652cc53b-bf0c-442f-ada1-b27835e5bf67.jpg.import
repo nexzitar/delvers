@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dk53tnmcddqi1"
-path="res://.godot/imported/gear_bracer_Color_652cc53b-bf0c-442f-ada1-b27835e5bf67.jpg-d918b1957e892db0b48ac23f1e2bba53.ctex"
+path.s3tc="res://.godot/imported/gear_bracer_Color_652cc53b-bf0c-442f-ada1-b27835e5bf67.jpg-d918b1957e892db0b48ac23f1e2bba53.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7d03f306445cad514a46c4fae8ae26db"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/gear_bracer_Color_652cc53b-bf0c-442f-ada1-b27835e5bf67.jpg"
-dest_files=["res://.godot/imported/gear_bracer_Color_652cc53b-bf0c-442f-ada1-b27835e5bf67.jpg-d918b1957e892db0b48ac23f1e2bba53.ctex"]
+dest_files=["res://.godot/imported/gear_bracer_Color_652cc53b-bf0c-442f-ada1-b27835e5bf67.jpg-d918b1957e892db0b48ac23f1e2bba53.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
