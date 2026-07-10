@@ -366,5 +366,88 @@
 		],
 		"stroke_scale": 2.0,
 		"stroke_speed": 0.55
+	},
+	"sockets": {
+		"grip_main": {
+			"bone": "R_Hand",
+			"position": [
+				0,
+				0.05,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			]
+		},
+		"grip_off": {
+			"bone": "L_Hand",
+			"position": [
+				0,
+				0.05,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			]
+		},
+		"back": {
+			"bone": "Spine02",
+			"position": [
+				0,
+				0.05,
+				0.13
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			]
+		},
+		"hip_l": {
+			"bone": "Waist",
+			"position": [
+				0.14,
+				-0.02,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			]
+		},
+		"hip_r": {
+			"bone": "Waist",
+			"position": [
+				-0.14,
+				-0.02,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"grips": {
+		"sword_m": {
+			"socket": "grip_main",
+			"position": [
+				0,
+				0.31,
+				0.3
+			],
+			"rotation": [
+				-135,
+				0,
+				0
+			],
+			"scale": 0.5
+		}
 	}
 }

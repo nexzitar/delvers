@@ -401,8 +401,8 @@ func _dress(opts: Dictionary):
 	if opts.get("sword", false):
 		main_model = _mount_worn_model(opts.get("main_gear", ""))
 		if main_model:
-			var mounts = _skeleton.get_children()
-			_sword_node = mounts[mounts.size() - 1].get_child(0)
+			var main_fit = WORN_MODELS[opts.main_gear].fit
+			_sword_node = worn_mounts[main_fit].back()
 	if not main_model and (opts.get("sword", false) or opts.get("axe", false) or opts.get("dagger", false)):
 		var hand = _attach("R_Hand")
 		var weapon = DelverBuilder.build_axe() if opts.get("axe", false) \
@@ -416,8 +416,8 @@ func _dress(opts: Dictionary):
 		hand.add_child(weapon)
 		_sword_node = weapon
 	if opts.get("shield", false) and _mount_worn_model(opts.get("off_gear", "")):
-		var mounts = _skeleton.get_children()
-		_shield_arm = mounts[mounts.size() - 1]
+		var off_fit = WORN_MODELS[opts.off_gear].fit
+		_shield_arm = worn_mounts[off_fit].back().get_parent()
 		_shield_prop = load(GEAR_FITS.shield_m.path).instantiate()
 		_shield_prop.position = Vector3(0.42, 0.15, 0.24)
 		_shield_prop.rotation_degrees = Vector3(0, 15, 75)
@@ -474,6 +474,33 @@ func _mount_worn_model(gear_id: String) -> bool:
 		_hide_covered(fit)
 		return not found.is_empty()
 
+	# Socket mounting: the item's grip marker lands exactly on the
+	# body's socket, so weapons pivot around the palm, not the wrist.
+	# Sockets live on bones (grip_main, grip_off, back, hip_l...);
+	# grips live on items - both placed visually in the Socket
+	# Workshop (capture/socket_workshop.tscn) and saved to tuning.
+	var grip = tuning.get("grips", {}).get(entry.fit)
+	var socket = tuning.get("sockets", {}).get(grip.socket) if grip else null
+	if grip and socket:
+		var mount = _attach(socket.bone)
+		var piece = load(fit.path).instantiate()
+		var socket_rot := Basis.from_euler(_vec(socket.rotation) * PI / 180.0)
+		var grip_rot := Basis.from_euler(_vec(grip.rotation) * PI / 180.0)
+		piece.quaternion = (socket_rot * grip_rot.inverse()).get_rotation_quaternion()
+		piece.scale = Vector3.ONE * float(grip.get("scale", fit.get("scale", 1.0)))
+		# basis carries the scale, so grip offsets are authored in the
+		# item's own (unscaled) coordinates.
+		piece.position = _vec(socket.position) - piece.basis * _vec(grip.position)
+		piece.set_meta("mount_transform", piece.transform)
+		mount.add_child(piece)
+		if not worn_mounts.has(entry.fit):
+			worn_mounts[entry.fit] = []
+		worn_mounts[entry.fit].append(piece)
+		if entry.has("palette"):
+			_recolor(piece, entry.palette)
+		_hide_covered(fit)
+		return true
+
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
 	var saved_pieces: Array = tuning.get("fits", {}).get(entry.fit, {}).get("pieces", [])
 	for i in bones.size():
@@ -498,6 +525,7 @@ func _mount_worn_model(gear_id: String) -> bool:
 				piece.position.x = -piece.position.x
 		if piece.scale.x < 0.0:
 			_disable_cull(piece)
+		piece.set_meta("mount_transform", piece.transform)
 		mount.add_child(piece)
 		if not worn_mounts.has(entry.fit):
 			worn_mounts[entry.fit] = []
@@ -612,10 +640,9 @@ func _pose(role: String, fraction: float, looped := false):
 	_model.position = Vector3.ZERO
 	_set_shield_grounded(false)
 	if _sword_node:
-		var grip = fit_for("sword_m")
-		_sword_node.position = grip.position
-		_sword_node.rotation_degrees = grip.rotation
-		_sword_node.scale = Vector3.ONE * grip.scale
+		# Undo the campfire sit-grip override: back to how it mounted.
+		_sword_node.transform = _sword_node.get_meta(
+			"mount_transform", _sword_node.transform)
 	# The captures carry the chin low; lift the gaze off the ground.
 	_rotate_bone("Head", Vector3.RIGHT, 0.25)
 

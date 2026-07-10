@@ -5,6 +5,21 @@ Notable changes per pull request. Newest first.
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added
+- **The socket system — weapons are finally HELD**: bodies carry
+  named sockets (grip_main in the right palm, grip_off in the left,
+  back and hip_l/hip_r for future quivers, backpacks and potion
+  pouches), items carry grip points, and the mount places the grip
+  exactly on the socket in every pose — the sword now hangs from a
+  fist wrapped around its handle instead of floating beside the arm.
+  The **Socket Workshop** (capture/socket_workshop.tscn, editor-only
+  like the Fitting Room) shows both marker families in the Scene
+  dock for standard-gizmo placement; save_sockets writes
+  pose_tuning.json. New bows will add a second grip on the string
+  for the draw hand, plus a draw animation — the schema is ready.
+- **Fixed: pose seeks reverted weapon fits** — every pose seek
+  stomped the sword back to fit defaults (why Fitting Room sword
+  fits never seemed to stick). Mounts now remember their transform
+  and poses restore it. Pinned by test_sockets.
 - **Wren wears a headband, not a helmet**: her recruit kit swaps the
   Starter Helmet for a Starter Headband (leather, HEAD, open — hair
   and ponytail physics stay visible; "Keeps the hair out of the
