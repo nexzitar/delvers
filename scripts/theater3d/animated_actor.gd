@@ -57,6 +57,15 @@ const GEAR_FITS := {
 	"derived_chest": {"path": "res://resources/models/derived_chest.glb",
 		"bone": "Spine01", "position": Vector3.ZERO,
 		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
+	"derived_skirt": {"path": "res://resources/models/derived_skirt.glb",
+		"bone": "Pelvis", "position": Vector3.ZERO,
+		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
+	"derived_sleeve_l": {"path": "res://resources/models/derived_sleeve_l.glb",
+		"bone": "L_Upperarm", "position": Vector3.ZERO,
+		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
+	"derived_sleeve_r": {"path": "res://resources/models/derived_sleeve_r.glb",
+		"bone": "R_Upperarm", "position": Vector3.ZERO,
+		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
 		"bone": "L_Forearm", "position": Vector3(0, 0.12, -0.06),
 		"rotation": Vector3(0, 0, 0), "scale": 0.4},
@@ -92,6 +101,15 @@ const WORN_MODELS := {
 		"primary": Color(0.3, 0.22, 0.13), "secondary": Color(0.16, 0.11, 0.07),
 		"trim": Color(0.75, 0.7, 0.55)}},
 	"starter_sword": {"fit": "sword_m"},
+	"derived_set_skirt": {"fit": "derived_skirt", "palette": {
+		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
+		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
+	"derived_set_sleeve_l": {"fit": "derived_sleeve_l", "palette": {
+		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
+		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
+	"derived_set_sleeve_r": {"fit": "derived_sleeve_r", "palette": {
+		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
+		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
 	"derived_leathers": {"fit": "derived_chest", "palette": {
 		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
 		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
@@ -157,10 +175,14 @@ var _world_rest_pending := []
 
 func _ready():
 	for fit_key in _world_rest_pending:
-		for piece in worn_mounts.get(fit_key, []):
-			var mount = piece.get_parent()
-			piece.transform = mount.global_transform.affine_inverse() \
-				* _skeleton.global_transform
+		_align_world_rest(fit_key)
+	_world_rest_pending.clear()
+
+func _align_world_rest(fit_key: String):
+	for piece in worn_mounts.get(fit_key, []):
+		var mount = piece.get_parent()
+		piece.transform = mount.global_transform.affine_inverse() \
+			* _skeleton.global_transform
 
 func _init(scene: PackedScene, opts := {}):
 	var model = scene.instantiate()
@@ -446,7 +468,10 @@ func _mount_worn_model(gear_id: String) -> bool:
 	if fit.has("hides") and _body_parts.has(fit.hides):
 		_body_parts[fit.hides].visible = false
 	if fit.get("world_rest", false):
-		_world_rest_pending.append(entry.fit)
+		if is_inside_tree():
+			_align_world_rest(entry.fit)
+		else:
+			_world_rest_pending.append(entry.fit)
 	return true
 
 ## The registry fit, with any owner-saved override from the tuning
@@ -481,15 +506,19 @@ func _recolor(piece: Node, palette: Dictionary):
 		var node = stack.pop_back()
 		if node is MeshInstance3D:
 			var base = node.get_active_material(0)
-			if base is StandardMaterial3D and base.albedo_texture:
-				var mat := ShaderMaterial.new()
+			var mat: ShaderMaterial
+			if base is ShaderMaterial:
+				mat = base
+			elif base is StandardMaterial3D and base.albedo_texture:
+				mat = ShaderMaterial.new()
 				mat.shader = load(RECOLOR_SHADER)
 				mat.set_shader_parameter("base_tex", base.albedo_texture)
+				node.material_override = mat
+			if mat:
 				mat.set_shader_parameter("col_primary", palette.primary)
 				mat.set_shader_parameter("col_secondary", palette.secondary)
 				mat.set_shader_parameter("col_trim", palette.trim)
 				mat.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
-				node.material_override = mat
 		stack.append_array(node.get_children())
 
 static func _vec(arr) -> Vector3:

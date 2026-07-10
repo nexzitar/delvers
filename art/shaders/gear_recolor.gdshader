@@ -28,9 +28,10 @@ void fragment() {
 		target = col_trim;
 	}
 	float luma = dot(tex, vec3(0.299, 0.587, 0.114));
-	luma = mix(luma, 0.45 + 0.25 * (luma - 0.5), luma_flatten);
 	float target_luma = max(dot(target, vec3(0.299, 0.587, 0.114)), 0.05);
-	ALBEDO = clamp(target * (luma / target_luma) * 1.6, vec3(0.0), vec3(1.0));
+	vec3 preserved = clamp(target * (luma / target_luma) * 1.6, vec3(0.0), vec3(1.0));
+	vec3 flat_dye = target * (0.55 + luma * 0.8);
+	ALBEDO = mix(preserved, flat_dye, luma_flatten);
 	ROUGHNESS = roughness_value;
 	METALLIC = 0.0;
 }

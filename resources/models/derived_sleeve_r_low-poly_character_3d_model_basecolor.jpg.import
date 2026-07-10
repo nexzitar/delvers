@@ -2,11 +2,10 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dptekrplf4ffq"
-path.s3tc="res://.godot/imported/derived_chest_low-poly_character_3d_model_basecolor.jpg-6f4541e2025c0b5027f7d95eb6063afa.s3tc.ctex"
+uid="uid://kga1et8jj6da"
+path="res://.godot/imported/derived_sleeve_r_low-poly_character_3d_model_basecolor.jpg-8e8072c399e643864106ab4a1477f389.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "d9cd354f74f0e7d3a7d1c54b0234ae7b"
@@ -14,12 +13,12 @@ generator_parameters={
 
 [deps]
 
-source_file="res://resources/models/derived_chest_low-poly_character_3d_model_basecolor.jpg"
-dest_files=["res://.godot/imported/derived_chest_low-poly_character_3d_model_basecolor.jpg-6f4541e2025c0b5027f7d95eb6063afa.s3tc.ctex"]
+source_file="res://resources/models/derived_sleeve_r_low-poly_character_3d_model_basecolor.jpg"
+dest_files=["res://.godot/imported/derived_sleeve_r_low-poly_character_3d_model_basecolor.jpg-8e8072c399e643864106ab4a1477f389.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -41,4 +40,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

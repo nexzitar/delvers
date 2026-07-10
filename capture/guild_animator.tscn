@@ -4,6 +4,7 @@
 
 [node name="GuildAnimator" type="Node3D" unique_id=1510447005]
 script = ExtResource("1")
+pose = "swing"
 speed = 0.55
 stroke_scale = 2.0
 delver_position = Vector3(0, 0.2, -0.1)
