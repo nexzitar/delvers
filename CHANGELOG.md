@@ -12,6 +12,17 @@ Notable changes per pull request. Newest first.
   shape-language not a color, and Delvers armor is explorer-built:
   repaired, mismatched, asymmetric. Derive v2 will build
   construction pieces from the body instead of inflated shells.
+- **THE GARMENT CONSTRUCTION ENGINE** (v5): garments are compiled
+  from a spec ({volume, collar, shoulder_layers, buckles, sleeves,
+  belt, hem_flaps}) into ASSEMBLED construction — face-partitioned
+  panels (front-left/front-right/back/yoke/sleeves, each with its
+  own thickness and bevel, sharing one drape so seams align),
+  layered shoulder flanges, a clasp ladder in rhythm, waist
+  compression with flare, asymmetric sleeves, and per-part culling.
+  Items can store the spec instead of the mesh: procedural loot
+  where every garment is genuinely unique. Iterations en route:
+  inflated shell → constructed vest → skinned jacket → sealed →
+  draped → assembled.
 - **Body-derived armor works end to end**: the first chest piece is
   Garrick's own torso — spine-weighted faces duplicated in Blender,
   inflated off the skin, solidified, exported, rest-aligned onto his
