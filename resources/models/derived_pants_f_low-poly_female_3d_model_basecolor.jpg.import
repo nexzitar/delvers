@@ -2,24 +2,23 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://f73u4dxjattj"
-path.s3tc="res://.godot/imported/derived_jacket_plain_low-poly_character_3d_model_basecolor.jpg-cb117a42213ee864aa707603e91994c6.s3tc.ctex"
+uid="uid://8ev0t46bcdg1"
+path="res://.godot/imported/derived_pants_f_low-poly_female_3d_model_basecolor.jpg-e703239517364a2de32c7355e7dd744d.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
-"md5": "d9cd354f74f0e7d3a7d1c54b0234ae7b"
+"md5": "60dfac89e0505cf5e6e0c04056e2ba05"
 }
 
 [deps]
 
-source_file="res://resources/models/derived_jacket_plain_low-poly_character_3d_model_basecolor.jpg"
-dest_files=["res://.godot/imported/derived_jacket_plain_low-poly_character_3d_model_basecolor.jpg-cb117a42213ee864aa707603e91994c6.s3tc.ctex"]
+source_file="res://resources/models/derived_pants_f_low-poly_female_3d_model_basecolor.jpg"
+dest_files=["res://.godot/imported/derived_pants_f_low-poly_female_3d_model_basecolor.jpg-e703239517364a2de32c7355e7dd744d.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -41,4 +40,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

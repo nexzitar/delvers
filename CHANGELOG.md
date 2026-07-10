@@ -5,6 +5,12 @@ Notable changes per pull request. Newest first.
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added
+- **Garments compile per body — and Wren gets a shirt**: recruit kits
+  now include Starter Armor (Wren arrived with bow and helmet only),
+  and the jacket, plain jacket and trousers are compiled from the
+  female body too (same specs, her mesh, `_f` GLB variants picked by
+  the actor's body). The purchasable third delver's kit gains a chest
+  piece as well.
 - **The full basic starter set**: Starter Trousers, Boots, Gloves and
   Belt — zero-stat leather basics dropped by Darkwood normals, so a
   fresh delver can finish dressing without power creep. Delvers still

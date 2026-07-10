@@ -129,6 +129,8 @@ var clip_ranges := {}
 ## The theater's walk phase is radians (sin-based rigs); one clip
 ## cycle spans TAU * this. Bigger = slower stride.
 var walk_cycle_scale := 1.0
+## "" = garments as authored (male body); "_f" = female-compiled GLBs.
+var garment_suffix := ""
 
 var _player: AnimationPlayer
 var _skeleton: Skeleton3D
@@ -191,6 +193,7 @@ func _init(scene: PackedScene, opts := {}):
 	_model = model
 	clip_ranges = opts.get("clip_ranges", {})
 	walk_cycle_scale = opts.get("walk_cycle_scale", 1.0)
+	garment_suffix = opts.get("garment_suffix", "")
 	_has_sword = opts.get("sword", false)
 	tuning = _load_tuning().duplicate(true)
 	_player = _find_player(model)
@@ -509,6 +512,12 @@ func _mount_worn_model(gear_id: String) -> bool:
 ## file laid over it (the Guild Animator's Gear Fitter writes these).
 func fit_for(fit_key: String) -> Dictionary:
 	var fit = GEAR_FITS[fit_key].duplicate()
+	# Garments are compiled per body: a "_f" sibling GLB (same spec,
+	# female body) wins when this actor declared the variant.
+	if garment_suffix != "":
+		var variant_path: String = fit.path.replace(".glb", garment_suffix + ".glb")
+		if ResourceLoader.exists(variant_path):
+			fit.path = variant_path
 	var saved = tuning.get("fits", {}).get(fit_key, {})
 	if saved.has("position"):
 		fit.position = _vec(saved.position)

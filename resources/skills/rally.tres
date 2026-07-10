@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://bbkg8wjr43wuu"]
 
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
-[ext_resource type="Script" path="res://scripts/combat/skills/rally.gd" id="2_behavior"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_rally.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" uid="uid://4v0iav1ddsfj" path="res://scripts/combat/skills/rally.gd" id="2_behavior"]
+[ext_resource type="Texture2D" uid="uid://bwh7y6bk5065n" path="res://art/skills/skill_rally.png" id="3_icon"]
 
 [resource]
 resource_name = "Rally"
@@ -12,7 +12,7 @@ skill_name = "Rally"
 icon = ExtResource("3_icon")
 behavior_script = ExtResource("2_behavior")
 skill_type = 2
-cooldown = 18.0
 mana_cost = 4
 base_min_damage = 4
 base_max_damage = 6
+cooldown = 18.0
