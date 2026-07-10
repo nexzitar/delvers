@@ -1520,6 +1520,8 @@ func _tooltip_gear(gear: GearDefinition):
 		for line in affix.effect_lines():
 			_tip_line(line, Color(0.55, 0.85, 0.5), 16, 1)
 
+	if gear.flavor != "":
+		_tip_line('"%s"' % gear.flavor, Color(0.72, 0.65, 0.45), 15, 0)
 	_tip_line("Item level %d" % gear.item_level, DIM, 16, 1)
 
 	_fill_gear_compare(gear)

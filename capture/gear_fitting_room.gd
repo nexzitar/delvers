@@ -10,9 +10,9 @@ extends Node3D
 ## wears them. Tick rebuild to re-dress from the saved file.
 ## DON'T Ctrl+S the scene itself; the json is the save.
 
-@export var wear_robe := false:
+@export var wear_jacket := false:
 	set(value):
-		wear_robe = value
+		wear_jacket = value
 		_build()
 
 @export var rebuild := false:
@@ -44,7 +44,7 @@ func _build():
 		"off_gear": "starter_shield", "shoulders": true,
 		"shoulder_gear": "wardens_pauldrons",
 		"chest_plate": true,
-		"chest_gear": "showcase_robe" if wear_robe else "chitin_armor",
+		"chest_gear": "oiled_leathers" if wear_jacket else "chitin_armor",
 		"belt_trim": true, "belt_gear": "studded_belt",
 	}, true)
 	actor = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)

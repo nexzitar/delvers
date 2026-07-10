@@ -1,14 +1,19 @@
 extends Node3D
 
-## The derived leather set, four color schemes: every piece grown
-## from the delver's own body.
+## The compiled garments as real items: Starter Armor (plain jacket),
+## Oiled Leathers (the clasp-ladder jacket), Leather Trousers - plus
+## two dye variants showing the recolor lever on the same meshes.
 
-const SCHEMES = [
-	{"name": "tanned", "primary": Color(0.42, 0.3, 0.18), "secondary": Color(0.3, 0.2, 0.12), "trim": Color(0.58, 0.46, 0.3), "flatten": 0.9},
-	{"name": "black", "primary": Color(0.13, 0.12, 0.12), "secondary": Color(0.08, 0.08, 0.09), "trim": Color(0.4, 0.38, 0.36), "flatten": 0.9},
-	{"name": "forest", "primary": Color(0.2, 0.3, 0.16), "secondary": Color(0.12, 0.18, 0.1), "trim": Color(0.5, 0.45, 0.28), "flatten": 0.9},
-	{"name": "oxblood", "primary": Color(0.36, 0.14, 0.12), "secondary": Color(0.2, 0.09, 0.08), "trim": Color(0.6, 0.5, 0.34), "flatten": 0.9},
+const OUTFITS = [
+	{"pieces": ["starter_armor", "starter_trousers", "starter_boots",
+		"starter_gloves", "starter_belt"]},
+	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"]},
+	{"pieces": ["starter_armor", "leather_trousers", "iron_shod_boots"],
+		"dye": {"name": "forest", "primary": Color(0.2, 0.3, 0.16), "secondary": Color(0.12, 0.18, 0.1), "trim": Color(0.5, 0.45, 0.28), "flatten": 0.9}},
+	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"],
+		"dye": {"name": "oxblood", "primary": Color(0.36, 0.14, 0.12), "secondary": Color(0.2, 0.09, 0.08), "trim": Color(0.6, 0.5, 0.34), "flatten": 0.9}},
 ]
+const GARMENT_FITS = ["jacket", "jacket_plain", "pants"]
 
 func _ready():
 	var cam := Camera3D.new()
@@ -46,22 +51,22 @@ func _ready():
 	ground.material_override = mat
 	add_child(ground)
 
-	for i in SCHEMES.size():
-		var scheme = SCHEMES[i]
+	for i in OUTFITS.size():
+		var outfit = OUTFITS[i]
 		var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
 		var actor = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
 		actor.position = Vector3(-1.5 + i * 1.0, 0, 0)
 		actor.rotation.y = 0.15 - i * 0.1
 		add_child(actor)
-		for piece_id in ["leather_jacket", "leather_pants"]:
+		for piece_id in outfit.pieces:
 			actor._mount_worn_model(piece_id)
-		actor._mount_worn_model("iron_shod_boots")
-		# Re-dye everything in this delver's scheme.
-		for fit_key in actor.worn_mounts:
-			if not fit_key.begins_with("derived"):
-				continue
-			for piece in actor.worn_mounts[fit_key]:
-				actor._recolor(piece, scheme)
+		# Dye variants: re-dye the compiled garments over their item palette.
+		if outfit.has("dye"):
+			for fit_key in actor.worn_mounts:
+				if not GARMENT_FITS.has(fit_key):
+					continue
+				for piece in actor.worn_mounts[fit_key]:
+					actor._recolor(piece, outfit.dye)
 		if i == 2:
 			actor.pose_swing(0.5)
 		else:

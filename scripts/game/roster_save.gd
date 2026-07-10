@@ -43,6 +43,7 @@ const RECIPE_PATHS := {
 	"silk_bracers": "res://resources/recipes/silk_bracers.tres",
 	"weavers_cloak": "res://resources/recipes/weavers_cloak.tres",
 	"oiled_leathers": "res://resources/recipes/oiled_leathers.tres",
+	"leather_trousers": "res://resources/recipes/leather_trousers.tres",
 	"sprung_boots": "res://resources/recipes/sprung_boots.tres",
 	"engineers_goggles": "res://resources/recipes/engineers_goggles.tres",
 }
@@ -88,6 +89,10 @@ const GEAR_PATHS := {
 	"starter_shield": "res://resources/gear/starter_shield.tres",
 	"starter_helmet": "res://resources/gear/starter_helmet.tres",
 	"starter_armor": "res://resources/gear/starter_armor.tres",
+	"starter_trousers": "res://resources/gear/starter_trousers.tres",
+	"starter_boots": "res://resources/gear/starter_boots.tres",
+	"starter_gloves": "res://resources/gear/starter_gloves.tres",
+	"starter_belt": "res://resources/gear/starter_belt.tres",
 	"fast_dagger": "res://resources/gear/fast_dagger.tres",
 	"heavy_axe": "res://resources/gear/heavy_axe.tres",
 	"iron_shod_boots": "res://resources/gear/iron_shod_boots.tres",
@@ -101,6 +106,7 @@ const GEAR_PATHS := {
 	"silk_bracers": "res://resources/gear/silk_bracers.tres",
 	"weavers_cloak": "res://resources/gear/weavers_cloak.tres",
 	"oiled_leathers": "res://resources/gear/oiled_leathers.tres",
+	"leather_trousers": "res://resources/gear/leather_trousers.tres",
 	"sprung_boots": "res://resources/gear/sprung_boots.tres",
 	"engineers_goggles": "res://resources/gear/engineers_goggles.tres",
 }
@@ -204,10 +210,20 @@ static func load_into(roster, path := SAVE_PATH) -> bool:
 		return false
 
 	roster.heroes = heroes
+	# An item's category may change in an update (e.g. boots that were
+	# saved on the waist): anything sitting in a position its slot no
+	# longer accepts goes back to the stash instead of staying misfiled.
+	var displaced := []
+	for hero in roster.heroes:
+		for pos in hero.equipped.keys():
+			var gear = hero.equipped[pos]
+			if not Equip.accepted_positions(gear).has(pos):
+				hero.equipped.erase(pos)
+				displaced.append(gear)
 	for hero in roster.heroes:
 		roster._sync_role(hero)
 
-	roster.gear_stash = []
+	roster.gear_stash = displaced
 	for entry in data.get("stash", []):
 		var gear = _gear_from_entry(entry)
 		if gear:

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GearDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
+[ext_resource type="Texture2D" path="res://art/gear/iron_greaves.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_gear")
+gear_id = "starter_trousers"
+gear_name = "Starter Trousers"
+armor_type = "leather"
+slot = 10
+flavor = "Guild provision number one, ever since the founder was recovered from a hedge maze wearing nothing at all."
+icon = ExtResource("2_tex")

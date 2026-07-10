@@ -1,14 +1,13 @@
 [gd_resource type="Resource" script_class="GearDefinition" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/gear_definition.gd" id="1_gear"]
-[ext_resource type="Texture2D" path="res://art/gear/gear_sprung_boots.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://art/gear/studded_belt.png" id="2_tex"]
 
 [resource]
 script = ExtResource("1_gear")
-gear_id = "sprung_boots"
-gear_name = "Sprung Boots"
+gear_id = "starter_belt"
+gear_name = "Starter Belt"
 armor_type = "leather"
-slot = 11
+slot = 9
+flavor = "Holds the trousers up. See provision number one."
 icon = ExtResource("2_tex")
-health_bonus = 4
-dodge_rating = 0.12

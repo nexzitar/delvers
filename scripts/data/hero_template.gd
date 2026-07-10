@@ -4,7 +4,6 @@ class_name HeroTemplate
 @export var hero_id: String
 @export var hero_name: String
 @export var template_id : String
-@export var actor_scene : PackedScene
 
 @export var base_health: int
 @export var base_mana: int

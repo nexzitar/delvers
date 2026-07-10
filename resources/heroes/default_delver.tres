@@ -1,6 +1,5 @@
 [gd_resource type="Resource" script_class="HeroTemplate" format=3 uid="uid://c6xkaeieam0sm"]
 
-[ext_resource type="PackedScene" uid="uid://ypyclgsx45sk" path="res://scenes/theater/actors/hero_actor.tscn" id="1_iac65"]
 [ext_resource type="Script" uid="uid://dcbphjyx7hvig" path="res://scripts/data/hero_template.gd" id="1_ok26h"]
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_ctke7"]
 [ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_iac65"]
@@ -18,7 +17,6 @@ script = ExtResource("1_ok26h")
 hero_id = "Default Delver"
 hero_name = "Garrick"
 template_id = null
-actor_scene = ExtResource("1_iac65")
 base_health = 100
 base_mana = 10
 base_attack = 1

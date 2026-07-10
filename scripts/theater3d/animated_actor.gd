@@ -48,26 +48,10 @@ const GEAR_FITS := {
 		"pair_bones": ["L_Hand", "R_Hand"],
 		"position": Vector3(0, 0.04, 0),
 		"rotation": Vector3(0, 0, 0), "scale": 0.15},
-	"chest_leather": {"path": "res://resources/models/gear_leather_chest.glb",
-		"bone": "Spine01", "position": Vector3(0, 0.0, 0),
-		"rotation": Vector3(0, 180, 0), "scale": 0.38},
-	"robe": {"path": "res://resources/models/gear_robe.glb",
-		"bone": "Spine01", "position": Vector3(0, -0.03, 0.015),
-		"rotation": Vector3(-6, 0, 0), "scale": 0.58},
-	"derived_chest": {"path": "res://resources/models/derived_vest.glb",
-		"bone": "Spine01", "position": Vector3.ZERO,
-		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
-	"derived_skirt": {"path": "res://resources/models/derived_skirt.glb",
-		"bone": "Pelvis", "position": Vector3.ZERO,
-		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
-	"derived_sleeve_l": {"path": "res://resources/models/derived_sleeve_l.glb",
-		"bone": "L_Upperarm", "position": Vector3.ZERO,
-		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
-	"derived_sleeve_r": {"path": "res://resources/models/derived_sleeve_r.glb",
-		"bone": "R_Upperarm", "position": Vector3.ZERO,
-		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"jacket": {"path": "res://resources/models/derived_jacket.glb",
 		"skinned": true, "hides": ["Torso", "RForearm"]},
+	"jacket_plain": {"path": "res://resources/models/derived_jacket_plain.glb",
+		"skinned": true, "hides": ["Torso", "RForearm", "LForearm"]},
 	"pants": {"path": "res://resources/models/derived_pants.glb",
 		"skinned": true, "hides": ["Legs"]},
 	"shield_m": {"path": "res://resources/models/gear_shield.glb",
@@ -93,36 +77,32 @@ const WORN_MODELS := {
 		"primary": Color(0.85, 0.82, 0.72), "secondary": Color(0.6, 0.55, 0.45),
 		"trim": Color(0.5, 0.42, 0.3)}},
 	"goblin_work_gauntlets": {"fit": "gauntlet"},
-	"starter_armor": {"fit": "chest_leather"},
-	"oiled_leathers": {"fit": "chest_leather", "palette": {
-		"primary": Color(0.16, 0.12, 0.08), "secondary": Color(0.3, 0.24, 0.16),
-		"trim": Color(0.55, 0.45, 0.3)}},
-	"showcase_robe": {"fit": "robe", "palette": {
-		"primary": Color(0.78, 0.75, 0.66), "secondary": Color(0.45, 0.4, 0.5),
-		"trim": Color(0.6, 0.5, 0.32)}},
+	"starter_armor": {"fit": "jacket_plain", "palette": {
+		"primary": Color(0.34, 0.24, 0.14), "secondary": Color(0.26, 0.18, 0.11),
+		"trim": Color(0.42, 0.32, 0.2), "flatten": 0.9}},
+	"oiled_leathers": {"fit": "jacket", "palette": {
+		"primary": Color(0.13, 0.1, 0.08), "secondary": Color(0.1, 0.08, 0.06),
+		"trim": Color(0.24, 0.19, 0.13), "flatten": 0.9}},
+	"leather_trousers": {"fit": "pants", "palette": {
+		"primary": Color(0.27, 0.19, 0.12), "secondary": Color(0.2, 0.14, 0.09),
+		"trim": Color(0.36, 0.28, 0.18), "flatten": 0.9}},
+	"starter_trousers": {"fit": "pants", "palette": {
+		"primary": Color(0.35, 0.28, 0.19), "secondary": Color(0.28, 0.22, 0.15),
+		"trim": Color(0.4, 0.33, 0.24), "flatten": 0.9}},
+	"starter_boots": {"fit": "boot", "palette": {
+		"primary": Color(0.3, 0.22, 0.14), "secondary": Color(0.38, 0.34, 0.28),
+		"trim": Color(0.42, 0.33, 0.22), "flatten": 0.9}},
+	"starter_gloves": {"fit": "gauntlet", "palette": {
+		"primary": Color(0.34, 0.26, 0.17), "secondary": Color(0.27, 0.2, 0.13),
+		"trim": Color(0.42, 0.34, 0.23), "flatten": 0.9}},
+	"starter_belt": {"fit": "belt", "palette": {
+		"primary": Color(0.3, 0.22, 0.14), "secondary": Color(0.24, 0.18, 0.11),
+		"trim": Color(0.45, 0.38, 0.26), "flatten": 0.9}},
 	"starter_shield": {"fit": "shield_m"},
 	"chitin_shield": {"fit": "shield_m", "palette": {
 		"primary": Color(0.3, 0.22, 0.13), "secondary": Color(0.16, 0.11, 0.07),
 		"trim": Color(0.75, 0.7, 0.55)}},
 	"starter_sword": {"fit": "sword_m"},
-	"derived_set_skirt": {"fit": "derived_skirt", "palette": {
-		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
-		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
-	"derived_set_sleeve_l": {"fit": "derived_sleeve_l", "palette": {
-		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
-		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
-	"derived_set_sleeve_r": {"fit": "derived_sleeve_r", "palette": {
-		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
-		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
-	"leather_pants": {"fit": "pants", "palette": {
-		"primary": Color(0.3, 0.21, 0.13), "secondary": Color(0.22, 0.16, 0.1),
-		"trim": Color(0.45, 0.36, 0.24), "flatten": 0.9}},
-	"leather_jacket": {"fit": "jacket", "palette": {
-		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
-		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
-	"derived_leathers": {"fit": "derived_chest", "palette": {
-		"primary": Color(0.36, 0.26, 0.16), "secondary": Color(0.3, 0.2, 0.12),
-		"trim": Color(0.5, 0.4, 0.28), "flatten": 0.9}},
 }
 const RECOLOR_SHADER := "res://art/shaders/gear_recolor.gdshader"
 
@@ -376,11 +356,21 @@ func _dress(opts: Dictionary):
 		buckle.material_override = _flat(Color(0.75, 0.62, 0.3))
 		buckle.position = Vector3(0, 0.03, -0.072)
 		belt_mount.add_child(buckle)
+	# Any remaining worn gear with a fitted model mounts by id; fits
+	# already claimed above (helm, chest, belt, shoulders) skip through.
+	for gear_id in opts.get("gear_ids", []):
+		if WORN_MODELS.has(gear_id) and not worn_mounts.has(WORN_MODELS[gear_id].fit):
+			_mount_worn_model(gear_id)
+	var region_fits := {"gauntlets": ["gauntlet"], "bracers": ["bracer"],
+		"greaves": ["greave", "pants"], "boots_gear": ["boot"]}
 	for pair in [["gauntlets", "Hand", Vector3(0, 0.02, 0), Vector3(0.075, 0.08, 0.09)],
 			["bracers", "Forearm", Vector3(0, 0.1, 0), Vector3(0.07, 0.09, 0.075)],
 			["greaves", "Calf", Vector3(0, 0.12, 0), Vector3(0.085, 0.13, 0.095)],
 			["boots_gear", "Foot", Vector3(0, 0.03, -0.02), Vector3(0.085, 0.07, 0.16)]]:
 		if not opts.has(pair[0]):
+			continue
+		# A fitted model already covers this region - no box fallback.
+		if region_fits[pair[0]].any(func(f): return worn_mounts.has(f)):
 			continue
 		for side in ["L", "R"]:
 			var mount = _attach(side + "_" + pair[1])

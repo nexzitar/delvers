@@ -2,7 +2,52 @@
 
 Notable changes per pull request. Newest first.
 
-## PR #13 — The generated armory *(open)*
+## Item overhaul — compiled garments become the items *(open)*
+
+### Added
+- **The full basic starter set**: Starter Trousers, Boots, Gloves and
+  Belt — zero-stat leather basics dropped by Darkwood normals, so a
+  fresh delver can finish dressing without power creep. Delvers still
+  BEGIN without trousers; the trousers' flavor line explains the
+  guild's first provision ("ever since the founder was recovered from
+  a hedge maze wearing nothing at all") — a nod to a certain
+  outworlder.
+- **Gear flavor lines**: GearDefinition gains a `flavor` field shown
+  at the foot of the loadout tooltip — a lore channel on the item
+  itself.
+- **Real items wear the engine's garments**: Starter Armor is a newly
+  compiled plain jacket (low volume, short collar, five clasps, no
+  belt — humble through CONSTRUCTION, not color), Oiled Leathers is
+  the clasp-ladder showcase jacket in a dark oiled palette, and the
+  new **Leather Trousers** (LEGS, leather, craftable — recipe taught
+  by Goblin Warriors, "The Walker's Second Hide") wear the compiled
+  pants. The demo-only ids (leather_jacket, showcase_robe, derived_*)
+  are gone; the spec-is-the-item philosophy now points at the loot
+  table.
+- **Every worn slot mounts its fitted model in real battles**: hero
+  opts now carry all worn gear ids, so boots, greaves, bracers and
+  gauntlets mount their sculpted models in gameplay (previously only
+  capture harnesses did); procedural box fallbacks only fire when no
+  fitted model covers the region.
+
+### Changed
+- Starter/oiled palettes tuned darker and lower-contrast so the
+  recolor classifier's texture noise stays invisible (per-piece
+  material slots from the engine are the recorded proper fix).
+- `sprung_boots` fixed from WAIST to FEET, with a save-load guard
+  that re-routes misfiled items to the stash.
+
+### Removed
+- The dead 2D layer: campfire scenes, the 2D TheaterActor chain, the
+  superseded 2D cast harness, and the unread `actor_scene` template
+  field.
+- ~30 MB of superseded models: the Tripo leather chest and robe
+  one-offs (replaced by compiled jackets), the v4 derived vest/skirt/
+  sleeves set, and the orphaned derived_chest.glb.
+- Committed editor backups (`*.png~`), orphaned `.gd.uid` sidecars,
+  and art/audio orphaned by the 2D layer removal.
+
+## PR #13 — The generated armory *(merged)*
 
 ### Added
 - **Armor design language** (owner doctrine, spec:

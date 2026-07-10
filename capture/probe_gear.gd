@@ -1,6 +1,6 @@
 extends Node
 func _ready():
-	for gear in ["gear_shield", "gear_sword", "gear_boot", "gear_greave", "gear_bracer", "gear_gauntlet", "gear_leather_chest", "gear_robe"]:
+	for gear in ["gear_shield", "gear_sword", "gear_boot", "gear_greave", "gear_bracer", "gear_gauntlet"]:
 		var model = load("res://resources/models/%s.glb" % gear).instantiate()
 		add_child(model)
 		var aabb := AABB()

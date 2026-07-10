@@ -13,7 +13,7 @@ extends Node3D
 ## GEAR FITTER: the delver wears the full sculpted kit. Every piece
 ## has position/rotation/scale knobs under "Fit: ..." groups, applied
 ## live. Adjust until it sits right, toggle save_tuning, and the game
-## wears your fit. wear_robe swaps the chest for the cloth robe.
+## wears your fit. wear_jacket swaps the chest for the compiled jacket.
 ##
 ## - pose: which animation plays (authored poses and baked clips both)
 ## - scrub + playing: freeze at a moment or let it run
@@ -32,9 +32,9 @@ extends Node3D
 	var pose := "idle":
 	set(value):
 		pose = value
-@export var wear_robe := false:
+@export var wear_jacket := false:
 	set(value):
-		wear_robe = value
+		wear_jacket = value
 		if garrick:
 			_rebuild_actor()
 @export var playing := true
@@ -64,13 +64,6 @@ extends Node3D
 @export var chest_rot := Vector3.ZERO
 @export var chest_scale := 0.0
 @export_group("Fit: leather chest")
-@export var chest_leather_pos := Vector3.ZERO
-@export var chest_leather_rot := Vector3.ZERO
-@export var chest_leather_scale := 0.0
-@export_group("Fit: robe")
-@export var robe_pos := Vector3.ZERO
-@export var robe_rot := Vector3.ZERO
-@export var robe_scale := 0.0
 @export_group("Fit: belt")
 @export var belt_pos := Vector3.ZERO
 @export var belt_rot := Vector3.ZERO
@@ -127,7 +120,7 @@ func _rebuild_actor():
 		"off_gear": "starter_shield", "shoulders": true,
 		"shoulder_gear": "wardens_pauldrons",
 		"chest_plate": true,
-		"chest_gear": "showcase_robe" if wear_robe else "chitin_armor",
+		"chest_gear": "oiled_leathers" if wear_jacket else "chitin_armor",
 		"belt_trim": true, "belt_gear": "studded_belt",
 	}, true)
 	garrick = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
@@ -135,8 +128,6 @@ func _rebuild_actor():
 	for extra in ["iron_shod_boots", "iron_greaves", "silk_bracers",
 			"goblin_work_gauntlets"]:
 		garrick._mount_worn_model(extra)
-	if wear_robe:
-		garrick._mount_worn_model("showcase_robe")
 	_seed_fit_knobs()
 
 func _seed_fit_knobs():
@@ -195,7 +186,7 @@ func _save():
 	AnimatedActor._tuning_cache = null
 	print("TUNING SAVED to ", AnimatedActor.TUNING_PATH)
 
-const FITS := ["helm", "chest", "chest_leather", "robe", "belt", "pauldron",
+const FITS := ["helm", "chest", "belt", "pauldron",
 	"boot", "greave", "bracer", "gauntlet", "shield_m", "sword_m"]
 
 const JOINTS := {

@@ -148,9 +148,19 @@ static func hero_opts(equipped: Dictionary) -> Dictionary:
 	if equipped.get(Equip.Position.SHOULDER):
 		opts["shoulder_gear"] = equipped[Equip.Position.SHOULDER].gear_id
 	# Everything worn shows: shoulders, cloak, plate, belt, and the rest.
+	# gear_ids carries every worn id so fitted models mount by id; the
+	# color opts remain the procedural fallback for unfitted gear.
 	for pos in equipped:
 		var item = equipped[pos]
-		if item == null or not SLOT_WORN.has(item.slot):
+		if item == null:
+			continue
+		# Weapons mount through main_gear/off_gear with their own timing.
+		if item.slot in [GearDefinition.Slot.MAIN_HAND, GearDefinition.Slot.OFF_HAND]:
+			continue
+		if not opts.has("gear_ids"):
+			opts["gear_ids"] = []
+		opts["gear_ids"].append(item.gear_id)
+		if not SLOT_WORN.has(item.slot):
 			continue
 		var entry = SLOT_WORN[item.slot]
 		opts[entry[0]] = WORN_COLORS.get(item.gear_id, entry[1])

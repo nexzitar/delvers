@@ -82,10 +82,12 @@ the item.**
 
 ![The leather outfit](docs/screenshots/leather_outfit_lineup.png)
 
-*One grammar, two garments — jacket and trousers, compiled from the
-delver's own body: rolled sleeve, knee pads, thigh pouch and all. The
-recolor shader dyes each scheme's palette; the hardware keeps its
-leather and steel.*
+*Real items, compiled. Left: a day-one delver in the full zero-stat
+starter set (plain jacket, trousers, boots, gloves, belt). Then Oiled
+Leathers with crafted Leather Trousers, and the same meshes re-dyed —
+the recolor lever on identical construction. Fresh recruits still
+arrive without trousers; the guild has issued them ever since the
+founder was recovered from a hedge maze wearing nothing at all.*
 
 ## Features
 
