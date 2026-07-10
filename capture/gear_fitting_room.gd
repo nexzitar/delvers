@@ -73,15 +73,18 @@ func _save():
 	var fits := {}
 	for fit_key in actor.worn_mounts:
 		var pieces: Array = actor.worn_mounts[fit_key]
-		if pieces.is_empty() or not is_instance_valid(pieces[0]):
-			continue
-		var piece = pieces[0]
-		fits[fit_key] = {
-			"position": [piece.position.x, piece.position.y, piece.position.z],
-			"rotation": [piece.rotation_degrees.x, piece.rotation_degrees.y,
-				piece.rotation_degrees.z],
-			"scale": piece.scale.x,
-		}
+		var saved := []
+		for piece in pieces:
+			if not is_instance_valid(piece):
+				continue
+			saved.append({
+				"position": [piece.position.x, piece.position.y, piece.position.z],
+				"rotation": [piece.rotation_degrees.x, piece.rotation_degrees.y,
+					piece.rotation_degrees.z],
+				"scale": [piece.scale.x, piece.scale.y, piece.scale.z],
+			})
+		if not saved.is_empty():
+			fits[fit_key] = {"pieces": saved}
 	var tuning = AnimatedActor._load_tuning().duplicate(true)
 	tuning["fits"] = fits
 	var file = FileAccess.open(AnimatedActor.TUNING_PATH, FileAccess.WRITE)

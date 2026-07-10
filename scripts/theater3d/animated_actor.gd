@@ -30,11 +30,11 @@ const GEAR_FITS := {
 		"position": Vector3(0, 0.055, 0),
 		"rotation": Vector3(0, 90, 0), "scale": 0.24},
 	"boot": {"path": "res://resources/models/gear_boot.glb",
-		"pair_bones": ["L_Foot", "R_Foot"],
+		"pair_bones": ["L_Foot", "R_Foot"], "mirror": "none",
 		"position": Vector3(0, 0.04, -0.02),
 		"rotation": Vector3(0, 180, 0), "scale": 0.2},
 	"greave": {"path": "res://resources/models/gear_greave.glb",
-		"pair_bones": ["L_Calf", "R_Calf"],
+		"pair_bones": ["L_Calf", "R_Calf"], "mirror": "none",
 		"position": Vector3(0, 0.12, -0.02),
 		"rotation": Vector3(0, 180, 0), "scale": 0.3},
 	"bracer": {"path": "res://resources/models/gear_bracer.glb",
@@ -388,20 +388,28 @@ func _mount_worn_model(gear_id: String) -> bool:
 	if not ResourceLoader.exists(fit.path):
 		return false
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
+	var saved_pieces: Array = tuning.get("fits", {}).get(entry.fit, {}).get("pieces", [])
 	for i in bones.size():
 		var mount = _attach(bones[i])
 		var piece = load(fit.path).instantiate()
-		piece.position = fit.position
-		piece.rotation_degrees = fit.rotation
-		piece.scale = Vector3.ONE * fit.scale
-		if i == 1:
-			# The mirrored side is a true reflection: a right glove
-			# becomes a left one. Culling flips with the winding, so
-			# the mirrored piece renders both faces.
-			piece.scale.x = -piece.scale.x
-			piece.rotation_degrees.y = -piece.rotation_degrees.y
-			piece.rotation_degrees.z = -piece.rotation_degrees.z
-			piece.position.x = -piece.position.x
+		if i < saved_pieces.size():
+			# Owner-fitted in the Fitting Room: applied verbatim, both
+			# sides independent, negative/non-uniform scale preserved.
+			var saved = saved_pieces[i]
+			piece.position = _vec(saved.position)
+			piece.rotation_degrees = _vec(saved.rotation)
+			piece.scale = _vec(saved.scale)
+		else:
+			piece.position = fit.position
+			piece.rotation_degrees = fit.rotation
+			piece.scale = Vector3.ONE * fit.scale
+			if i == 1 and fit.get("mirror", "reflect") == "reflect":
+				# Chiral default: a right glove becomes a left one.
+				piece.scale.x = -piece.scale.x
+				piece.rotation_degrees.y = -piece.rotation_degrees.y
+				piece.rotation_degrees.z = -piece.rotation_degrees.z
+				piece.position.x = -piece.position.x
+		if piece.scale.x < 0.0:
 			_disable_cull(piece)
 		mount.add_child(piece)
 		if not worn_mounts.has(entry.fit):

@@ -164,6 +164,11 @@ func _run_all():
 		"sword_m": {"position": [0.01, 0.07, -0.02], "rotation": [-70, 12, -5], "scale": 0.44},
 		"helm": {"position": [0, 0.09, -0.02], "rotation": [3, 180, 0], "scale": 0.26},
 	}
+	# Per-piece verbatim fits: both sides independent, signs preserved.
+	var boots_fit = {"boot": {"pieces": [
+		{"position": [0.01, 0.05, -0.02], "rotation": [0, 175, 0], "scale": [0.2, 0.26, 0.24]},
+		{"position": [-0.01, 0.05, -0.02], "rotation": [0, 185, 0], "scale": [-0.2, 0.26, 0.24]},
+	]}}
 	# Re-dress from tuning (what rebuild does) and pose (what reverted the sword).
 	var fresh = AnimatedActor.new(load("res://resources/models/delver_male.glb"), room_config)
 	fresh.tuning = fitted.tuning.duplicate(true)
@@ -171,6 +176,13 @@ func _run_all():
 	fresh.worn_mounts.clear()
 	fresh._mount_worn_model("starter_sword")
 	fresh.pose_idle(0.0)
+	fresh.tuning["fits"].merge(boots_fit)
+	fresh._mount_worn_model("iron_shod_boots")
+	var right_boot = fresh.worn_mounts["boot"][1]
+	assert(right_boot.scale.is_equal_approx(Vector3(-0.2, 0.26, 0.24)),
+		"the owner's per-piece scale survives, sign and all")
+	assert(right_boot.rotation_degrees.is_equal_approx(Vector3(0, 185, 0)),
+		"each side keeps its own rotation")
 	var sword_piece = fresh.worn_mounts["sword_m"][0]
 	assert(sword_piece.rotation_degrees.is_equal_approx(Vector3(-70, 12, -5)),
 		"the sword keeps the owner's grip through a pose")
