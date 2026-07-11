@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Loadout totals**: the hero panel now sums the whole loadout -
+  HP, armor, mana, block/dodge/crit, spell power, poison resist, and
+  the worn armor-type counts - so three new pieces show up as
+  numbers, not vibes.
+- **Full stat-delta compare**: hovering a piece lists exactly what
+  would change if equipped - green gains, red losses, armor-type
+  changes called out.
+- **A lament for the fallen**: on defeat the stems fade out first,
+  the sting lands in silence, and a short cello lament plays under
+  the summary (the sting was drowning in its own music).
 - **MUSIC STEMS (Eleven Music trial)**: the audio grammar's runtime
   half arrives. Three Darkwood stems - explore (low cello and harp),
   combat (taiko and string stabs), boss (low choir and war drums) -
@@ -183,6 +193,12 @@ Notable changes per pull request. Newest first.
   fitted model covers the region.
 
 ### Changed
+- The old combat theme no longer leaks in during dungeon compilation
+  (stopped before the sim, restored only for themes without stems).
+- Loot toasts replace each other and fade out after a few seconds
+  (they used to stack forever in continuous delves).
+- Dead enemies fade off the roster after a few seconds; the damage
+  meter keeps their line.
 - Starter/oiled palettes tuned darker and lower-contrast so the
   recolor classifier's texture noise stays invisible (per-piece
   material slots from the engine are the recorded proper fix).

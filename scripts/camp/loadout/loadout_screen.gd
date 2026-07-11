@@ -49,6 +49,7 @@ var hero_index := -1
 # Rebuilt containers kept around for refresh().
 var _name_edit: LineEdit
 var _role_label: Label
+var _totals_box: VBoxContainer
 var _mastery_box: VBoxContainer
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
@@ -255,6 +256,11 @@ func _build_left_panel():
 	_role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_role_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_role_label)
+
+	_totals_box = VBoxContainer.new()
+	_totals_box.add_theme_constant_override("separation", 1)
+	_totals_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(_totals_box)
 
 	# Mastery: the delver's history in stars — filled current, hollow
 	# gold dormant, dim empty.
@@ -1197,6 +1203,7 @@ func refresh():
 	for pos in _equip_slots.keys():
 		_fill_equip_slot(pos)
 	_fill_skill_slots()
+	_fill_totals()
 	_fill_mastery()
 	_fill_gear_grid()
 	_fill_forge()
@@ -1558,6 +1565,43 @@ func _fill_gear_compare(gear: GearDefinition):
 			_tip_cmp_line("Currently", equipped)
 		else:
 			_tip_cmp("Slot is empty", DIM, 16)
+		if equipped != gear:
+			_tip_cmp_deltas(gear, equipped)
+
+## The honest arithmetic: every stat that would change if this piece
+## replaced what's worn, green for gains, red for losses.
+func _tip_cmp_deltas(candidate: GearDefinition, equipped: GearDefinition):
+	var stats := [
+		["Health", "health_bonus", 1.0, ""],
+		["Attack", "attack_bonus", 1.0, ""],
+		["Armor", "armor", 1.0, ""],
+		["Block", "block_rating", 100.0, "%"],
+		["Dodge", "dodge_rating", 100.0, "%"],
+		["Crit", "crit_rating", 100.0, "%"],
+		["Spell Power", "spell_power", 1.0, ""],
+		["Poison Res", "poison_resist", 100.0, "%"],
+	]
+	var lines := []
+	for spec in stats:
+		var was = equipped.get(spec[1]) if equipped else 0
+		var delta = (candidate.get(spec[1]) - was) * spec[2]
+		if absf(delta) < 0.5:
+			continue
+		lines.append(["%s%d%s %s" % [
+			"+" if delta > 0 else "", roundi(delta), spec[3], spec[0]],
+			delta > 0])
+	var was_type = equipped.armor_type if equipped else ""
+	if candidate.armor_type != was_type and (candidate.armor_type != "" or was_type != ""):
+		lines.append(["Type: %s -> %s" % [
+			was_type if was_type != "" else "none",
+			candidate.armor_type if candidate.armor_type != "" else "none"],
+			null])
+	if lines.is_empty():
+		return
+	_tip_cmp("If equipped:", GOLD, 18)
+	for entry in lines:
+		var color = PARCHMENT if entry[1] == null 			else Color(0.55, 0.85, 0.5) if entry[1] else Color(0.9, 0.45, 0.4)
+		_tip_cmp("  " + entry[0], color, 17)
 
 func _tip_cmp_line(label: String, item: GearDefinition, is_weapon := false):
 	if item == null:
@@ -1591,6 +1635,69 @@ func _gear_subtitle(gear: GearDefinition) -> String:
 		GearDefinition.WeaponType.BOW:
 			return "%s - Bow (ranged)" % slot_name
 	return slot_name
+
+## Aggregate combat stats for a loadout - the same sums the sim
+## performs at setup, armor-type passives included.
+static func loadout_totals(hero) -> Dictionary:
+	var t := {"health": hero.base_health, "armor": 0, "block": 0.0,
+		"dodge": 0.0, "crit": 0.0, "spell_power": 0,
+		"poison_resist": 0.0, "mana": hero.base_mana,
+		"plate": 0, "leather": 0, "cloth": 0}
+	for item in hero.equipped.values():
+		t.health += item.health_bonus
+		t.armor += item.armor
+		t.block += item.block_rating
+		t.dodge += item.dodge_rating
+		t.crit += item.crit_rating
+		t.spell_power += item.spell_power
+		t.poison_resist += item.poison_resist
+		match item.armor_type:
+			"plate":
+				t.plate += 1
+				t.dodge -= 0.015
+			"leather":
+				t.leather += 1
+				t.crit += 0.01
+			"cloth":
+				t.cloth += 1
+				t.mana += 2
+				t.spell_power += 1
+	return t
+
+func _fill_totals():
+	_clear(_totals_box)
+	var hero = PlayerRoster.heroes[hero_index]
+	var t = loadout_totals(hero)
+	var line1 := "%d HP    %d Armor    %d Mana" % [t.health, t.armor, t.mana]
+	var parts := []
+	if t.block > 0.0:
+		parts.append("%d%% Block" % roundi(t.block * 100))
+	if t.dodge != 0.0:
+		parts.append("%d%% Dodge" % roundi(t.dodge * 100))
+	if t.crit > 0.0:
+		parts.append("%d%% Crit" % roundi(t.crit * 100))
+	if t.spell_power > 0:
+		parts.append("+%d SP" % t.spell_power)
+	if t.poison_resist > 0.0:
+		parts.append("%d%% Poison Res" % roundi(t.poison_resist * 100))
+	var worn := []
+	if t.plate > 0:
+		worn.append("%d plate" % t.plate)
+	if t.leather > 0:
+		worn.append("%d leather" % t.leather)
+	if t.cloth > 0:
+		worn.append("%d cloth" % t.cloth)
+	for text in [line1, "    ".join(parts), ", ".join(worn)]:
+		if text == "":
+			continue
+		var l := Label.new()
+		l.text = text
+		l.add_theme_font_override("font", FONT)
+		l.add_theme_font_size_override("font_size", 16)
+		l.add_theme_color_override("font_color", DIM)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_totals_box.add_child(l)
 
 func _stat_summary(gear: GearDefinition) -> String:
 	var parts = []

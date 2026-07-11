@@ -131,6 +131,17 @@ func mark_dead(entity_id):
 	set_health(entity_id, 0, unit_rows[entity_id].hp_bar.max_value)
 	unit_rows[entity_id].row.modulate = DEAD_TINT
 
+## The fallen linger a moment, then fade off the roster (the damage
+## meter keeps their line - credit outlives the corpse).
+func remove_unit(entity_id):
+	if not unit_rows.has(entity_id):
+		return
+	var row = unit_rows[entity_id].row
+	unit_rows.erase(entity_id)
+	var fade := create_tween()
+	fade.tween_property(row, "modulate:a", 0.0, 0.7)
+	fade.tween_callback(row.queue_free)
+
 func add_damage(entity_id, amount, sim_time):
 
 	damage_totals[entity_id] = damage_totals.get(entity_id, 0) + amount

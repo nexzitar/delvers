@@ -151,6 +151,12 @@ var _room_reached := 1
 
 func _ready():
 	get_viewport().msaa_3d = Viewport.MSAA_4X
+	if forced_arena_path == "":
+		# The stems own the delve; the old theme must not leak in
+		# while the sim compiles the dungeon.
+		var old_music = get_node_or_null("Music")
+		if old_music:
+			old_music.stop()
 
 	var room = maxi(1, PlayerRoster.delve_room)
 
@@ -560,6 +566,12 @@ func _play_heal(event):
 
 func _play_death(event):
 	call_deferred("_music_update")
+	if actors.get(event.entity_id, {}).get("team", -1) == CombatEntity.Team.ENEMY:
+		var linger := get_tree().create_timer(7.0)
+		linger.timeout.connect(func():
+			var bar = sidebars_by_entity.get(event.entity_id)
+			if bar:
+				bar.remove_unit(event.entity_id))
 	var dead_state = actors.get(event.entity_id)
 	if dead_state:
 		match dead_state.get("family", ""):
@@ -735,10 +747,10 @@ func _setup_stems():
 		return
 	var base = "res://audio/music/%s_" % stem_theme
 	if not ResourceLoader.exists(base + "explore.mp3"):
+		var old_music = get_node_or_null("Music")
+		if old_music:
+			old_music.play()
 		return
-	var old_music = get_node_or_null("Music")
-	if old_music:
-		old_music.stop()
 	for stem in ["explore", "combat", "boss"]:
 		var path = base + stem + ".mp3"
 		if not ResourceLoader.exists(path):
@@ -1261,11 +1273,16 @@ func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: 
 	return entries
 
 ## Brief bottom-center spoils toast; the delve marches on by itself.
+var _toast_layer: CanvasLayer = null
+
 func _show_room_toast(room: int, entries: Array):
 	_sfx("loot_toast", -6.0)
+	if is_instance_valid(_toast_layer):
+		_toast_layer.queue_free()
 	var layer := CanvasLayer.new()
 	layer.layer = 12
 	add_child(layer)
+	_toast_layer = layer
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.05, 0.045, 0.06, 0.92)
@@ -1309,6 +1326,11 @@ func _show_room_toast(room: int, entries: Array):
 	panel.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(panel, "modulate:a", 1.0, 0.35)
+	tween.tween_interval(4.2)
+	tween.tween_property(panel, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(func():
+		if is_instance_valid(layer):
+			layer.queue_free())
 
 ## Final spoils screen: everything gathered this delve, then camp.
 func _show_summary(title: String, subtitle: String):
@@ -1330,7 +1352,27 @@ func _bank_and_return():
 	SceneFlow.change_scene("res://scenes/camp/camp.tscn")
 
 func _show_battle_result(victory):
-	_sfx("victory_sting" if victory else "defeat_sting", -5.0)
+	if not victory:
+		for stem in _stem_players:
+			var fade := create_tween()
+			fade.tween_property(_stem_players[stem], "volume_db", -60.0, 0.5)
+		var old_music = get_node_or_null("Music")
+		if old_music and old_music.playing:
+			var fade_old := create_tween()
+			fade_old.tween_property(old_music, "volume_db", -60.0, 0.5)
+		await get_tree().create_timer(0.7).timeout
+		_sfx("defeat_sting", -4.0)
+		var lament_path := "res://audio/music/defeat_theme.mp3"
+		if ResourceLoader.exists(lament_path):
+			var lament := AudioStreamPlayer.new()
+			lament.stream = load(lament_path)
+			lament.bus = "Music"
+			lament.volume_db = -5.0
+			add_child(lament)
+			var start := get_tree().create_timer(1.6)
+			start.timeout.connect(func(): lament.play())
+	else:
+		_sfx("victory_sting", -5.0)
 	var layer = CanvasLayer.new()
 	layer.layer = 10
 	add_child(layer)
