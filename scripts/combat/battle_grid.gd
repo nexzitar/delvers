@@ -8,6 +8,21 @@ func _init(arena):
 	for t in arena.blocked_tiles:
 		_blocked[t] = true
 
+const MAX_STEP := 0.34
+## Head height for sightlines: a ridge must rise this far above both
+## ends to hide one from the other.
+const EYE_LEVEL := 0.6
+
+func height_of(cell: Vector2i) -> float:
+	return _arena.heights.get(cell, 0.0)
+
+func height_at_world(p: Vector2) -> float:
+	return height_of(world_to_tile(p))
+
+## A step is walkable only if it is gentle: ramps yes, ledges no.
+func step_ok(from_cell: Vector2i, to_cell: Vector2i) -> bool:
+	return absf(height_of(from_cell) - height_of(to_cell)) <= MAX_STEP
+
 func is_walkable(cell: Vector2i) -> bool:
 	if cell.x < 0 or cell.y < 0 or cell.x >= _arena.width or cell.y >= _arena.height:
 		return false
@@ -57,8 +72,12 @@ func tile_to_world(cell: Vector2i) -> Vector2:
 func has_los(from: Vector2, to: Vector2) -> bool:
 	var a = world_to_tile(from)
 	var b = world_to_tile(to)
+	var eye = maxf(height_of(a), height_of(b)) + EYE_LEVEL
 	for cell in _bresenham(a, b):
 		if _blocked.has(cell):
+			return false
+		# Terrain occludes: ground higher than both heads is a wall.
+		if height_of(cell) > eye:
 			return false
 	return true
 

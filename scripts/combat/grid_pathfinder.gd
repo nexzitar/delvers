@@ -37,6 +37,8 @@ func find_path(from_cell: Vector2i, to_cell: Vector2i, occupied := {}) -> Packed
 			return _reconstruct_path(came_from, current)
 
 		for neighbor in _neighbors(current):
+			if not _grid.step_ok(current, neighbor):
+				continue
 			if not _grid.is_walkable(neighbor):
 				continue
 			var tentative = g_score.get(current, INF) + 1.0 \

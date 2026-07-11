@@ -2,6 +2,25 @@
 
 Notable changes per pull request. Newest first.
 
+## Phase B — The Heightfield *(open)*
+
+### Added
+- **ELEVATION**: the delve descends - the Broken Gate stands highest
+  and the boss lair waits at the bottom. Every tile carries a height;
+  corridors between levels become RAMPS (graded over their fresh
+  ground so room mouths never cliff); a ledge is a wall to
+  pathfinding; and terrain occludes sightlines - a ridge higher than
+  both heads hides the far side. The theater renders raised ground
+  as stepped stone, and everything - actors, props, arches,
+  landmarks, telegraphs - stands on its floor.
+- **test_elevation** pins the contracts: ledges block, ramps carry,
+  ridges hide, the compiled descent stays walkable end to end, and
+  an elevated Darkwood delve terminates.
+- **Dagger mastery**: a dagger in the main hand trains its own
+  discipline (Hamstring, Find the Gap, Flurry, Red Ribbons) via the
+  new GearDefinition.weapon_family - Bram's rare blade earns its
+  keep. Pairs with Dual Wield.
+
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
