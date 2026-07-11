@@ -74,6 +74,21 @@ static func _render(key: String, rig: Node3D, host: Node) -> Texture2D:
 		camera.look_at_from_position(
 			camera.position, Vector3(0, 0.26 * rig.scale.y, 0)
 		)
+	elif rig is AnimatedActor:
+		# Chibi models carry huge heads: aim at the face, a third of
+		# a head below the crown.
+		var top := 0.0
+		var stack := [rig]
+		while not stack.is_empty():
+			var n = stack.pop_back()
+			if n is MeshInstance3D:
+				var b: AABB = n.get_aabb()
+				top = maxf(top, b.end.y)
+			stack.append_array(n.get_children())
+		top *= rig.scale.y
+		var face_y = top * 0.8
+		camera.position = Vector3(0, face_y + 0.04, top * 0.62)
+		camera.look_at_from_position(camera.position, Vector3(0, face_y, 0))
 	else:
 		var head_y = 0.9 * rig.scale.y
 		camera.position = Vector3(0, head_y + 0.06, 0.98 * rig.scale.y)

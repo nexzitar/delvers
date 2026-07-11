@@ -507,11 +507,12 @@ func _play_cast_start(event):
 	state.target_id = event.target_id
 	var queue = _cast_durations.get(event.source_id, [])
 	var duration = queue.pop_front() if not queue.is_empty() else 0.3
-	if state.rig is DelverRig:
+	if state.rig is DelverRig or state.rig.has_method("pose_shoot"):
 		state.mode = "shoot"
 		state.anim_t = 0.0
 		# Scale the pose so the arrow releases exactly at CAST_FINISH.
-		state.anim_speed = (0.62 * DelverRig.SHOOT_T) / duration
+		state.anim_speed = (0.62 * DelverRig.SHOOT_T) / duration \
+			if state.rig is DelverRig else 0.8 / maxf(duration, 0.1)
 		var target = actors.get(event.target_id)
 		if target:
 			state.shoot_dist = (

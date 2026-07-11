@@ -287,6 +287,22 @@ static func _place_packs(layout: DungeonLayout, dungeon: DungeonDefinition,
 			layout.packs.append({"room": room_no, "center": center,
 				"templates": elite_pack, "elite": true, "link": -1})
 			continue
+		# The opening is scripted, not rolled: room two fields exactly
+		# the farmable pair, room three adds one. A new delver's first
+		# fight is a lesson, never an ambush.
+		if room_no == 2:
+			layout.packs.append({"room": room_no, "center": center,
+				"templates": dungeon.guaranteed.duplicate(), "elite": false,
+				"link": -1})
+			continue
+		if room_no == 3:
+			var opening = dungeon.guaranteed.duplicate()
+			opening.append_array(_roll(dungeon, room_no, rng,
+				-(opening.size() + 1)))
+			layout.packs.append({"room": room_no, "center": center,
+				"templates": opening.slice(0, 3), "elite": false,
+				"link": -1})
+			continue
 		var two = rooms[i].size.x >= 11 and rng.randf() < 0.45
 		var linked = two and rng.randf() < 0.5
 		var link_id = -1

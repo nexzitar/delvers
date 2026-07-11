@@ -5,6 +5,10 @@ Notable changes per pull request. Newest first.
 ## Phase B — The Heightfield *(open)*
 
 ### Added
+- **A scripted opening**: room two always fields exactly the
+  dungeon's farmable pair (Darkwood: one warrior, one slime) and
+  room three adds a single body - the first fights are lessons,
+  never five-enemy ambushes. The dice start rolling in room four.
 - **Save slots** (Options menu): three slots with Store/Load - stash
   the current guild away, test any stage of the game, bring it back.
   Loading a slot copies it over the active save and reloads the camp.
@@ -16,6 +20,13 @@ Notable changes per pull request. Newest first.
   Piercing Shot.
 
 ### Changed
+- Archers DRAW now: the cast wind-up pose was gated to procedural
+  rigs only - every modeled rig (Wren and the goblins) skipped it.
+  Any rig that can pose_shoot draws before the arrow flies.
+- Portraits frame the face from the mesh's actual crown - goblin
+  portraits show goblins, not foreheads.
+- The shield grip resolved by lineup probe (four candidate rotations
+  rendered side by side): face out, guarding the flank.
 - Goblin warriors hold their shields properly: the procedural shield
   mounts through the socket system (shield_arm socket + shield_p
   grip) instead of delver-tuned fallback numbers.
