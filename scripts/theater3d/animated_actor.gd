@@ -161,6 +161,9 @@ var _shield_prop: Node3D
 var _sword_node: Node3D
 ## fit_key -> [mounted piece nodes], for live fitting in the Animator.
 var worn_mounts := {}
+## grip_key -> prop node, for socket-mounted built weapons (sword_p,
+## shield_p, bow_p) - the Socket Workshop edits these live.
+var prop_mounts := {}
 ## Named body parts (Hair/Feet/Hands), hidden by the gear that covers
 ## them - the surgery lives in the GLBs, split via Blender.
 var _body_parts := {}
@@ -553,6 +556,7 @@ func _socket_mount_node(node: Node3D, grip_key: String, default_scale := 1.0) ->
 	node.position = _vec(socket.position) - node.basis * _vec(grip.position)
 	node.set_meta("mount_transform", node.transform)
 	mount.add_child(node)
+	prop_mounts[grip_key] = node
 	return true
 
 func fit_for(fit_key: String) -> Dictionary:

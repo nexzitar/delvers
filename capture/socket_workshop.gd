@@ -2,8 +2,9 @@
 extends Node3D
 
 ## THE SOCKET WORKSHOP: open this scene IN THE EDITOR (double-click
-## socket_workshop.tscn - do NOT run it). Garrick stands with sword
-## and shield. Two families of markers appear in the Scene dock:
+## socket_workshop.tscn - do NOT run it). Pick a SUBJECT in the
+## inspector (delver, goblin_warrior, goblin_archer) and it stands
+## with its weapons. Two families of markers appear in the Scene dock:
 ##
 ##   SOCKET_<name>  - a point on the BODY (grip_main in the right
 ##                    palm, grip_off in the left, back between the
@@ -26,10 +27,19 @@ extends Node3D
 const DEFAULT_SOCKETS := {
 	"grip_main": "R_Hand",
 	"grip_off": "L_Hand",
+	"shield_arm": "L_Forearm",
 	"back": "Spine02",
 	"hip_l": "Waist",
 	"hip_r": "Waist",
 }
+
+## Which body stands for fitting. Goblins hold the procedural sword
+## and shield through sword_p / shield_p grips.
+@export_enum("delver", "goblin_warrior", "goblin_archer") var subject := "delver":
+	set(value):
+		subject = value
+		if is_inside_tree():
+			_build()
 
 @export var rebuild := false:
 	set(value):
@@ -57,10 +67,17 @@ func _build():
 	_socket_markers.clear()
 	_grip_markers.clear()
 	AnimatedActor._tuning_cache = null
-	var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
-	config.merge({"sword": true, "shield": true,
-		"main_gear": "starter_sword", "off_gear": "starter_shield"}, true)
-	actor = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
+	var model_paths := {
+		"delver": "res://resources/models/delver_male.glb",
+		"goblin_warrior": "res://resources/models/goblin_warrior_m.glb",
+		"goblin_archer": "res://resources/models/goblin_archer_m.glb",
+	}
+	var model_path: String = model_paths[subject]
+	var config = ActorFactory3D.MODEL_CONFIGS[model_path].duplicate(true)
+	if subject == "delver":
+		config.merge({"sword": true, "shield": true,
+			"main_gear": "starter_sword", "off_gear": "starter_shield"}, true)
+	actor = AnimatedActor.new(load(model_path), config)
 	actor.name = "WorkshopActor"
 	add_child(actor)
 	actor.pose_idle(0.0)
@@ -84,17 +101,26 @@ func _build():
 	for fit_key in actor.worn_mounts:
 		if not GEAR_GRIP_SOCKETS.has(fit_key):
 			continue
-		var piece = actor.worn_mounts[fit_key].back()
-		var marker := Marker3D.new()
-		marker.name = "GRIP_" + fit_key
-		marker.gizmo_extents = 0.35
-		piece.add_child(marker)
-		var saved = saved_grips.get(fit_key, {})
-		if saved.has("position"):
-			marker.position = actor._vec(saved.position)
-			marker.rotation_degrees = actor._vec(saved.rotation)
-		_grip_markers[fit_key] = marker
-		_own(marker, root)
+		_add_grip_marker(fit_key, actor.worn_mounts[fit_key].back(),
+			saved_grips, root)
+	# Procedural weapons (goblin sword and shield, the bow) fit the
+	# same way: their grips live on prop_mounts.
+	for grip_key in actor.prop_mounts:
+		_add_grip_marker(grip_key, actor.prop_mounts[grip_key],
+			saved_grips, root)
+
+func _add_grip_marker(grip_key: String, piece: Node3D,
+		saved_grips: Dictionary, root: Node):
+	var marker := Marker3D.new()
+	marker.name = "GRIP_" + grip_key
+	marker.gizmo_extents = 0.35
+	piece.add_child(marker)
+	var saved = saved_grips.get(grip_key, {})
+	if saved.has("position"):
+		marker.position = actor._vec(saved.position)
+		marker.rotation_degrees = actor._vec(saved.rotation)
+	_grip_markers[grip_key] = marker
+	_own(marker, root)
 
 ## Which socket each grippable fit hangs from. Add a fit here and
 ## rebuild to start fitting its grip.
@@ -131,7 +157,8 @@ func _save():
 		if not is_instance_valid(marker):
 			continue
 		grips[fit_key] = {
-			"socket": GEAR_GRIP_SOCKETS[fit_key],
+			"socket": GEAR_GRIP_SOCKETS.get(fit_key,
+				actor.tuning.get("grips", {}).get(fit_key, {}).get("socket", "grip_main")),
 			"position": [marker.position.x, marker.position.y, marker.position.z],
 			"rotation": [marker.rotation_degrees.x, marker.rotation_degrees.y,
 				marker.rotation_degrees.z],
