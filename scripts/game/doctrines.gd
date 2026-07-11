@@ -24,11 +24,13 @@ const ALL := {
 		"name": "Protect the Healer",
 		"tome": "Doctrine of the Warding Hand",
 		"lore": "The one who mends is the one they hunt. Stand where the hunt must pass.",
+		"min_party": 2,
 	},
 	"guard": {
 		"name": "Guard the Line",
 		"tome": "Doctrine of the Shield-Line",
 		"lore": "Strike the one who is not looking at you, until every one of them is.",
+		"min_party": 2,
 	},
 	"skirmish": {
 		"name": "Skirmisher's Step",

@@ -80,7 +80,7 @@ static func roll_enemy_drops(
 		enemy_templates: Array, room: int,
 		known_recipes := [], known_affixes := [], known_lore := [],
 		dungeon: DungeonDefinition = null, unlocked_dungeons := [],
-		tier := 1, known_doctrines := [],
+		tier := 1, known_doctrines := [], party_size := 99,
 ) -> Dictionary:
 	var drops := {"materials": {}, "recipes": [], "affixes": [], "gear": [],
 		"lore": [], "maps": [], "doctrines": []}
@@ -130,9 +130,14 @@ static func roll_enemy_drops(
 				seen_affixes.append(affix_id)
 
 		# Doctrines: battlefield knowledge, taught by its practitioners.
+		# A doctrine about protecting allies waits until there IS an
+		# ally - the Shield-Line means nothing to a delver alone.
 		if randf() <= template.doctrine_drop_chance:
 			var unknown_doctrines = template.doctrine_loot.filter(
-				func(id): return not seen_doctrines.has(id)
+				func(id):
+					if seen_doctrines.has(id):
+						return false
+					return party_size >= Doctrines.ALL.get(id, {}).get("min_party", 1)
 			)
 			if not unknown_doctrines.is_empty():
 				var doctrine_id = unknown_doctrines[0]

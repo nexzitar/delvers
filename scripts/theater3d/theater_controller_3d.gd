@@ -1019,7 +1019,8 @@ func _bank_pack(event):
 		dungeon(),
 		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps,
 		PlayerRoster.current_tier,
-		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines
+		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines,
+		PlayerRoster.heroes.size()
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:
@@ -1129,7 +1130,8 @@ func _finish_battle():
 		dungeon(),
 		PlayerRoster.unlocked_dungeons + PlayerRoster.delve_maps,
 		PlayerRoster.current_tier,
-		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines
+		PlayerRoster.known_tactics + PlayerRoster.delve_doctrines,
+		PlayerRoster.heroes.size()
 	)
 	PlayerRoster.delve_loot.append_array(found.gear)
 	for material_id in found.materials:

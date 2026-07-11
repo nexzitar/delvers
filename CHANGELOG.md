@@ -5,6 +5,10 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Stat and mastery tooltips**: every stat row and mastery row in
+  the hero panel explains itself on hover - what armor actually
+  does, what blocks, what rusts and what never fades, and each
+  discipline's full star track with unlocks marked green.
 - **Loadout totals**: the hero panel now sums the whole loadout -
   HP, armor, mana, block/dodge/crit, spell power, poison resist, and
   the worn armor-type counts - so three new pieces show up as
@@ -193,6 +197,13 @@ Notable changes per pull request. Newest first.
   fitted model covers the region.
 
 ### Changed
+- The hero panel lays out like a character sheet: mastery stars on
+  the left, the stat table (name left, value right) on the right,
+  armor-type census below.
+- **Fixed: the Shield-Line no longer drops for a lone delver** -
+  doctrines about protecting allies (guard, protect) declare
+  min_party and the loot roll honors the real roster size. "You're
+  not alone anymore" comes first; the tome waits.
 - The old combat theme no longer leaks in during dungeon compilation
   (stopped before the sim, restored only for themes without stems).
 - Loot toasts replace each other and fade out after a few seconds
