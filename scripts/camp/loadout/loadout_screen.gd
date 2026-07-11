@@ -49,6 +49,7 @@ var hero_index := -1
 # Rebuilt containers kept around for refresh().
 var _name_edit: LineEdit
 var _role_label: Label
+var _totals_box: VBoxContainer
 var _mastery_box: VBoxContainer
 var _equip_slots := {}        # Equip.Position -> DropTarget panel
 var _skill_slots := []        # skill DropTarget panels (attack + unlocked bonus)
@@ -256,19 +257,37 @@ func _build_left_panel():
 	_role_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_role_label)
 
-	# Mastery: the delver's history in stars — filled current, hollow
-	# gold dormant, dim empty.
+	# Under the role line: mastery stars on the left, the loadout's
+	# stat table on the right. Every row explains itself on hover.
+	var under := HBoxContainer.new()
+	under.add_theme_constant_override("separation", 18)
+	under.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(under)
+
+	var left_col := VBoxContainer.new()
+	left_col.add_theme_constant_override("separation", 8)
+	left_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	under.add_child(left_col)
+
 	_mastery_box = VBoxContainer.new()
 	_mastery_box.add_theme_constant_override("separation", 2)
 	_mastery_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(_mastery_box)
+	left_col.add_child(_mastery_box)
 
-	# Weapon row.
+	_totals_box = VBoxContainer.new()
+	_totals_box.add_theme_constant_override("separation", 1)
+	_totals_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_totals_box.custom_minimum_size = Vector2(210, 0)
+	_totals_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	under.add_child(_totals_box)
+
+	# Weapon row, beneath the stars in the left column.
 	var weapons = HBoxContainer.new()
 	weapons.alignment = BoxContainer.ALIGNMENT_CENTER
 	weapons.add_theme_constant_override("separation", 14)
 	weapons.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(weapons)
+	left_col.add_child(weapons)
 	for pos in Equip.WEAPON_ROW:
 		weapons.add_child(_build_equip_slot(pos))
 
@@ -1197,6 +1216,7 @@ func refresh():
 	for pos in _equip_slots.keys():
 		_fill_equip_slot(pos)
 	_fill_skill_slots()
+	_fill_totals()
 	_fill_mastery()
 	_fill_gear_grid()
 	_fill_forge()
@@ -1216,7 +1236,12 @@ func _fill_mastery():
 		var row = HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 2)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.mouse_filter = Control.MOUSE_FILTER_STOP
+		var hover_discipline: String = discipline
+		var hover_stars: int = current
+		row.mouse_entered.connect(func(): show_tooltip("mastery",
+			{"discipline": hover_discipline, "stars": hover_stars}))
+		row.mouse_exited.connect(_refresh_forge_tooltip)
 		var name_label = Label.new()
 		name_label.text = Mastery.DISCIPLINES[discipline].name
 		name_label.add_theme_font_override("font", FONT)
@@ -1435,6 +1460,10 @@ func show_tooltip(kind, res):
 
 	if kind == "gear":
 		_tooltip_gear(res)
+	elif kind == "stat":
+		_tooltip_stat(res)
+	elif kind == "mastery":
+		_tooltip_mastery(res)
 	elif kind == "affix":
 		_tooltip_affix(res)
 	elif kind == "skill":
@@ -1526,6 +1555,36 @@ func _tooltip_gear(gear: GearDefinition):
 
 	_fill_gear_compare(gear)
 
+func _tooltip_stat(res: Dictionary):
+	_tip_line(res.name, GOLD, 26, 0)
+	_tip_line(res.desc, PARCHMENT, 18, 0)
+
+const MASTERY_TRAINING := {
+	"sword": "Trains every room fought with a sword in the main hand.",
+	"shield": "Trains every room fought with a shield in the off hand.",
+	"bow": "Trains every room fought with a bow.",
+	"dualwield": "Trains every room fought with a weapon in each hand.",
+	"restoration": "Trains every room fought with a healing skill slotted.",
+}
+
+func _tooltip_mastery(res: Dictionary):
+	var discipline: String = res.discipline
+	var stars: int = res.stars
+	var info = Mastery.DISCIPLINES[discipline]
+	_tip_line("%s Mastery" % info.name, GOLD, 24, 0)
+	_tip_line(MASTERY_TRAINING.get(discipline, ""), DIM, 15, 0)
+	_tip_line("Stars unlock free techniques. Rust fades, never erases: relearning runs 3x.", DIM, 14, 0)
+	for star in info.track:
+		var entry = info.track[star]
+		var what: String = ""
+		if entry.has("skill"):
+			what = String(entry.skill).capitalize()
+		else:
+			what = entry.get("label", "Passive")
+		var owned: bool = star <= stars
+		_tip_line("%d* %s" % [star, what],
+			Color(0.55, 0.85, 0.5) if owned else PARCHMENT, 18, 1)
+
 func _tooltip_affix(affix):
 	_tip_line(affix.affix_name, ItemQuality.color(ItemQuality.Tier.EPIC), 26, 0)
 	_tip_line("Affix — craft it onto compatible %s" % (
@@ -1558,6 +1617,43 @@ func _fill_gear_compare(gear: GearDefinition):
 			_tip_cmp_line("Currently", equipped)
 		else:
 			_tip_cmp("Slot is empty", DIM, 16)
+		if equipped != gear:
+			_tip_cmp_deltas(gear, equipped)
+
+## The honest arithmetic: every stat that would change if this piece
+## replaced what's worn, green for gains, red for losses.
+func _tip_cmp_deltas(candidate: GearDefinition, equipped: GearDefinition):
+	var stats := [
+		["Health", "health_bonus", 1.0, ""],
+		["Attack", "attack_bonus", 1.0, ""],
+		["Armor", "armor", 1.0, ""],
+		["Block", "block_rating", 100.0, "%"],
+		["Dodge", "dodge_rating", 100.0, "%"],
+		["Crit", "crit_rating", 100.0, "%"],
+		["Spell Power", "spell_power", 1.0, ""],
+		["Poison Res", "poison_resist", 100.0, "%"],
+	]
+	var lines := []
+	for spec in stats:
+		var was = equipped.get(spec[1]) if equipped else 0
+		var delta = (candidate.get(spec[1]) - was) * spec[2]
+		if absf(delta) < 0.5:
+			continue
+		lines.append(["%s%d%s %s" % [
+			"+" if delta > 0 else "", roundi(delta), spec[3], spec[0]],
+			delta > 0])
+	var was_type = equipped.armor_type if equipped else ""
+	if candidate.armor_type != was_type and (candidate.armor_type != "" or was_type != ""):
+		lines.append(["Type: %s -> %s" % [
+			was_type if was_type != "" else "none",
+			candidate.armor_type if candidate.armor_type != "" else "none"],
+			null])
+	if lines.is_empty():
+		return
+	_tip_cmp("If equipped:", GOLD, 18)
+	for entry in lines:
+		var color = PARCHMENT if entry[1] == null 			else Color(0.55, 0.85, 0.5) if entry[1] else Color(0.9, 0.45, 0.4)
+		_tip_cmp("  " + entry[0], color, 17)
 
 func _tip_cmp_line(label: String, item: GearDefinition, is_weapon := false):
 	if item == null:
@@ -1591,6 +1687,101 @@ func _gear_subtitle(gear: GearDefinition) -> String:
 		GearDefinition.WeaponType.BOW:
 			return "%s - Bow (ranged)" % slot_name
 	return slot_name
+
+## Aggregate combat stats for a loadout - the same sums the sim
+## performs at setup, armor-type passives included.
+static func loadout_totals(hero) -> Dictionary:
+	var t := {"health": hero.base_health, "armor": 0, "block": 0.0,
+		"dodge": 0.0, "crit": 0.0, "spell_power": 0,
+		"poison_resist": 0.0, "mana": hero.base_mana,
+		"plate": 0, "leather": 0, "cloth": 0}
+	for item in hero.equipped.values():
+		t.health += item.health_bonus
+		t.armor += item.armor
+		t.block += item.block_rating
+		t.dodge += item.dodge_rating
+		t.crit += item.crit_rating
+		t.spell_power += item.spell_power
+		t.poison_resist += item.poison_resist
+		match item.armor_type:
+			"plate":
+				t.plate += 1
+				t.dodge -= 0.015
+			"leather":
+				t.leather += 1
+				t.crit += 0.01
+			"cloth":
+				t.cloth += 1
+				t.mana += 2
+				t.spell_power += 1
+	return t
+
+## What each number MEANS - shown when the player hovers a stat.
+const STAT_HELP := {
+	"HP": "Health. At zero the delver falls and sits out the rest of the delve. Health carries between fights - what you lose in one room you bring to the next.",
+	"Mana": "Fuel for casts like Heal. Regenerates slowly during combat.",
+	"Armor": "Flat damage removed from every physical hit taken - at least 1 always gets through.",
+	"Dodge": "Chance to avoid a physical hit entirely.",
+	"Block": "Chance to take only half damage from a hit. Carried by shields.",
+	"Crit": "Chance to strike for 150% damage.",
+	"Spell Power": "Added to every heal (and future spells).",
+	"Poison Res": "Fraction shaved off poison damage-over-time. Armor stops steel; this stops venom.",
+	"Plate": "Each plate piece worn: +6% threat, +8% stagger resistance, -1.5% dodge, -3% move speed. Plate holds the line and draws every eye.",
+	"Leather": "Each leather piece worn: +1% crit, +2% swing speed, +1.5% move speed. Leather moves and strikes.",
+	"Cloth": "Each cloth piece worn: +2 mana, 5% faster casts, +1 spell power. Cloth casts.",
+}
+
+func _stat_row(stat_name: String, value: String):
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	var name_l := Label.new()
+	name_l.text = stat_name
+	name_l.add_theme_font_override("font", FONT)
+	name_l.add_theme_font_size_override("font_size", 17)
+	name_l.add_theme_color_override("font_color", DIM)
+	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(name_l)
+	var value_l := Label.new()
+	value_l.text = value
+	value_l.add_theme_font_override("font", FONT)
+	value_l.add_theme_font_size_override("font_size", 17)
+	value_l.add_theme_color_override("font_color", PARCHMENT)
+	value_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(value_l)
+	if STAT_HELP.has(stat_name):
+		row.mouse_entered.connect(func(): show_tooltip("stat",
+			{"name": stat_name, "desc": STAT_HELP[stat_name]}))
+		row.mouse_exited.connect(_refresh_forge_tooltip)
+	_totals_box.add_child(row)
+
+func _fill_totals():
+	_clear(_totals_box)
+	var hero = PlayerRoster.heroes[hero_index]
+	var t = loadout_totals(hero)
+	_stat_row("HP", str(t.health))
+	_stat_row("Mana", str(t.mana))
+	_stat_row("Armor", str(t.armor))
+	if t.dodge != 0.0:
+		_stat_row("Dodge", "%d%%" % roundi(t.dodge * 100))
+	if t.block > 0.0:
+		_stat_row("Block", "%d%%" % roundi(t.block * 100))
+	if t.crit > 0.0:
+		_stat_row("Crit", "%d%%" % roundi(t.crit * 100))
+	if t.spell_power > 0:
+		_stat_row("Spell Power", "+%d" % t.spell_power)
+	if t.poison_resist > 0.0:
+		_stat_row("Poison Res", "%d%%" % roundi(t.poison_resist * 100))
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 6)
+	_totals_box.add_child(spacer)
+	if t.plate > 0:
+		_stat_row("Plate", str(t.plate))
+	if t.leather > 0:
+		_stat_row("Leather", str(t.leather))
+	if t.cloth > 0:
+		_stat_row("Cloth", str(t.cloth))
 
 func _stat_summary(gear: GearDefinition) -> String:
 	var parts = []

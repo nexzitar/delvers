@@ -148,7 +148,9 @@ static func allows_cast(state, hero, skill_id: String) -> bool:
 
 static func _living_opponents(state, hero) -> Array:
 	var pool = state.enemies if hero.team == CombatEntity.Team.HERO else state.heroes
-	return pool.filter(func(e): return e.alive)
+	# A dormant pack hasn't noticed the party - and the party's
+	# tactics leave sleeping packs to the puller's judgement.
+	return pool.filter(func(e): return e.alive and not e.dormant)
 
 static func _priority_rank(state, foe) -> int:
 	var idx = state.enemy_priority.find(foe.template.enemy_id)

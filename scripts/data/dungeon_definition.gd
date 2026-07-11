@@ -20,6 +20,9 @@ class_name DungeonDefinition
 @export var deep_from: int = 3
 @export var guaranteed: Array[EnemyDefinition] = []
 @export var boss_pack: Array[EnemyDefinition] = []
+## The elite pack anchoring the middle room (continuous delves).
+## Empty = the guaranteed pack, grown up.
+@export var mid_boss: Array[EnemyDefinition] = []
 
 ## Loot band: item level = room + level_offset. Depth unlocks rarity:
 ## normals here can roll rare at rare_chance; the boss rolls epic at

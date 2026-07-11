@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://n275q522x8hb" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="2_skill"]
 [ext_resource type="Resource" uid="uid://c8naycsowwxx3" path="res://resources/skills/auto_attack.tres" id="3_slash"]
-[ext_resource type="Resource" path="res://resources/skills/venom_bite.tres" id="4_venom"]
+[ext_resource type="Resource" uid="uid://dl13xtbvsn5pf" path="res://resources/skills/venom_bite.tres" id="4_venom"]
 
 [resource]
 script = ExtResource("1_enemy")

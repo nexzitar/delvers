@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://c8naycsowwxx3"]
 
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_hodyc"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_slash.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://dgb2xb0inyfmf" path="res://art/skills/skill_slash.png" id="2_icon"]
 
 [resource]
 resource_name = "Auto Attack"

@@ -8,7 +8,8 @@ const OUTFITS = [
 	{"pieces": ["starter_armor", "starter_trousers", "starter_boots",
 		"starter_gloves", "starter_belt"]},
 	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"]},
-	{"pieces": ["starter_armor", "leather_trousers", "iron_shod_boots"],
+	{"model": "res://resources/models/delver_female.glb",
+		"pieces": ["starter_headband", "starter_armor", "leather_trousers", "iron_shod_boots"],
 		"dye": {"name": "forest", "primary": Color(0.2, 0.3, 0.16), "secondary": Color(0.12, 0.18, 0.1), "trim": Color(0.5, 0.45, 0.28), "flatten": 0.9}},
 	{"pieces": ["oiled_leathers", "leather_trousers", "iron_shod_boots"],
 		"dye": {"name": "oxblood", "primary": Color(0.36, 0.14, 0.12), "secondary": Color(0.2, 0.09, 0.08), "trim": Color(0.6, 0.5, 0.34), "flatten": 0.9}},
@@ -53,8 +54,9 @@ func _ready():
 
 	for i in OUTFITS.size():
 		var outfit = OUTFITS[i]
-		var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
-		var actor = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
+		var model = outfit.get("model", "res://resources/models/delver_male.glb")
+		var config = ActorFactory3D.MODEL_CONFIGS[model].duplicate(true)
+		var actor = AnimatedActor.new(load(model), config)
 		actor.position = Vector3(-1.5 + i * 1.0, 0, 0)
 		actor.rotation.y = 0.15 - i * 0.1
 		add_child(actor)

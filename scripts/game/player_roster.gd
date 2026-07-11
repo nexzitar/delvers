@@ -205,7 +205,7 @@ func check_milestones():
 	if adventures_completed >= 1 \
 			and not purchased_unlocks.has(GuildUnlocks.RESTORATION):
 		purchased_unlocks.append(GuildUnlocks.RESTORATION)
-		recruit_hero(["starter_bow", "starter_helmet"])
+		recruit_hero(["starter_bow", "starter_headband", "starter_armor"])
 		arrival_message = "You're not alone anymore."
 		if autosave:
 			RosterSave.save(self)

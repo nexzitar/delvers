@@ -48,6 +48,9 @@ const GEAR_FITS := {
 		"pair_bones": ["L_Hand", "R_Hand"],
 		"position": Vector3(0, 0.04, 0),
 		"rotation": Vector3(0, 0, 0), "scale": 0.15},
+	"headband": {"path": "res://resources/models/gear_headband.glb",
+		"bone": "Head", "position": Vector3.ZERO,
+		"rotation": Vector3.ZERO, "scale": 1.0, "world_rest": true},
 	"jacket": {"path": "res://resources/models/derived_jacket.glb",
 		"skinned": true, "hides": ["Torso", "RForearm"]},
 	"jacket_plain": {"path": "res://resources/models/derived_jacket_plain.glb",
@@ -63,6 +66,7 @@ const GEAR_FITS := {
 }
 const WORN_MODELS := {
 	"starter_helmet": {"fit": "helm"},
+	"starter_headband": {"fit": "headband"},
 	"chitin_armor": {"fit": "chest", "palette": {
 		"primary": Color(0.32, 0.23, 0.13), "secondary": Color(0.14, 0.1, 0.07),
 		"trim": Color(0.78, 0.73, 0.58)}},
@@ -129,6 +133,8 @@ var clip_ranges := {}
 ## The theater's walk phase is radians (sin-based rigs); one clip
 ## cycle spans TAU * this. Bigger = slower stride.
 var walk_cycle_scale := 1.0
+## "" = garments as authored (male body); "_f" = female-compiled GLBs.
+var garment_suffix := ""
 
 var _player: AnimationPlayer
 var _skeleton: Skeleton3D
@@ -191,6 +197,7 @@ func _init(scene: PackedScene, opts := {}):
 	_model = model
 	clip_ranges = opts.get("clip_ranges", {})
 	walk_cycle_scale = opts.get("walk_cycle_scale", 1.0)
+	garment_suffix = opts.get("garment_suffix", "")
 	_has_sword = opts.get("sword", false)
 	tuning = _load_tuning().duplicate(true)
 	_player = _find_player(model)
@@ -382,11 +389,12 @@ func _dress(opts: Dictionary):
 			piece.position = pair[2]
 			mount.add_child(piece)
 	if opts.get("bow", false):
-		var bow_mount = _attach("L_Hand")
 		var bow = DelverBuilder.build_bow()
-		bow.position = Vector3(0, 0.05, 0)
-		bow.scale = Vector3.ONE * 0.9
-		bow_mount.add_child(bow)
+		if not _socket_mount_node(bow, "bow_p", 0.9):
+			var bow_mount = _attach("L_Hand")
+			bow.position = Vector3(0, 0.05, 0)
+			bow.scale = Vector3.ONE * 0.9
+			bow_mount.add_child(bow)
 
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.
@@ -394,23 +402,24 @@ func _dress(opts: Dictionary):
 	if opts.get("sword", false):
 		main_model = _mount_worn_model(opts.get("main_gear", ""))
 		if main_model:
-			var mounts = _skeleton.get_children()
-			_sword_node = mounts[mounts.size() - 1].get_child(0)
+			var main_fit = WORN_MODELS[opts.main_gear].fit
+			_sword_node = worn_mounts[main_fit].back()
 	if not main_model and (opts.get("sword", false) or opts.get("axe", false) or opts.get("dagger", false)):
-		var hand = _attach("R_Hand")
 		var weapon = DelverBuilder.build_axe() if opts.get("axe", false) \
 			else DelverBuilder.build_dagger() if opts.get("dagger", false) \
 			else DelverBuilder.build_sword()
-		# Hand bone: +Y runs along the fingers; the grip tilts the
-		# blade forward and slightly up from the fist.
-		weapon.position = Vector3(0.0, 0.05, 0.0)
-		weapon.rotation_degrees = Vector3(-115, 0, 0)
-		weapon.scale = Vector3.ONE * 0.8
-		hand.add_child(weapon)
+		if not _socket_mount_node(weapon, "sword_p", 0.8):
+			var hand = _attach("R_Hand")
+			# Hand bone: +Y runs along the fingers; the grip tilts the
+			# blade forward and slightly up from the fist.
+			weapon.position = Vector3(0.0, 0.05, 0.0)
+			weapon.rotation_degrees = Vector3(-115, 0, 0)
+			weapon.scale = Vector3.ONE * 0.8
+			hand.add_child(weapon)
 		_sword_node = weapon
 	if opts.get("shield", false) and _mount_worn_model(opts.get("off_gear", "")):
-		var mounts = _skeleton.get_children()
-		_shield_arm = mounts[mounts.size() - 1]
+		var off_fit = WORN_MODELS[opts.off_gear].fit
+		_shield_arm = worn_mounts[off_fit].back().get_parent()
 		_shield_prop = load(GEAR_FITS.shield_m.path).instantiate()
 		_shield_prop.position = Vector3(0.42, 0.15, 0.24)
 		_shield_prop.rotation_degrees = Vector3(0, 15, 75)
@@ -467,6 +476,23 @@ func _mount_worn_model(gear_id: String) -> bool:
 		_hide_covered(fit)
 		return not found.is_empty()
 
+	# Socket mounting: the item's grip marker lands exactly on the
+	# body's socket, so weapons pivot around the palm, not the wrist.
+	# Sockets live on bones (grip_main, grip_off, back, hip_l...);
+	# grips live on items - both placed visually in the Socket
+	# Workshop (capture/socket_workshop.tscn) and saved to tuning.
+	if tuning.get("grips", {}).has(entry.fit):
+		var piece = load(fit.path).instantiate()
+		if _socket_mount_node(piece, entry.fit, fit.get("scale", 1.0)):
+			if not worn_mounts.has(entry.fit):
+				worn_mounts[entry.fit] = []
+			worn_mounts[entry.fit].append(piece)
+			if entry.has("palette"):
+				_recolor(piece, entry.palette)
+			_hide_covered(fit)
+			return true
+		piece.queue_free()
+
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
 	var saved_pieces: Array = tuning.get("fits", {}).get(entry.fit, {}).get("pieces", [])
 	for i in bones.size():
@@ -491,6 +517,7 @@ func _mount_worn_model(gear_id: String) -> bool:
 				piece.position.x = -piece.position.x
 		if piece.scale.x < 0.0:
 			_disable_cull(piece)
+		piece.set_meta("mount_transform", piece.transform)
 		mount.add_child(piece)
 		if not worn_mounts.has(entry.fit):
 			worn_mounts[entry.fit] = []
@@ -507,8 +534,35 @@ func _mount_worn_model(gear_id: String) -> bool:
 
 ## The registry fit, with any owner-saved override from the tuning
 ## file laid over it (the Guild Animator's Gear Fitter writes these).
+## Mounts any prop by grip data: the prop's grip point lands on its
+## body socket, oriented grip-to-socket - one math for worn models
+## and built weapons alike. The basis carries the scale, so grip
+## offsets stay in the prop's own coordinates.
+func _socket_mount_node(node: Node3D, grip_key: String, default_scale := 1.0) -> bool:
+	var grip = tuning.get("grips", {}).get(grip_key)
+	if grip == null:
+		return false
+	var socket = tuning.get("sockets", {}).get(grip.socket)
+	if socket == null:
+		return false
+	var mount = _attach(socket.bone)
+	var socket_rot := Basis.from_euler(_vec(socket.rotation) * PI / 180.0)
+	var grip_rot := Basis.from_euler(_vec(grip.rotation) * PI / 180.0)
+	node.quaternion = (socket_rot * grip_rot.inverse()).get_rotation_quaternion()
+	node.scale = Vector3.ONE * float(grip.get("scale", default_scale))
+	node.position = _vec(socket.position) - node.basis * _vec(grip.position)
+	node.set_meta("mount_transform", node.transform)
+	mount.add_child(node)
+	return true
+
 func fit_for(fit_key: String) -> Dictionary:
 	var fit = GEAR_FITS[fit_key].duplicate()
+	# Garments are compiled per body: a "_f" sibling GLB (same spec,
+	# female body) wins when this actor declared the variant.
+	if garment_suffix != "":
+		var variant_path: String = fit.path.replace(".glb", garment_suffix + ".glb")
+		if ResourceLoader.exists(variant_path):
+			fit.path = variant_path
 	var saved = tuning.get("fits", {}).get(fit_key, {})
 	if saved.has("position"):
 		fit.position = _vec(saved.position)
@@ -535,22 +589,45 @@ func _recolor(piece: Node, palette: Dictionary):
 	var stack = [piece]
 	while not stack.is_empty():
 		var node = stack.pop_back()
-		if node is MeshInstance3D:
-			var base = node.get_active_material(0)
-			var mat: ShaderMaterial
-			if base is ShaderMaterial:
-				mat = base
-			elif base is StandardMaterial3D and base.albedo_texture:
-				mat = ShaderMaterial.new()
-				mat.shader = load(RECOLOR_SHADER)
-				mat.set_shader_parameter("base_tex", base.albedo_texture)
-				node.material_override = mat
-			if mat:
-				mat.set_shader_parameter("col_primary", palette.primary)
-				mat.set_shader_parameter("col_secondary", palette.secondary)
-				mat.set_shader_parameter("col_trim", palette.trim)
-				mat.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
+		if node is MeshInstance3D and node.mesh:
+			for si in node.mesh.get_surface_count():
+				_recolor_surface(node, si, palette)
 		stack.append_array(node.get_children())
+
+## Per-surface dyeing. Engine-compiled garments carry solid two-tone
+## materials (GarmentPrimary/GarmentSecondary) tinted directly - no
+## texture, no classification noise. Textured sculpts keep the
+## chroma-classifying recolor shader. Hardware (straps, clasps) keeps
+## its leather and steel.
+func _recolor_surface(node: MeshInstance3D, si: int, palette: Dictionary):
+	var base = node.get_surface_override_material(si)
+	if base == null:
+		base = node.material_override
+	if base == null:
+		base = node.mesh.surface_get_material(si)
+	if base is ShaderMaterial:
+		base.set_shader_parameter("col_primary", palette.primary)
+		base.set_shader_parameter("col_secondary", palette.secondary)
+		base.set_shader_parameter("col_trim", palette.trim)
+		base.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
+		return
+	if not (base is StandardMaterial3D):
+		return
+	var mat_name := String(base.resource_name)
+	if mat_name.begins_with("Garment"):
+		var tinted: StandardMaterial3D = base.duplicate()
+		tinted.albedo_color = palette.secondary \
+			if mat_name.contains("Secondary") else palette.primary
+		node.set_surface_override_material(si, tinted)
+	elif base.albedo_texture:
+		var mat := ShaderMaterial.new()
+		mat.shader = load(RECOLOR_SHADER)
+		mat.set_shader_parameter("base_tex", base.albedo_texture)
+		mat.set_shader_parameter("col_primary", palette.primary)
+		mat.set_shader_parameter("col_secondary", palette.secondary)
+		mat.set_shader_parameter("col_trim", palette.trim)
+		mat.set_shader_parameter("luma_flatten", palette.get("flatten", 0.0))
+		node.set_surface_override_material(si, mat)
 
 static func _vec(arr) -> Vector3:
 	return Vector3(arr[0], arr[1], arr[2]) if arr is Array and arr.size() == 3 else Vector3.ZERO
@@ -599,10 +676,9 @@ func _pose(role: String, fraction: float, looped := false):
 	_model.position = Vector3.ZERO
 	_set_shield_grounded(false)
 	if _sword_node:
-		var grip = fit_for("sword_m")
-		_sword_node.position = grip.position
-		_sword_node.rotation_degrees = grip.rotation
-		_sword_node.scale = Vector3.ONE * grip.scale
+		# Undo the campfire sit-grip override: back to how it mounted.
+		_sword_node.transform = _sword_node.get_meta(
+			"mount_transform", _sword_node.transform)
 	# The captures carry the chin low; lift the gaze off the ground.
 	_rotate_bone("Head", Vector3.RIGHT, 0.25)
 

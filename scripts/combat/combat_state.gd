@@ -17,6 +17,20 @@ var combat_log := CombatLog.new()
 
 var combat_over: bool = false
 
+## Continuous delve (layout != null): packs sleep until noticed, the
+## party walks the spine between fights, and pulls chain.
+var layout = null
+const PERCEPTION_RADIUS := 160.0
+const CHAIN_RADIUS := 96.0
+const TRAVEL_ARRIVE := 48.0
+const LEASH_RADIUS := 620.0
+const TRAVEL_SLOTS := [Vector2(0, 0), Vector2(-30, 24), Vector2(-30, -24),
+	Vector2(-60, 12), Vector2(-60, -12), Vector2(-90, 0)]
+var travel_index := 0
+var current_room := 1
+var _reported_packs := {}
+var _used_names := {}
+
 ## Deeper delve rooms field stronger foes.
 var enemy_level_bonus: int = 0
 
@@ -26,8 +40,11 @@ func update(delta: float):
 	combat_time += delta
 
 	for entity in heroes + enemies:
-		if entity.alive:
+		if entity.alive and not entity.dormant:
 			entity.update(delta, self)
+
+	if layout != null:
+		_tick_delve(delta)
 
 	check_victory()
 
@@ -158,6 +175,13 @@ func apply_on_hit(attacker, weapon, target):
 				affix.on_hit_duration, affix.on_hit_magnitude,
 				"slow_" + affix.affix_id, attacker.entity_id
 			)
+			# Cold hands swing slower: chill drags the attack timer
+			# as hard as it drags the feet.
+			apply_status(
+				target, StatusEffect.Kind.SLUGGISH,
+				affix.on_hit_duration, 0.8,
+				"chill_swing_" + affix.affix_id, attacker.entity_id
+			)
 
 ## A regeneration tick mended health: a small green number, credited
 ## to whoever cast it.
@@ -174,6 +198,7 @@ func log_hot(target, status, amount: int):
 	event.max_health = target.max_health
 	event.skill_name = "Renew"
 	event.amount = amount
+	event.dot = true
 	add_event(event)
 
 ## A poison tick dealt damage: log it (flagged as a dot so the theater
@@ -514,8 +539,185 @@ func check_victory():
 		combat_over = true
 
 ## Most foes are common rabble; an occasional veteran shows up.
-func roll_enemy_level() -> int:
-	return [1, 1, 2, 2, 2, 3].pick_random() + enemy_level_bonus
+## Delve packs pass their own depth bonus; single arenas use the
+## state-wide one.
+func roll_enemy_level(bonus = null) -> int:
+	var extra: int = enemy_level_bonus if bonus == null else bonus
+	return [1, 1, 2, 2, 2, 3].pick_random() + extra
+
+## One enemy, fully statted from its template, spawned at a position.
+## Shared by single-arena setup, delve packs, and reinforcements.
+func spawn_enemy_entity(enemy_template, pos: Vector2, level_bonus = null,
+		pack := -1, link := -1, sleeping := false) -> CombatEntity:
+	var enemy = CombatEntity.new()
+	enemy.entity_id = _next_entity_id
+	_next_entity_id += 1
+	enemy.team = CombatEntity.Team.ENEMY
+	enemy.level = roll_enemy_level(level_bonus)
+	enemy.entity_name = (
+		unique_name(enemy_template.enemy_name, _used_names)
+		+ " Lv %d" % enemy.level
+	)
+	enemy.template = enemy_template
+	var power = level_power(enemy.level)
+	enemy.max_health = maxi(1, roundi(enemy_template.base_health * power))
+	enemy.attack_power = maxi(1, roundi(enemy_template.base_attack * power))
+	enemy.current_health = enemy.max_health
+	enemy.current_mana = enemy_template.base_mana
+	enemy.max_mana = enemy_template.base_mana
+	enemy.armor = enemy_template.armor
+	enemy.block_chance = enemy_template.block_rating
+	enemy.dodge_chance = enemy_template.dodge_rating
+	enemy.crit_chance = enemy_template.crit_rating
+	enemy.attack_interval = enemy_template.base_attack_interval
+	enemy.attack_timer = enemy.attack_interval
+	enemy.move_speed = enemy_template.move_speed
+	enemy.skills = enemy_template.skills.duplicate()
+	if enemy_template.model_scene != null:
+		enemy.model_path = enemy_template.model_scene.resource_path
+	enemy.position = pos
+	enemy.facing = Vector2.LEFT
+	enemy.pack_id = pack
+	enemy.link_id = link
+	enemy.dormant = sleeping
+	enemy.home_position = pos
+	enemies.append(enemy)
+	entities_by_id[enemy.entity_id] = enemy
+	combat_log.add_event(CombatEvent.create_spawn(enemy))
+	return enemy
+
+## Continuous delve: one arena for the whole dungeon. Heroes spawn at
+## the entrance, every pack spawns dormant where it lives, and the
+## party walks the spine pulling what it disturbs.
+func setup_delve(hero_templates, dungeon_layout, hero_health := {},
+		tier_bonus := 0, elite_bonus := 2):
+	layout = dungeon_layout
+	setup_combat(hero_templates, [], layout.arena, hero_health)
+	combat_log.add_event(CombatEvent.create_room_entered(1, combat_time))
+	for pack_index in layout.packs.size():
+		var pack = layout.packs[pack_index]
+		var bonus: int = (pack.room - 1) / 4 + tier_bonus 			+ (elite_bonus if pack.elite else 0)
+		for k in pack.templates.size():
+			var pos = pack.center + Vector2(
+				(k % 3 - 1) * 40.0, (k / 3) * 40.0 - 20.0)
+			spawn_enemy_entity(pack.templates[k], pos, bonus,
+				pack_index, pack.link, true)
+
+## The delve heartbeat: wake packs that noticed the party (or were
+## dragged in by a fleeing friend), report cleared packs, and when
+## all is quiet, walk the spine toward the next room.
+func _tick_delve(delta):
+	_check_pack_wakes()
+	_check_leashes()
+	_report_defeated_packs()
+	if enemies.any(func(e): return e.alive and not e.dormant):
+		return
+	if travel_index >= layout.waypoints.size():
+		return
+	var living = heroes.filter(func(h): return h.alive)
+	if living.is_empty():
+		return
+	var goal: Vector2 = layout.waypoints[travel_index]
+	if living[0].position.distance_to(goal) < TRAVEL_ARRIVE:
+		travel_index += 1
+		if travel_index < layout.waypoints.size():
+			var room: int = layout.waypoint_rooms[travel_index]
+			if room != current_room:
+				current_room = room
+				combat_log.add_event(
+					CombatEvent.create_room_entered(room, combat_time))
+		return
+	for i in living.size():
+		var slot: Vector2 = TRAVEL_SLOTS[mini(i, TRAVEL_SLOTS.size() - 1)]
+		tick_movement_toward(living[i], goal + slot, delta)
+
+## Wakes: a hero close enough to be noticed, damage (a stray blade or
+## splash), or an already-woken enemy blundering into the sleepers -
+## that last one is how a fleeing enemy chains the next pack.
+func _check_pack_wakes():
+	var woken := {}
+	for enemy in enemies:
+		if not enemy.alive or not enemy.dormant or woken.has(enemy.pack_id):
+			continue
+		if enemy.current_health < enemy.max_health:
+			woken[enemy.pack_id] = true
+			continue
+		for hero in heroes:
+			if hero.alive and hero.position.distance_to(enemy.position) 					<= PERCEPTION_RADIUS:
+				woken[enemy.pack_id] = true
+				break
+		if woken.has(enemy.pack_id):
+			continue
+		for other in enemies:
+			if other.alive and not other.dormant 					and other.pack_id != enemy.pack_id 					and other.position.distance_to(enemy.position) 						<= CHAIN_RADIUS:
+				woken[enemy.pack_id] = true
+				break
+	for pack_id in woken:
+		_activate_pack(pack_id)
+
+## A pack with nobody left to chase walks home, mends, and takes up
+## its post again - abandoned pulls do not trail the party forever.
+func _check_leashes():
+	var living = heroes.filter(func(h): return h.alive)
+	if living.is_empty():
+		return
+	var packs_active := {}
+	for enemy in enemies:
+		if enemy.alive and not enemy.dormant and enemy.pack_id >= 0:
+			if not packs_active.has(enemy.pack_id):
+				packs_active[enemy.pack_id] = []
+			packs_active[enemy.pack_id].append(enemy)
+	for pack_id in packs_active:
+		var anyone_near := false
+		for enemy in packs_active[pack_id]:
+			for hero in living:
+				if enemy.position.distance_to(hero.position) < LEASH_RADIUS:
+					anyone_near = true
+					break
+			if anyone_near:
+				break
+		if anyone_near:
+			continue
+		for enemy in packs_active[pack_id]:
+			enemy.dormant = true
+			enemy.position = enemy.home_position
+			enemy.current_health = enemy.max_health
+			enemy.target_id = -1
+			enemy.threat_table.clear()
+			enemy.path = PackedVector2Array()
+		combat_log.add_event(CombatEvent.create_pack_reset(
+			pack_id, combat_time))
+
+func _activate_pack(pack_id: int):
+	var link: int = layout.packs[pack_id].link
+	var to_wake := {pack_id: true}
+	if link >= 0:
+		for i in layout.packs.size():
+			if layout.packs[i].link == link:
+				to_wake[i] = true
+	# One event per pack that transitions: the theater wakes actors
+	# and reveals sidebar entries per pack.
+	for wake_id in to_wake:
+		var any_woke := false
+		for enemy in enemies:
+			if enemy.pack_id == wake_id and enemy.dormant:
+				enemy.dormant = false
+				any_woke = true
+		if any_woke:
+			combat_log.add_event(CombatEvent.create_pack_pulled(
+				wake_id, layout.packs[wake_id].room, combat_time))
+
+func _report_defeated_packs():
+	var alive_by_pack := {}
+	for enemy in enemies:
+		if enemy.alive and enemy.pack_id >= 0:
+			alive_by_pack[enemy.pack_id] = true
+	for pack_index in layout.packs.size():
+		if _reported_packs.has(pack_index) or alive_by_pack.has(pack_index):
+			continue
+		_reported_packs[pack_index] = true
+		combat_log.add_event(CombatEvent.create_pack_defeated(
+			pack_index, layout.packs[pack_index].room, combat_time))
 
 ## Stat multiplier for a level, with a touch of individual variance
 ## so two enemies of the same level aren't perfectly identical.
@@ -552,7 +754,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 	pathfinder = GridPathfinder.new(grid)
 
 	_next_entity_id = 1
-	var used_names = {}
+	_used_names = {}
 
 	for hero_template in hero_templates:
 
@@ -566,7 +768,7 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 
 		hero.template = hero_template
 		hero.entity_name = unique_name(
-			hero_template.hero_name, used_names
+			hero_template.hero_name, _used_names
 		)
 
 		var loadout = hero_template.equipped.values()
@@ -691,52 +893,10 @@ func setup_combat(hero_templates, enemy_templates, battle_arena: BattleArena = n
 		combat_log.add_event(CombatEvent.create_spawn(hero))
 
 	for enemy_template in enemy_templates:
-
-		var enemy = CombatEntity.new()
-
-		enemy.entity_id = _next_entity_id
-		_next_entity_id += 1
-
-		enemy.team = CombatEntity.Team.ENEMY
-		enemy.level = roll_enemy_level()
-		enemy.entity_name = (
-			unique_name(enemy_template.enemy_name, used_names)
-			+ " Lv %d" % enemy.level
-		)
-
-		enemy.template = enemy_template
-
-		var power = level_power(enemy.level)
-		enemy.max_health = maxi(
-			1, roundi(enemy_template.base_health * power)
-		)
-		enemy.attack_power = maxi(
-			1, roundi(enemy_template.base_attack * power)
-		)
-
-		enemy.current_health = enemy.max_health
-		enemy.current_mana = enemy_template.base_mana
-		enemy.max_mana = enemy_template.base_mana
-		enemy.armor = enemy_template.armor
-		enemy.block_chance = enemy_template.block_rating
-		enemy.dodge_chance = enemy_template.dodge_rating
-		enemy.crit_chance = enemy_template.crit_rating
-
-		enemy.attack_interval = enemy_template.base_attack_interval
-		enemy.attack_timer = enemy.attack_interval
-		enemy.move_speed = enemy_template.move_speed
-
-		enemy.skills = enemy_template.skills.duplicate()
-
-		enemy.position = _spawn_position(
+		spawn_enemy_entity(enemy_template, _spawn_position(
 			arena.enemy_spawn_center, enemies.size(),
 			enemy_template.preferred_row, -1
-		)
-		enemy.facing = Vector2.LEFT
-
-		enemies.append(enemy)
-		entities_by_id[enemy.entity_id] = enemy
-		combat_log.add_event(CombatEvent.create_spawn(enemy))
+		))
 	
 func build_result() -> CombatResult:
 

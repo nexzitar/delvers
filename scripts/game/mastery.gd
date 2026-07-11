@@ -44,6 +44,15 @@ const DISCIPLINES := {
 			5: {"passive": {"crit_add": 0.1}, "label": "Deadly Aim"},
 		},
 	},
+	"dualwield": {
+		"name": "Dual Wield",
+		"track": {
+			2: {"passive": {"attack_speed_mult": 0.96}, "label": "Ambidexterity"},
+			3: {"passive": {"crit_add": 0.04}, "label": "Twin Fangs"},
+			4: {"passive": {"attack_speed_mult": 0.94}, "label": "Off-Hand Training"},
+			5: {"passive": {"crit_add": 0.06}, "label": "Blade Dance"},
+		},
+	},
 	"restoration": {
 		"name": "Restoration",
 		"track": {
@@ -81,6 +90,8 @@ static func active_disciplines(hero) -> Array:
 	var off = hero.equipped.get(Equip.Position.OFF_HAND)
 	if off and off.attack_speed <= 0.0:
 		active.append("shield")
+	elif off and off.attack_speed > 0.0:
+		active.append("dualwield")
 	for skill in hero.bonus_skills:
 		if skill is SkillDefinition and skill.skill_id in ["heal", "renew"]:
 			active.append("restoration")

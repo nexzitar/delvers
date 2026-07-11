@@ -22,8 +22,15 @@ func _stash_one_handed() -> GearDefinition:
 	return null
 
 func _run():
+	PlayerRoster.autosave = false
 	var camp = load("res://scenes/camp/camp.tscn").instantiate()
 	add_child(camp)
+	# The shots need a stash to drag from, whatever the live save holds.
+	if PlayerRoster.gear_stash.is_empty():
+		PlayerRoster.gear_stash.append(
+			LootTable.materialize("fast_dagger", 3, ItemQuality.Tier.COMMON))
+		PlayerRoster.gear_stash.append(
+			LootTable.materialize("starter_bow", 3, ItemQuality.Tier.COMMON))
 	await get_tree().create_timer(0.8).timeout
 
 	# Hover the melee hero so the outline + nameplate show.

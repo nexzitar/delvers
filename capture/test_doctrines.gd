@@ -18,8 +18,12 @@ func _ready():
 	# Warriors teach the shield-line; known doctrine never re-drops.
 	var warrior = load("res://resources/enemies/goblin_warrior.tres").duplicate()
 	warrior.doctrine_drop_chance = 1.0
+	# Alone, the Shield-Line means nothing: the tome waits.
+	var alone = LootTable.roll_enemy_drops([warrior], 3,
+		[], [], [], null, [], 1, roster.known_tactics, 1)
+	assert(alone.doctrines.is_empty(), "no ally, no shield-line")
 	var lesson = LootTable.roll_enemy_drops([warrior], 3,
-		[], [], [], null, [], 1, roster.known_tactics)
+		[], [], [], null, [], 1, roster.known_tactics, 2)
 	assert(lesson.doctrines == ["guard"], "the warrior teaches guarding")
 	var known_all = LootTable.roll_enemy_drops([warrior], 3,
 		[], [], [], null, [], 1, ["nearest", "guard"])

@@ -2,9 +2,201 @@
 
 Notable changes per pull request. Newest first.
 
+## The Continuous Dungeon — Phase A *(open)*
+
+### Added
+- **Replay speed control**: 1×/2×/3× buttons in the battle UI - the
+  replay obeys the player's clock (the whole architecture was built
+  for exactly this: the sim already ran ahead; the theater just reads
+  the log faster).
+- **THE LEASH**: packs with nobody left to chase walk home, mend to
+  full, and take up their posts again (PACK_RESET events; the panel
+  forgets them, the music relaxes, and they will pull again). Charging
+  past a pack no longer leaves it trailing you across the dungeon.
+- **Consolidated enemy unit list**: the panel shows one row per
+  enemy KIND with the pack's pooled health as its bar ("Nest
+  Spiderling ×15" over a shared 400/600) - the count tracks the
+  living, and only wakened enemies appear at all.
+- **Consolidated enemy damage meters**: one row per enemy KIND -
+  "Nest Spiderling ×12" with total and per-head average - instead of
+  a hundred entries converging on noise. Heroes keep individual rows
+  and DPS.
+- **Contact reactions**: bodies answer the fight - a jolt away from
+  a landed hit (bigger on crits), a quick sidestep on a dodge, a
+  small brace on a block. Decaying offsets, no new animations needed.
+- **Portraits show who we are now**: hero and enemy sidebar portraits
+  render from the actual models - Garrick's helmet, Wren's hood, the
+  goblins' own faces - instead of the old procedural rigs.
+- **Dual Wield mastery**: fighting with a weapon in each hand now
+  trains its own discipline - Ambidexterity, Twin Fangs, Off-Hand
+  Training, Blade Dance (passives; its unique techniques wait for
+  their tomes).
+- **Stat and mastery tooltips**: every stat row and mastery row in
+  the hero panel explains itself on hover - what armor actually
+  does, what blocks, what rusts and what never fades, and each
+  discipline's full star track with unlocks marked green.
+- **Loadout totals**: the hero panel now sums the whole loadout -
+  HP, armor, mana, block/dodge/crit, spell power, poison resist, and
+  the worn armor-type counts - so three new pieces show up as
+  numbers, not vibes.
+- **Full stat-delta compare**: hovering a piece lists exactly what
+  would change if equipped - green gains, red losses, armor-type
+  changes called out.
+- **A lament for the fallen**: on defeat the stems fade out first,
+  the sting lands in silence, and a short cello lament plays under
+  the summary (the sting was drowning in its own music).
+- **MUSIC STEMS (Eleven Music trial)**: the audio grammar's runtime
+  half arrives. Three Darkwood stems - explore (low cello and harp),
+  combat (taiko and string stabs), boss (low choir and war drums) -
+  all in D minor at 90 BPM so they stack in time. All three loop from
+  the moment the delve starts; the combat layer fades in when a pack
+  wakes, the explore layer ducks, and the boss layer joins when the
+  King's pack pulls. audio_batch.py speaks the music endpoint now.
+- **Battle camera orbit**: right-drag turns the bearing, the wheel
+  zooms (0.55x-1.9x) - the follow framing keeps tracking the fight
+  underneath, so you orbit the battle, not a fixed point. Same feel
+  as the camp camera.
+- **Creature attacks own their sounds**: slimes lunge with a wet
+  stretchy squelch and land gooey slaps (no more sword whooshes from
+  a blob), spiders snap their mandibles on attack and on hit. The
+  attacker's family picks both the wind-up and the impact sound.
+- **THE AUDIO LIBRARY** (ElevenLabs batch, the Tripo pattern for
+  sound - audio_batch.py): 24 SFX + 3 per-theme ambience beds
+  generated in one sweep. The theater now plays: per-theme looping
+  ambience (wind through firs / cavern drips / dead machinery),
+  a danger sting plus the family's own voice on every pull (goblin
+  barks, spider hisses, slime squelches), family death cries, sword
+  swing/hit variants with block clangs and crit crunches, bowstring
+  and arrow impacts, heal chimes, loot chimes, banner whooshes, and
+  victory/defeat stings. Every hook is guarded - a missing file
+  falls back to the old wavs or silence.
+- **THE GOBLIN FAMILY** (enemy families, not more enemies): Scout
+  (fast, slippery, drops the hood recipe), Shaman (heals its pack -
+  pinned by test; teaches Flaming), and Chief (armored elite, teaches
+  Priority and the pauldron recipe) join Warrior and Archer. Same
+  proportions, same equipment language, five silhouettes: a
+  civilization. Scout runs with the core pool, Shaman joins the deep
+  pool, and the Chief anchors the mid-boss room via the new
+  DungeonDefinition.mid_boss field.
+- **PLACES WITH PURPOSE**: every room draws a role (entrance, guard
+  post, hall, storeroom, shrine, warren, landmark, mid-boss hold,
+  boss lair) with themed names - banners and clear-toasts now say
+  "The Warren cleared - pressing on..." instead of "Room 2".
+- **LANDMARKS**: each dungeon theme owns a Tripo hero piece - the
+  Darkwood's moss-swallowed Warden statue, the Nest's web-wrapped
+  spider idol, the Workshop's dead brass colossus - placed in its
+  own named room with a warm accent light. Players remember "the
+  room with the statue," never "the third corridor."
+- **ECOLOGY IS EVIDENCE**: packs seed their surroundings before a
+  single enemy moves - spider packs hang webs and egg sacs, slime
+  packs leave gel pools, goblin packs camp around a stone fire ring
+  with charred logs. The kit compiler grew Web/EggSac/GelPool/
+  Campfire pieces with EcoSilk/EcoGel materials.
+- **Enemies get the treatment: modeled goblins** - a headless Tripo
+  character pipeline (gen_character.py: text -> model -> rig ->
+  preset animations -> one GLB) generated the Goblin Warrior and
+  Goblin Archer with the SAME skeleton as the delvers, so sockets,
+  pose functions and clip conventions work unchanged. EnemyTemplate
+  gains model_scene; modeled enemies ride AnimatedActor in battle
+  (weapon flags live on the model config). Slimes and spiders stay
+  procedural by choice - blobs and arachnids animate better as code.
+- **Weapons are held properly**: the socket convention changed to
+  the thumb line (a fist holds the handle ACROSS the palm, not along
+  the fingers) - the sword now continues the arm mid-swing; the
+  procedural bow socket-mounts upright with the string toward the
+  archer (it hung upside down from the finger line); the procedural
+  sword shares the same grip through a new _socket_mount_node used
+  by worn models and built props alike.
+- **THE ARCHITECTURE KIT** (the garment engine pattern at room
+  scale): a Blender compiler (arch_kit.py) generates a modular
+  masonry kit from a construction grammar - coursed stone walls in
+  three variants (wandering joints, proud capstones, one jutting
+  stone so nothing is flush), pillars with base and capital, arches
+  spanning every corridor mouth, rubble piles where rooms settled.
+  Solid Arch* materials dye per dungeon theme at runtime exactly like
+  garment surfaces (forest moss, nest silk, workshop brass). The
+  layout now records rooms and doorways; walls render as per-variant
+  MultiMeshes; freestanding masonry becomes pillars automatically.
+- **One dungeon, walked end to end**: no more teleporting between
+  rooms. DungeonLayout compiles a DungeonDefinition into one place -
+  rooms carved along a winding spine with L-corridors and pillars -
+  and the whole delve is ONE simulation: packs spawn dormant where
+  they live, the party walks the spine between fights, and the replay
+  shows all of it (the spec is the dungeon).
+- **The pull grammar**: packs wake when a hero enters perception,
+  when damage reaches a sleeper, or when an already-woken enemy
+  blunders into them - a fleeing enemy chains the next pack. Some
+  double-pack rooms are LINKED and pull together. An elite mid-boss
+  pack (+2 levels) holds the middle room; the boss keeps the end.
+- **Loot banks mid-run**: PACK_DEFEATED events roll and toast each
+  pack's drops during the replay ("Room N cleared - pressing on...");
+  training, knowledge pity and autosave follow the same cadence. The
+  enemy sidebar reveals packs only when they wake, so it always reads
+  as the current fight.
+- **test_pulls** pins the contracts: sleep at distance, travel when
+  quiet, chain aggro, linked pulls, walkable spine, and a full
+  compiled Darkwood terminating. Deterministic (seeded).
+
+### Changed
+- Dungeon-scale walls render as one MultiMesh (shell tiles only);
+  clearing dressing (treeline, scatter) stays for single arenas.
+- Enemy spawning refactored into spawn_enemy_entity (shared by
+  arenas, packs, reinforcements) with per-pack depth bonuses.
+- Harnesses with forced_arena_path keep the single-arena flow.
+
 ## Item overhaul — compiled garments become the items *(open)*
 
 ### Added
+- **GARMENT ENGINE v6 — convergence on believable equipment** (owner
+  reference-render analysis): the face partition no longer IS the
+  garment; it decorates one. New grammar rules: (1) BASE SHELL first —
+  one watertight draped surface, so seams can never gap and skin can
+  never peek; (2) OVERLAYS — the partition pieces sit proud of the
+  base at defined altitudes (the layer ladder: base < panels < straps
+  < pads); (3) CHUNKY FACETS — limited-dissolve planarization turns
+  body triangulation into deliberate low-poly planes; (4) FABRIC
+  FORGETS ANATOMY — a torso-scoped cast-to-cylinder (the torso's own
+  mean radius) drapes cloth across the belly instead of shrink-
+  wrapping abs (a Laplacian smooth pass shredded open shells — dead
+  end recorded); (5) TERMINATION BANDS — cuffs at wrists/elbows and
+  waistbands with buckles, because hems are what make fabric read as
+  clothing; (6) FEW BOLD HARDWARE — a studded baldric, pillowed
+  two-layer shoulder pads, a hardware size floor.
+- **Solid two-tone garment materials end the texture noise era**: the
+  engine assigns GarmentPrimary/GarmentSecondary solid materials (no
+  body texture), and `_recolor` now dyes **per surface** — garments
+  tint directly, textured sculpts keep the chroma shader, hardware
+  keeps its leather and steel. Kills the waistband mottle, the
+  skin-toned sleeves, and Wren's painted-on abs in one move; GLBs
+  drop ~40% (no embedded texture copies).
+- **The socket system — weapons are finally HELD**: bodies carry
+  named sockets (grip_main in the right palm, grip_off in the left,
+  back and hip_l/hip_r for future quivers, backpacks and potion
+  pouches), items carry grip points, and the mount places the grip
+  exactly on the socket in every pose — the sword now hangs from a
+  fist wrapped around its handle instead of floating beside the arm.
+  The **Socket Workshop** (capture/socket_workshop.tscn, editor-only
+  like the Fitting Room) shows both marker families in the Scene
+  dock for standard-gizmo placement; save_sockets writes
+  pose_tuning.json. New bows will add a second grip on the string
+  for the draw hand, plus a draw animation — the schema is ready.
+- **Fixed: pose seeks reverted weapon fits** — every pose seek
+  stomped the sword back to fit defaults (why Fitting Room sword
+  fits never seemed to stick). Mounts now remember their transform
+  and poses restore it. Pinned by test_sockets.
+- **Wren wears a headband, not a helmet**: her recruit kit swaps the
+  Starter Helmet for a Starter Headband (leather, HEAD, open — hair
+  and ponytail physics stay visible; "Keeps the hair out of the
+  bowstring"). The band is built by a new Blender harness that
+  measures the wearer's own skull at brow height — snug elliptical
+  band, knot and trailing ends at the back — compiled per body like
+  the garments (male + `_f`). Goblin Archers drop it.
+- **Garments compile per body — and Wren gets a shirt**: recruit kits
+  now include Starter Armor (Wren arrived with bow and helmet only),
+  and the jacket, plain jacket and trousers are compiled from the
+  female body too (same specs, her mesh, `_f` GLB variants picked by
+  the actor's body). The purchasable third delver's kit gains a chest
+  piece as well.
 - **The full basic starter set**: Starter Trousers, Boots, Gloves and
   Belt — zero-stat leather basics dropped by Darkwood normals, so a
   fresh delver can finish dressing without power creep. Delvers still
@@ -31,6 +223,49 @@ Notable changes per pull request. Newest first.
   fitted model covers the region.
 
 ### Changed
+- Frostforged chills the sword arm too: chilled targets swing 20%
+  slower for the duration, not just walk slower.
+- Renew ticks in whole beats (about one mend per second) and its
+  ticks are quiet - small numbers, no chime, no bloom. The full
+  effect stays for real casts.
+- Mid-boss packs trimmed by three bodies; the Slime King grew into
+  his crown (+45 health, +2 attack) and holds court with adds.
+- Room banners only announce rooms worth announcing (entrance,
+  landmark, mid-boss hold, boss lair) - ordinary rooms just show
+  their name in the clear-toast.
+- The battle camera opens on the party at the dungeon door, not the
+  middle of the map - and stays ANCHORED to the party: enemies only
+  widen the frame when they are part of this fight, within seven
+  units, never stragglers across the map.
+- DPS meters freeze a combatant's clock at death - numbers stop
+  converging to zero.
+- The spider death rerolled: wet crunch and curling legs, no screech.
+- The mastery tooltip fits its panel; the Guild's "Restored" badge
+  no longer folds into a vertical ribbon.
+- Dead enemies now actually fade off the roster (the despawn was
+  listening to the wrong event field) - the damage meter no longer
+  gets pushed off screen.
+- Damage meter names/numbers: light text with a dark outline on the
+  colored bars, up a size - readable at a glance.
+- Room banners dedupe and replace instead of stacking doubles.
+- The combat music stem rerolled calmer - a scuffle, not a war
+  (the epic version remains one prompt away for bosses).
+- The armor tooltip no longer lectures about poison (that fact
+  belongs to Poison Res); the Guild panel no longer names the
+  Slime King before you've met him.
+- The hero panel lays out like a character sheet: mastery stars on
+  the left, the stat table (name left, value right) on the right,
+  armor-type census below.
+- **Fixed: the Shield-Line no longer drops for a lone delver** -
+  doctrines about protecting allies (guard, protect) declare
+  min_party and the loot roll honors the real roster size. "You're
+  not alone anymore" comes first; the tome waits.
+- The old combat theme no longer leaks in during dungeon compilation
+  (stopped before the sim, restored only for themes without stems).
+- Loot toasts replace each other and fade out after a few seconds
+  (they used to stack forever in continuous delves).
+- Dead enemies fade off the roster after a few seconds; the damage
+  meter keeps their line.
 - Starter/oiled palettes tuned darker and lower-contrast so the
   recolor classifier's texture noise stays invisible (per-piece
   material slots from the engine are the recorded proper fix).

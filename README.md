@@ -82,10 +82,12 @@ the item.**
 
 ![The leather outfit](docs/screenshots/leather_outfit_lineup.png)
 
-*Real items, compiled. Left: a day-one delver in the full zero-stat
-starter set (plain jacket, trousers, boots, gloves, belt). Then Oiled
-Leathers with crafted Leather Trousers, and the same meshes re-dyed —
-the recolor lever on identical construction. Fresh recruits still
+*Real items, compiled per body. Left: a day-one delver in the full
+zero-stat starter set (plain jacket, trousers, boots, gloves, belt).
+Then Oiled Leathers with crafted Leather Trousers; Wren in her
+headband and a forest-dyed jacket compiled from her own body (same
+spec, her mesh);
+and the oxblood dye on the same construction. Fresh recruits still
 arrive without trousers; the guild has issued them ever since the
 founder was recovered from a hedge maze wearing nothing at all.*
 

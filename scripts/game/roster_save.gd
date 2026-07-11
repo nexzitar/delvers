@@ -88,6 +88,7 @@ const GEAR_PATHS := {
 	"starter_bow": "res://resources/gear/starter_bow.tres",
 	"starter_shield": "res://resources/gear/starter_shield.tres",
 	"starter_helmet": "res://resources/gear/starter_helmet.tres",
+	"starter_headband": "res://resources/gear/starter_headband.tres",
 	"starter_armor": "res://resources/gear/starter_armor.tres",
 	"starter_trousers": "res://resources/gear/starter_trousers.tres",
 	"starter_boots": "res://resources/gear/starter_boots.tres",

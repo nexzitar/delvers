@@ -172,6 +172,9 @@ func _run_all():
 	# Re-dress from tuning (what rebuild does) and pose (what reverted the sword).
 	var fresh = AnimatedActor.new(load("res://resources/models/delver_male.glb"), room_config)
 	fresh.tuning = fitted.tuning.duplicate(true)
+	# No grip data: this delver exercises the legacy fit path (socket
+	# mounting has its own contract in test_sockets).
+	fresh.tuning.erase("grips")
 	add_child(fresh)
 	fresh.worn_mounts.clear()
 	fresh._mount_worn_model("starter_sword")

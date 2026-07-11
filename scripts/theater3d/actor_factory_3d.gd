@@ -52,6 +52,7 @@ const MODEL_CONFIGS := {
 		"facing_fix": -PI / 2,
 		"model_scale": 1.17,
 		"walk_cycle_scale": 1.5,
+		"garment_suffix": "_f",
 		"animation_donor": "res://resources/models/delver_male.glb",
 		"hair_tail": {"color": Color(0.23, 0.17, 0.11), "segment_length": 0.085,
 			"offset": Vector3(0, 0.12, 0.1)},
@@ -63,6 +64,66 @@ const MODEL_CONFIGS := {
 			"swing": "NlaTrack_003",
 			"walk": "NlaTrack_004",
 			"cast": "NlaTrack_005",
+		},
+	},
+	"res://resources/models/goblin_warrior_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 0.95,
+		"walk_cycle_scale": 1.5,
+		"sword": true, "shield": true,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack",
+			"walk": "NlaTrack_001",
+			"run": "NlaTrack_002",
+			"swing": "NlaTrack_003",
+			"death": "NlaTrack_004",
+		},
+	},
+	"res://resources/models/goblin_archer_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 0.9,
+		"walk_cycle_scale": 1.5,
+		"bow": true,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack",
+			"walk": "NlaTrack_001",
+			"run": "NlaTrack_002",
+			"swing": "NlaTrack_003",
+			"death": "NlaTrack_004",
+		},
+	},
+	"res://resources/models/goblin_scout_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 0.85,
+		"walk_cycle_scale": 1.5,
+		"dagger": true,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack", "walk": "NlaTrack_001", "run": "NlaTrack_002",
+			"swing": "NlaTrack_003", "death": "NlaTrack_004",
+		},
+	},
+	"res://resources/models/goblin_shaman_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 0.9,
+		"walk_cycle_scale": 1.5,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack", "walk": "NlaTrack_001", "run": "NlaTrack_002",
+			"swing": "NlaTrack_003", "death": "NlaTrack_004",
+		},
+	},
+	"res://resources/models/goblin_chief_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 1.12,
+		"walk_cycle_scale": 1.5,
+		"sword": true, "shield": true,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack", "walk": "NlaTrack_001", "run": "NlaTrack_002",
+			"swing": "NlaTrack_003", "death": "NlaTrack_004",
 		},
 	},
 	"res://resources/models/delver_male.glb": {
@@ -89,6 +150,10 @@ static func build_from_spawn(event) -> Node3D:
 			opts.merge(config, true)
 			return AnimatedActor.new(load(event.model_path), opts)
 		return build_hero(event.equipped)
+	if event.model_path != "":
+		# A modeled enemy: its weapons and scale ride the model config.
+		var config = MODEL_CONFIGS.get(event.model_path, {}).duplicate(true)
+		return AnimatedActor.new(load(event.model_path), config)
 	return build_enemy(event.template)
 
 static func build_hero(equipped: Dictionary, model_path := "") -> Node3D:

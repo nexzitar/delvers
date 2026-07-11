@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://cs0ikiun3u8jj"]
 
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
-[ext_resource type="Script" path="res://scripts/combat/skills/cleave.gd" id="2_behavior"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_cleave.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" uid="uid://cgv3qrlub14dm" path="res://scripts/combat/skills/cleave.gd" id="2_behavior"]
+[ext_resource type="Texture2D" uid="uid://cbt138muqy5xc" path="res://art/skills/skill_cleave.png" id="3_icon"]
 
 [resource]
 resource_name = "Cleave"
@@ -12,6 +12,6 @@ skill_name = "Cleave"
 icon = ExtResource("3_icon")
 behavior_script = ExtResource("2_behavior")
 range = 48.0
-cooldown = 5.0
 base_min_damage = 2
 base_max_damage = 4
+cooldown = 5.0

@@ -53,6 +53,14 @@ var retarget_at: float = 0.0
 var behavior_tree: Array = []
 ## Imported model scene path ("" = procedural rig in the theater).
 var model_path := ""
+
+## Continuous delve: which pack this enemy belongs to (-1 = none),
+## whether it is still dormant (unaware of the party), and its home
+## for the leash. Packs sharing a link_id >= 0 pull together.
+var pack_id := -1
+var dormant := false
+var link_id := -1
+var home_position := Vector2.ZERO
 ## Armor-type identity trades (set from the worn loadout).
 var threat_mult := 1.0
 var stagger_resist := 0.0
@@ -115,7 +123,7 @@ func tick_statuses(delta, combat_state):
 		if s.kind == StatusEffect.Kind.REGEN and alive \
 				and current_health < max_health:
 			s.accum += s.magnitude * delta
-			if s.accum >= 1.0:
+			if s.accum >= 1.995:
 				var mend = mini(int(s.accum), max_health - current_health)
 				s.accum -= int(s.accum)
 				current_health += mend

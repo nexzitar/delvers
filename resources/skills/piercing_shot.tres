@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://ccnu7d4blkj24"]
 
-[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="1_skill"]
-[ext_resource type="Script" path="res://scripts/combat/skills/piercing_shot.gd" id="2_behavior"]
-[ext_resource type="Texture2D" path="res://art/skills/skill_piercing_shot.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="1_skill"]
+[ext_resource type="Script" uid="uid://btvs0sex8ycox" path="res://scripts/combat/skills/piercing_shot.gd" id="2_behavior"]
+[ext_resource type="Texture2D" uid="uid://b1ueybxw5c8pu" path="res://art/skills/skill_piercing_shot.png" id="3_icon"]
 
 [resource]
 resource_name = "Piercing Shot"
