@@ -56,6 +56,27 @@ const DEFAULT_SOCKETS := {
 var actor: AnimatedActor
 var _socket_markers := {}
 var _grip_markers := {}
+var _grip_socket := {}
+var _grip_props := {}
+
+## Live preview: every frame, re-mount each prop so its grip marker
+## lands on its socket marker - drag a gizmo, watch the weapon move.
+func _process(_delta):
+	if not Engine.is_editor_hint() or actor == null:
+		return
+	for grip_key in _grip_markers:
+		var marker = _grip_markers.get(grip_key)
+		var smarker = _socket_markers.get(_grip_socket.get(grip_key, ""))
+		var prop = _grip_props.get(grip_key)
+		if not (is_instance_valid(marker) and is_instance_valid(smarker) \
+				and is_instance_valid(prop)):
+			continue
+		var socket_rot := Basis.from_euler(smarker.rotation)
+		var grip_rot := Basis.from_euler(marker.rotation)
+		var keep_scale = prop.scale
+		prop.quaternion = (socket_rot * grip_rot.inverse()).get_rotation_quaternion()
+		prop.scale = keep_scale
+		prop.position = smarker.position - prop.basis * marker.position
 
 func _ready():
 	_build()
@@ -66,6 +87,8 @@ func _build():
 			child.free()
 	_socket_markers.clear()
 	_grip_markers.clear()
+	_grip_socket.clear()
+	_grip_props.clear()
 	AnimatedActor._tuning_cache = null
 	var model_paths := {
 		"delver": "res://resources/models/delver_male.glb",
@@ -111,6 +134,9 @@ func _build():
 
 func _add_grip_marker(grip_key: String, piece: Node3D,
 		saved_grips: Dictionary, root: Node):
+	_grip_props[grip_key] = piece
+	_grip_socket[grip_key] = GEAR_GRIP_SOCKETS.get(grip_key,
+		saved_grips.get(grip_key, {}).get("socket", "grip_main"))
 	var marker := Marker3D.new()
 	marker.name = "GRIP_" + grip_key
 	marker.gizmo_extents = 0.35
