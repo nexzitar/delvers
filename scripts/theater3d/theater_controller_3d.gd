@@ -546,6 +546,7 @@ func _play_heal(event):
 	var target = actors.get(event.target_id)
 	if target == null:
 		return
+	_spawn_heal_glow(target.rig.position)
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
@@ -790,6 +791,34 @@ func _spawn_arrow_streak(from: Vector3, to: Vector3):
 	tween.tween_callback(streak.queue_free)
 
 ## An expanding ground ring: thunder gold by default, renew green.
+## Healing has a face: a soft green ring and motes drifting up off
+## the mended delver, gone in under a second.
+func _spawn_heal_glow(at: Vector3):
+	_spawn_shockwave(at, Color(0.4, 0.9, 0.45, 0.55), 1.6)
+	for i in 5:
+		var mote := MeshInstance3D.new()
+		var orb := SphereMesh.new()
+		orb.radius = 0.035
+		orb.height = 0.07
+		orb.radial_segments = 6
+		orb.rings = 3
+		mote.mesh = orb
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.55, 0.95, 0.5)
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mote.material_override = mat
+		var a = TAU * i / 5.0 + randf() * 0.6
+		mote.position = at + Vector3(cos(a) * 0.22, 0.3 + randf() * 0.3,
+			sin(a) * 0.22)
+		add_child(mote)
+		var rise := create_tween()
+		rise.set_parallel(true)
+		rise.tween_property(mote, "position:y", mote.position.y + 0.9,
+			0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		rise.tween_property(mat, "albedo_color:a", 0.0, 0.8) 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		rise.chain().tween_callback(mote.queue_free)
+
 func _spawn_shockwave(at: Vector3, tint := Color(1.0, 0.9, 0.5, 0.8), max_scale := 5.6):
 	var ring := MeshInstance3D.new()
 	var torus := TorusMesh.new()
