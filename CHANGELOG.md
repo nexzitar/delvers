@@ -5,6 +5,13 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **MUSIC STEMS (Eleven Music trial)**: the audio grammar's runtime
+  half arrives. Three Darkwood stems - explore (low cello and harp),
+  combat (taiko and string stabs), boss (low choir and war drums) -
+  all in D minor at 90 BPM so they stack in time. All three loop from
+  the moment the delve starts; the combat layer fades in when a pack
+  wakes, the explore layer ducks, and the boss layer joins when the
+  King's pack pulls. audio_batch.py speaks the music endpoint now.
 - **Battle camera orbit**: right-drag turns the bearing, the wheel
   zooms (0.55x-1.9x) - the follow framing keeps tracking the fight
   underneath, so you orbit the battle, not a fixed point. Same feel

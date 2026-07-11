@@ -559,6 +559,7 @@ func _play_heal(event):
 	)
 
 func _play_death(event):
+	call_deferred("_music_update")
 	var dead_state = actors.get(event.entity_id)
 	if dead_state:
 		match dead_state.get("family", ""):
@@ -722,6 +723,63 @@ func _update_arrows():
 var _cam_yaw := 0.0
 var _cam_zoom := 1.0
 var _cam_orbiting := false
+
+## Music stems (vertical layering): explore always plays; the combat
+## layer fades in over it when a pack is awake; the boss layer joins
+## for the last pack. One key, one tempo - the layers stack in time.
+var _stem_players := {}
+
+func _setup_stems():
+	var stem_theme: String = {"forest": "darkwood"}.get(dungeon().theme, "")
+	if stem_theme == "":
+		return
+	var base = "res://audio/music/%s_" % stem_theme
+	if not ResourceLoader.exists(base + "explore.mp3"):
+		return
+	var old_music = get_node_or_null("Music")
+	if old_music:
+		old_music.stop()
+	for stem in ["explore", "combat", "boss"]:
+		var path = base + stem + ".mp3"
+		if not ResourceLoader.exists(path):
+			continue
+		var stream = load(path)
+		if stream is AudioStreamMP3:
+			stream.loop = true
+		var player := AudioStreamPlayer.new()
+		player.stream = stream
+		player.bus = "Music"
+		player.volume_db = -4.0 if stem == "explore" else -60.0
+		add_child(player)
+		player.play()
+		_stem_players[stem] = player
+
+func _music_update():
+	if _stem_players.is_empty():
+		return
+	var fighting := false
+	var boss_fight := false
+	var boss_pack: int = (_layout.packs.size() - 1) if _layout != null else -1
+	for state in actors.values():
+		if state.team != CombatEntity.Team.ENEMY:
+			continue
+		if state.get("dormant", false) or state.mode == "dead":
+			continue
+		fighting = true
+		if state.get("pack_id", -1) == boss_pack:
+			boss_fight = true
+	var targets := {
+		"explore": -10.0 if fighting else -4.0,
+		"combat": (-14.0 if boss_fight else -6.0) if fighting else -60.0,
+		"boss": -4.0 if boss_fight else -60.0,
+	}
+	for stem in _stem_players:
+		var player = _stem_players[stem]
+		var goal: float = targets.get(stem, -60.0)
+		if absf(player.volume_db - goal) > 0.5:
+			var fade := create_tween()
+			fade.tween_property(player, "volume_db", goal, 1.4) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton:
@@ -915,6 +973,7 @@ func _show_room_banner(room: int):
 ## enemy panel.
 func _wake_pack(pack_id: int):
 	_sfx("pack_pulled", -6.0)
+	call_deferred("_music_update")
 	var voices := {"goblin": ["goblin_bark_1", "goblin_bark_2"],
 		"spider": ["spider_hiss"], "slime": ["slime_hop"]}
 	var pack_family := ""
@@ -1534,6 +1593,7 @@ func _setup_world(arena):
 		mesh.position += center + Vector3(7.5 * cos(a), 0, 4.6 * sin(a))
 		add_child(mesh)
 
+	_setup_stems()
 	var beds := {"forest": "darkwood", "nest": "spider_nest",
 		"workshop": "sunken_workshop"}
 	var bed_path = "res://audio/ambience/%s.mp3" % beds.get(dungeon().theme, "darkwood")
