@@ -1571,11 +1571,9 @@ func _tooltip_mastery(res: Dictionary):
 	var discipline: String = res.discipline
 	var stars: int = res.stars
 	var info = Mastery.DISCIPLINES[discipline]
-	_tip_line("%s Mastery" % info.name, GOLD, 26, 0)
-	_tip_line(MASTERY_TRAINING.get(discipline, ""), DIM, 16, 0)
-	_tip_line("Stars unlock techniques that join combat on their own -", DIM, 15, 0)
-	_tip_line("no skill slot needed. Unpracticed stars rust but are", DIM, 15, 0)
-	_tip_line("never lost: relearning is three times faster.", DIM, 15, 0)
+	_tip_line("%s Mastery" % info.name, GOLD, 24, 0)
+	_tip_line(MASTERY_TRAINING.get(discipline, ""), DIM, 15, 0)
+	_tip_line("Stars unlock free techniques. Rust fades, never erases: relearning runs 3x.", DIM, 14, 0)
 	for star in info.track:
 		var entry = info.track[star]
 		var what: String = ""

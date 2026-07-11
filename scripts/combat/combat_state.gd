@@ -174,6 +174,13 @@ func apply_on_hit(attacker, weapon, target):
 				affix.on_hit_duration, affix.on_hit_magnitude,
 				"slow_" + affix.affix_id, attacker.entity_id
 			)
+			# Cold hands swing slower: chill drags the attack timer
+			# as hard as it drags the feet.
+			apply_status(
+				target, StatusEffect.Kind.SLUGGISH,
+				affix.on_hit_duration, 0.8,
+				"chill_swing_" + affix.affix_id, attacker.entity_id
+			)
 
 ## A regeneration tick mended health: a small green number, credited
 ## to whoever cast it.
@@ -190,6 +197,7 @@ func log_hot(target, status, amount: int):
 	event.max_health = target.max_health
 	event.skill_name = "Renew"
 	event.amount = amount
+	event.dot = true
 	add_event(event)
 
 ## A poison tick dealt damage: log it (flagged as a dot so the theater

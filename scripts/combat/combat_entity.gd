@@ -123,7 +123,7 @@ func tick_statuses(delta, combat_state):
 		if s.kind == StatusEffect.Kind.REGEN and alive \
 				and current_health < max_health:
 			s.accum += s.magnitude * delta
-			if s.accum >= 1.0:
+			if s.accum >= 1.995:
 				var mend = mini(int(s.accum), max_health - current_health)
 				s.accum -= int(s.accum)
 				current_health += mend

@@ -14,25 +14,34 @@ static var _cache := {}
 ## Portrait for a SPAWN event (hero loadout or enemy template).
 static func from_spawn(event, host: Node) -> Texture2D:
 	if event.team == CombatEntity.Team.HERO:
-		return await for_hero(event.equipped, host)
+		return await for_hero(event.equipped, host, event.model_path)
 	return await for_enemy(event.template, host)
 
-static func for_hero(equipped: Dictionary, host: Node) -> Texture2D:
+static func for_hero(equipped: Dictionary, host: Node, model_path := "") -> Texture2D:
 	var ids := []
 	for pos in equipped:
 		ids.append("%s:%s" % [pos, equipped[pos].gear_id])
 	ids.sort()
-	var key = "hero|" + ",".join(ids)
+	var key = "hero|%s|%s" % [model_path, ",".join(ids)]
 	if _cache.has(key):
 		return _cache[key]
-	var rig = ActorFactory3D.build_hero(equipped)
+	var rig = ActorFactory3D.build_hero(equipped, model_path)
+	if rig is AnimatedActor:
+		rig.pose_idle(0.2)
 	return await _render(key, rig, host)
 
 static func for_enemy(template, host: Node) -> Texture2D:
 	var key = "enemy|" + template.enemy_id
 	if _cache.has(key):
 		return _cache[key]
-	var rig = ActorFactory3D.build_enemy(template)
+	var rig: Node3D
+	if template.model_scene != null:
+		var path: String = template.model_scene.resource_path
+		var config = ActorFactory3D.MODEL_CONFIGS.get(path, {}).duplicate(true)
+		rig = AnimatedActor.new(load(path), config)
+		rig.pose_idle(0.2)
+	else:
+		rig = ActorFactory3D.build_enemy(template)
 	return await _render(key, rig, host)
 
 static func _render(key: String, rig: Node3D, host: Node) -> Texture2D:

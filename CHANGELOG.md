@@ -5,6 +5,12 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Contact reactions**: bodies answer the fight - a jolt away from
+  a landed hit (bigger on crits), a quick sidestep on a dodge, a
+  small brace on a block. Decaying offsets, no new animations needed.
+- **Portraits show who we are now**: hero and enemy sidebar portraits
+  render from the actual models - Garrick's helmet, Wren's hood, the
+  goblins' own faces - instead of the old procedural rigs.
 - **Dual Wield mastery**: fighting with a weapon in each hand now
   trains its own discipline - Ambidexterity, Twin Fangs, Off-Hand
   Training, Blade Dance (passives; its unique techniques wait for
@@ -201,6 +207,23 @@ Notable changes per pull request. Newest first.
   fitted model covers the region.
 
 ### Changed
+- Frostforged chills the sword arm too: chilled targets swing 20%
+  slower for the duration, not just walk slower.
+- Renew ticks in whole beats (about one mend per second) and its
+  ticks are quiet - small numbers, no chime, no bloom. The full
+  effect stays for real casts.
+- Mid-boss packs trimmed by three bodies; the Slime King grew into
+  his crown (+45 health, +2 attack) and holds court with adds.
+- Room banners only announce rooms worth announcing (entrance,
+  landmark, mid-boss hold, boss lair) - ordinary rooms just show
+  their name in the clear-toast.
+- The battle camera opens on the party at the dungeon door, not the
+  middle of the map.
+- DPS meters freeze a combatant's clock at death - numbers stop
+  converging to zero.
+- The spider death rerolled: wet crunch and curling legs, no screech.
+- The mastery tooltip fits its panel; the Guild's "Restored" badge
+  no longer folds into a vertical ribbon.
 - Dead enemies now actually fade off the roster (the despawn was
   listening to the wrong event field) - the damage meter no longer
   gets pushed off screen.

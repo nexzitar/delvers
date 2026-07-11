@@ -8,8 +8,8 @@
 script = ExtResource("1_enemy")
 enemy_id = "slime_king"
 enemy_name = "Slime King"
-base_health = 70
-base_attack = 3
+base_health = 115
+base_attack = 5
 base_attack_interval = 3.2
 move_speed = 70.0
 skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])

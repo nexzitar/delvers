@@ -30,6 +30,8 @@ var unit_rows := {}
 var meter_rows := {}
 var damage_totals := {}
 var encounter_time := 0.0
+## Death freezes a combatant's DPS clock; their number stays honest.
+var _frozen_at := {}
 
 var unit_list: VBoxContainer
 var meter_list: VBoxContainer
@@ -128,6 +130,7 @@ func set_mana(entity_id, current, max_value):
 
 func mark_dead(entity_id):
 
+	_frozen_at[entity_id] = encounter_time
 	set_health(entity_id, 0, unit_rows[entity_id].hp_bar.max_value)
 	unit_rows[entity_id].row.modulate = DEAD_TINT
 
@@ -207,7 +210,7 @@ func _refresh_meter():
 		var entity_id = order[i]
 		var row = meter_rows[entity_id]
 		var total = damage_totals[entity_id]
-		var dps = total / max(encounter_time, 0.1)
+		var dps = total / max(_frozen_at.get(entity_id, encounter_time), 0.1)
 
 		row.bar.value = float(total) / top
 		row.value.text = "%d (%.1f)" % [total, dps]

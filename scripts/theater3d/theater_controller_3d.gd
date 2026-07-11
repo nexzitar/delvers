@@ -392,7 +392,11 @@ func _play_event(event):
 			_play_buff_expired(event)
 		CombatEvent.EventType.ROOM_ENTERED:
 			_room_reached = maxi(_room_reached, event.room)
-			_show_room_banner(event.room)
+			var role := ""
+			if _layout != null and event.room - 1 < _layout.room_roles.size():
+				role = _layout.room_roles[event.room - 1]
+			if role in ["entrance", "landmark", "mid_boss", "boss"]:
+				_show_room_banner(event.room)
 		CombatEvent.EventType.PACK_PULLED:
 			_wake_pack(event.pack_id)
 		CombatEvent.EventType.PACK_DEFEATED:
@@ -434,6 +438,7 @@ func _play_spawn(event):
 		"pack_id": event.pack_id,
 		"dormant": event.team == CombatEntity.Team.ENEMY and event.pack_id >= 0,
 		"family": _family_of(event.template),
+		"reaction": Vector3.ZERO,
 	}
 
 	var sidebar = (
@@ -508,6 +513,7 @@ func _play_damage(event):
 		event.skill != null
 		and event.skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
 	)
+	_react(event)
 	var attacker_family = actors.get(event.source_id, {}).get("family", "")
 	if event.blocked and _sfx("shield_block", -4.0, randf_range(0.95, 1.05)):
 		pass
@@ -548,11 +554,12 @@ func _play_damage(event):
 		)
 
 func _play_heal(event):
-	_sfx("heal_chime", -8.0, randf_range(0.95, 1.05))
 	var target = actors.get(event.target_id)
 	if target == null:
 		return
-	_spawn_heal_glow(target.rig.position)
+	if not event.dot:
+		_sfx("heal_chime", -8.0, randf_range(0.95, 1.05))
+		_spawn_heal_glow(target.rig.position)
 	sidebars_by_entity[event.target_id].set_health(
 		event.target_id, event.remaining_health, event.max_health
 	)
@@ -561,8 +568,28 @@ func _play_heal(event):
 		caster_bar.set_mana(event.source_id, event.current_mana, event.max_mana)
 	_spawn_floating_text(
 		target.rig.position, "+%d" % event.amount, Color(0.35, 0.85, 0.3),
-		1.0, event.target_id
+		0.7 if event.dot else 1.0, event.target_id
 	)
+
+## Bodies answer contact: a jolt away from the blow, a sidestep on a
+## dodge, a small brace on a block - offsets that decay in a beat.
+func _react(event):
+	var target = actors.get(event.target_id)
+	var source = actors.get(event.source_id)
+	if target == null or target.mode == "dead":
+		return
+	var away := Vector3(0, 0, 0.12)
+	if source:
+		away = (target.rig.position - source.rig.position)
+		away.y = 0.0
+		away = away.normalized()
+	if event.dodged:
+		var side = away.cross(Vector3.UP)
+		target.reaction = side * (0.24 if randf() < 0.5 else -0.24)
+	elif event.blocked:
+		target.reaction = away * 0.06
+	elif not event.dot:
+		target.reaction = away * (0.16 if event.crit else 0.1)
 
 func _play_death(event):
 	call_deferred("_music_update")
@@ -659,7 +686,10 @@ func _update_actors(delta):
 			state.move_progress = minf(
 				1.0, state.move_progress + delta / MOVE_TWEEN_T
 			)
-			rig.position = state.move_from.lerp(state.move_to, state.move_progress)
+			rig.position = state.move_from.lerp(state.move_to, state.move_progress) \
+				+ state.get("reaction", Vector3.ZERO)
+			state.reaction = state.get("reaction", Vector3.ZERO) \
+				* exp(-7.0 * delta)
 
 		if state.mode != "dead":
 			rig.rotation.y = lerp_angle(
@@ -1662,9 +1692,14 @@ func _setup_world(arena):
 
 	camera = Camera3D.new()
 	camera.fov = 35
-	camera.position = center + CAMERA_OFFSET.normalized() * 13.0
+	var open_on = center
+	if _layout != null:
+		open_on = to_world(Vector2(
+			(arena.hero_spawn_center.x + 0.5) * arena.tile_size,
+			(arena.hero_spawn_center.y + 0.5) * arena.tile_size))
+	camera.position = open_on + CAMERA_OFFSET.normalized() * 10.0
 	add_child(camera)
-	camera.look_at(center)
+	camera.look_at(open_on)
 
 ## The architecture kit dresses the dungeon: coursed walls in three
 ## variants (MultiMesh), pillars where masonry stands alone, arches

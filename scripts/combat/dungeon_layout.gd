@@ -220,16 +220,17 @@ static func _place_packs(layout: DungeonLayout, dungeon: DungeonDefinition,
 		var center = Vector2(rooms[i].get_center().x + 0.5,
 			rooms[i].get_center().y + 0.5) * TILE
 		if i == rooms.size() - 1:
+			var court = dungeon.boss_pack.duplicate()
+			court.append_array(_roll(dungeon, room_no, rng, -2))
 			layout.packs.append({"room": room_no, "center": center,
-				"templates": dungeon.boss_pack.duplicate(), "elite": false,
-				"link": -1})
+				"templates": court, "elite": false, "link": -1})
 			continue
 		if i == mid:
 			# The mid-boss: the dungeon's named elite when it has one,
 			# else the farmable identity grown up.
 			var elite_pack = dungeon.mid_boss.duplicate() \
 				if not dungeon.mid_boss.is_empty() else dungeon.guaranteed.duplicate()
-			elite_pack.append_array(_roll(dungeon, room_no, rng, 2))
+			elite_pack.append_array(_roll(dungeon, room_no, rng, -3))
 			layout.packs.append({"room": room_no, "center": center,
 				"templates": elite_pack, "elite": true, "link": -1})
 			continue

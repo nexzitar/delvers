@@ -127,7 +127,10 @@ func _unlock_row(unlock: Dictionary) -> Control:
 			))
 
 	if purchased:
-		row.add_child(_label("Restored", 20, GOLD))
+		var restored = _label("Restored", 20, GOLD)
+		restored.custom_minimum_size = Vector2(120, 0)
+		restored.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(restored)
 	else:
 		var buy = Button.new()
 		buy.text = "Restore"
