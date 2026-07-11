@@ -1563,6 +1563,7 @@ const MASTERY_TRAINING := {
 	"sword": "Trains every room fought with a sword in the main hand.",
 	"shield": "Trains every room fought with a shield in the off hand.",
 	"bow": "Trains every room fought with a bow.",
+	"dagger": "Trains every room fought with a dagger in the main hand.",
 	"dualwield": "Trains every room fought with a weapon in each hand.",
 	"restoration": "Trains every room fought with a healing skill slotted.",
 }

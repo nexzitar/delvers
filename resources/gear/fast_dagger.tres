@@ -10,6 +10,7 @@ gear_id = "fast_dagger"
 gear_name = "Fast Dagger"
 slot = 2
 weapon_type = 1
+weapon_family = "dagger"
 texture = ExtResource("2_tex")
 icon = ExtResource("2_tex")
 offset = Vector2(68, 70)

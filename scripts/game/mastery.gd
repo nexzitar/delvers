@@ -44,6 +44,15 @@ const DISCIPLINES := {
 			5: {"passive": {"crit_add": 0.1}, "label": "Deadly Aim"},
 		},
 	},
+	"dagger": {
+		"name": "Dagger",
+		"track": {
+			2: {"skill": "hamstring"},
+			3: {"passive": {"crit_add": 0.04}, "label": "Find the Gap"},
+			4: {"passive": {"attack_speed_mult": 0.94}, "label": "Flurry"},
+			5: {"passive": {"crit_add": 0.06}, "label": "Red Ribbons"},
+		},
+	},
 	"dualwield": {
 		"name": "Dual Wield",
 		"track": {
@@ -85,6 +94,8 @@ static func active_disciplines(hero) -> Array:
 	if main:
 		if main.weapon_type == GearDefinition.WeaponType.BOW:
 			active.append("bow")
+		elif main.weapon_family == "dagger":
+			active.append("dagger")
 		else:
 			active.append("sword")
 	var off = hero.equipped.get(Equip.Position.OFF_HAND)
