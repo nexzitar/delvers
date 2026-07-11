@@ -8,6 +8,15 @@ extends Control
 @onready var loadout = $HeroLoadout
 
 func _ready():
+	# The campfire theme, from the real music pipeline - the old wav
+	# stays as the fallback and the menu keeps its own.
+	var camp_theme_path := "res://audio/music/camp_theme.mp3"
+	if ResourceLoader.exists(camp_theme_path) and has_node("Music"):
+		var theme_stream = load(camp_theme_path)
+		if theme_stream is AudioStreamMP3:
+			theme_stream.loop = true
+		$Music.stream = theme_stream
+		$Music.play()
 
 	UiSounds.wire_buttons(self)
 

@@ -20,6 +20,13 @@ Notable changes per pull request. Newest first.
   Piercing Shot.
 
 ### Changed
+- The goblin shield straps to the FRONT of the forearm (a two-angle
+  probe caught the earlier fix hiding it behind the arm), and the
+  goblin sword carries forward at a ready angle instead of pointing
+  backward - both settled by side-by-side candidate renders.
+- The camp has a proper theme now: a 90-second lute-and-strings
+  campfire piece from the music pipeline, looping in place of the
+  first-version wav (which remains the menu's and the fallback).
 - Archers DRAW now: the cast wind-up pose was gated to procedural
   rigs only - every modeled rig (Wren and the goblins) skipped it.
   Any rig that can pose_shoot draws before the arrow flies.
