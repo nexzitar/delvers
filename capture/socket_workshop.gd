@@ -84,21 +84,25 @@ func _process(_delta):
 func _ready():
 	_build()
 
-## Ctrl+S on the scene: bank the tuning, strip the built actor so
-## the scene file stays clean (a baked actor breaks the next open),
-## and rebuild from the fresh save afterwards.
+## Ctrl+S on the scene: bank the tuning, then disown the built actor
+## so it never serializes (a baked actor breaks the next open). The
+## tree itself can't be touched mid-save - only ownership can.
 func _notification(what):
 	if what == NOTIFICATION_EDITOR_PRE_SAVE:
 		if actor == null or not is_instance_valid(actor):
 			_reconnect()
 		_save()
-		for child in get_children():
-			if child.name == "WorkshopActor":
-				remove_child(child)
-				child.free()
-		actor = null
+		_disown_deep(self)
 	elif what == NOTIFICATION_EDITOR_POST_SAVE:
-		_build()
+		var root = get_tree().edited_scene_root if Engine.is_editor_hint() else self
+		for marker in _socket_markers.values() + _grip_markers.values():
+			if is_instance_valid(marker):
+				_own(marker, root)
+
+func _disown_deep(node: Node):
+	for child in node.get_children():
+		child.owner = null
+		_disown_deep(child)
 
 ## A script hot-reload (e.g. after a git pull with the scene open)
 ## wipes plain vars but leaves the scene standing: rewire the maps
@@ -126,7 +130,7 @@ func _reconnect():
 
 func _build():
 	for child in get_children():
-		if child.name == "WorkshopActor":
+		if is_instance_valid(child) and child.name == "WorkshopActor":
 			child.free()
 	_socket_markers.clear()
 	_grip_markers.clear()

@@ -47,5 +47,26 @@ func _ready():
 	assert(prop.position.distance_to(before + Vector3(0.1, 0.12, 0)) < 0.001,
 		"preview must survive a script hot-reload")
 
+	# Ctrl+S: the save notifications must bank tuning WITHOUT touching
+	# the tree (mid-save that's forbidden), serialize a bare scene,
+	# and leave the preview alive. Shield the real tuning file.
+	var tuning_backup: String = FileAccess.get_file_as_string(AnimatedActor.TUNING_PATH)
+	workshop.notification(NOTIFICATION_EDITOR_PRE_SAVE)
+	assert(is_instance_valid(workshop.actor), "pre-save must keep the actor standing")
+	var packed := PackedScene.new()
+	packed.pack(workshop)
+	assert(packed.instantiate().get_child_count() == 0,
+		"a saved workshop scene must hold nothing but the root")
+	workshop.notification(NOTIFICATION_EDITOR_POST_SAVE)
+	assert(smarker.owner != null, "post-save must re-own the markers")
+	smarker.position += Vector3(0.05, 0, 0)
+	await get_tree().process_frame
+	assert(prop.position.distance_to(before + Vector3(0.15, 0.12, 0)) < 0.001,
+		"preview must keep following after a save cycle")
+	var file := FileAccess.open(AnimatedActor.TUNING_PATH, FileAccess.WRITE)
+	file.store_string(tuning_backup)
+	file = null
+	AnimatedActor._tuning_cache = null
+
 	print("PASS test_workshop_preview")
 	get_tree().quit()
