@@ -20,9 +20,15 @@ static func try_use(state, caster, skill) -> bool:
 		return false
 
 	var direction = (target.position - caster.position).normalized()
-	caster.position = state.grid.clamp_world(
+	var landing = state.grid.clamp_world(
 		target.position - direction * CONTACT_DISTANCE
 	)
+	# The contact point can sit inside a pillar when the target hugs
+	# one; land on the nearest open tile instead.
+	var cell = state.grid.world_to_tile(landing)
+	if not state.grid.is_walkable(cell):
+		landing = state.grid.tile_to_world(state.grid.nearest_walkable(cell))
+	caster.position = landing
 	caster.facing = direction
 	state.stop_movement(caster)
 	state.log_forced_move(caster)

@@ -331,14 +331,30 @@ func face_target(entity, target):
 ## Standing units un-stack too: separation while stopped, gently,
 ## with the shift logged so the theater sees it. No-op when clear.
 func nudge_separation(entity):
-	var push = Separation.compute_offset(
+	var push = _legal_push(entity, Separation.compute_offset(
 		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0,
 		float(entity.entity_id)
-	)
+	))
 	if push == Vector2.ZERO:
 		return
 	entity.position = grid.clamp_world(entity.position + push)
 	_log_move(entity)
+
+## Separation must respect the architecture: a push that would land
+## inside a pillar (or up a cliff) slides along the free axis
+## instead of shoving the body through masonry.
+func _legal_push(entity, push: Vector2) -> Vector2:
+	if push == Vector2.ZERO:
+		return push
+	var from_cell = grid.world_to_tile(entity.position)
+	for candidate in [push, Vector2(push.x, 0.0), Vector2(0.0, push.y)]:
+		if candidate == Vector2.ZERO:
+			continue
+		var to_cell = grid.world_to_tile(grid.clamp_world(entity.position + candidate))
+		if to_cell == from_cell \
+				or (grid.is_walkable(to_cell) and grid.step_ok(from_cell, to_cell)):
+			return candidate
+	return Vector2.ZERO
 
 func stop_movement(entity):
 	entity.path = PackedVector2Array()
@@ -437,11 +453,11 @@ func tick_movement_toward(entity, goal_pos: Vector2, delta):
 		entity.facing = walked.normalized()
 
 	# Soft collision: paths may overlap, bodies should not stack. The
-	# push must never shove anyone off the field.
-	entity.position += Separation.compute_offset(
+	# push must never shove anyone off the field or into a pillar.
+	entity.position += _legal_push(entity, Separation.compute_offset(
 		entity.position, _other_positions(entity), SEPARATION_RADIUS, 1.0,
 		float(entity.entity_id)
-	)
+	))
 	entity.position = grid.clamp_world(entity.position)
 
 	var moved = entity.position - before

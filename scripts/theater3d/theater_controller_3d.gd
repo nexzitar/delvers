@@ -887,6 +887,7 @@ func _update_camera(delta):
 	hero_center /= hero_count
 	var low := Vector3(INF, 0, INF)
 	var high := Vector3(-INF, 0, -INF)
+	var y_sum := 0.0
 	var count := 0
 	for state in actors.values():
 		if state.mode == "dead" or state.get("dormant", false):
@@ -899,10 +900,14 @@ func _update_camera(delta):
 		low.z = minf(low.z, p.z)
 		high.x = maxf(high.x, p.x)
 		high.z = maxf(high.z, p.z)
+		y_sum += p.y
 		count += 1
 	if count == 0:
 		return
+	# Heightfield terrain: the frame rides the fighters' ground level,
+	# not absolute zero, or elevated rooms get framed at the feet.
 	var center = (low + high) * 0.5
+	center.y = y_sum / count
 	var spread = (high - low).length()
 	# Generous distance so the fight stays inside the strip between the
 	# sidebar panels rather than hiding behind them.
