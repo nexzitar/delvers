@@ -117,5 +117,23 @@ func _ready():
 	_run(full, 30000)
 	assert(full.combat_over, "a full Darkwood delve terminates")
 
+	# --- 5. The shaman keeps its pack standing -------------------------
+	seed(11)
+	var shaman = load("res://resources/enemies/goblin_shaman.tres")
+	var warrior = load("res://resources/enemies/goblin_warrior.tres")
+	var heal_layout = _tiny_layout([
+		{"room": 2, "center": Vector2(20.5, 7.5) * 32.0,
+			"templates": [warrior, warrior, shaman], "elite": false,
+			"link": -1}])
+	var hcombat = CombatState.new()
+	hcombat.setup_delve([delver, delver], heal_layout)
+	_run(hcombat, 4000)
+	var enemy_heals = hcombat.combat_log.events.filter(func(e):
+		if e.type != CombatEvent.EventType.HEAL:
+			return false
+		var src = hcombat.entity_by_id(e.source_id)
+		return src != null and src.team == CombatEntity.Team.ENEMY)
+	assert(not enemy_heals.is_empty(), "the shaman heals its pack")
+
 	print("PASS test_pulls")
 	get_tree().quit()

@@ -1,8 +1,9 @@
 extends Node3D
-## The modeled goblin warrior: idle, mid-swing, dying.
+## The goblin family: same proportions, same equipment language,
+## different silhouettes - a civilization, not a bestiary page.
 func _ready():
 	var cam := Camera3D.new()
-	cam.position = Vector3(0.0, 0.9, 2.8)
+	cam.position = Vector3(0.0, 1.0, 3.6)
 	cam.look_at_from_position(cam.position, Vector3(0, 0.55, 0))
 	cam.fov = 38
 	add_child(cam)
@@ -19,18 +20,19 @@ func _ready():
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.environment.ambient_light_color = Color(0.6, 0.6, 0.6)
 	add_child(env)
-	for i in 3:
-		var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/goblin_warrior_m.glb"].duplicate(true)
-		var actor = AnimatedActor.new(load("res://resources/models/goblin_warrior_m.glb"), config)
-		actor.position = Vector3(-0.9 + i * 0.9, 0, 0)
-		actor.rotation.y = -0.4 + i * 0.4
+	var family := ["goblin_scout_m", "goblin_archer_m", "goblin_warrior_m",
+		"goblin_shaman_m", "goblin_chief_m"]
+	for i in family.size():
+		var path = "res://resources/models/%s.glb" % family[i]
+		var config = ActorFactory3D.MODEL_CONFIGS[path].duplicate(true)
+		var actor = AnimatedActor.new(load(path), config)
+		actor.position = Vector3(-1.7 + i * 0.85, 0, 0)
+		actor.rotation.y = 0.2 - i * 0.1
 		add_child(actor)
-		if i == 0:
-			actor.pose_idle(0.5)
-		elif i == 1:
+		if i == 2:
 			actor.pose_swing(0.55)
 		else:
-			actor.pose_death(0.8)
+			actor.pose_idle(0.4 + i * 1.3)
 	await get_tree().create_timer(0.4).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(

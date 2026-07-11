@@ -5,6 +5,28 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **THE GOBLIN FAMILY** (enemy families, not more enemies): Scout
+  (fast, slippery, drops the hood recipe), Shaman (heals its pack -
+  pinned by test; teaches Flaming), and Chief (armored elite, teaches
+  Priority and the pauldron recipe) join Warrior and Archer. Same
+  proportions, same equipment language, five silhouettes: a
+  civilization. Scout runs with the core pool, Shaman joins the deep
+  pool, and the Chief anchors the mid-boss room via the new
+  DungeonDefinition.mid_boss field.
+- **PLACES WITH PURPOSE**: every room draws a role (entrance, guard
+  post, hall, storeroom, shrine, warren, landmark, mid-boss hold,
+  boss lair) with themed names - banners and clear-toasts now say
+  "The Warren cleared - pressing on..." instead of "Room 2".
+- **LANDMARKS**: each dungeon theme owns a Tripo hero piece - the
+  Darkwood's moss-swallowed Warden statue, the Nest's web-wrapped
+  spider idol, the Workshop's dead brass colossus - placed in its
+  own named room with a warm accent light. Players remember "the
+  room with the statue," never "the third corridor."
+- **ECOLOGY IS EVIDENCE**: packs seed their surroundings before a
+  single enemy moves - spider packs hang webs and egg sacs, slime
+  packs leave gel pools, goblin packs camp around a stone fire ring
+  with charred logs. The kit compiler grew Web/EggSac/GelPool/
+  Campfire pieces with EcoSilk/EcoGel materials.
 - **Enemies get the treatment: modeled goblins** - a headless Tripo
   character pipeline (gen_character.py: text -> model -> rig ->
   preset animations -> one GLB) generated the Goblin Warrior and

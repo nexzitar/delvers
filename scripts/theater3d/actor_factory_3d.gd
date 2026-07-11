@@ -94,6 +94,38 @@ const MODEL_CONFIGS := {
 			"death": "NlaTrack_004",
 		},
 	},
+	"res://resources/models/goblin_scout_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 0.85,
+		"walk_cycle_scale": 1.5,
+		"dagger": true,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack", "walk": "NlaTrack_001", "run": "NlaTrack_002",
+			"swing": "NlaTrack_003", "death": "NlaTrack_004",
+		},
+	},
+	"res://resources/models/goblin_shaman_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 0.9,
+		"walk_cycle_scale": 1.5,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack", "walk": "NlaTrack_001", "run": "NlaTrack_002",
+			"swing": "NlaTrack_003", "death": "NlaTrack_004",
+		},
+	},
+	"res://resources/models/goblin_chief_m.glb": {
+		"facing_fix": -PI / 2,
+		"model_scale": 1.12,
+		"walk_cycle_scale": 1.5,
+		"sword": true, "shield": true,
+		"hair": null,
+		"clip_map": {
+			"idle": "NlaTrack", "walk": "NlaTrack_001", "run": "NlaTrack_002",
+			"swing": "NlaTrack_003", "death": "NlaTrack_004",
+		},
+	},
 	"res://resources/models/delver_male.glb": {
 		"facing_fix": -PI / 2,
 		"model_scale": 1.2,

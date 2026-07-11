@@ -22,6 +22,37 @@ var packs: Array[Dictionary] = []
 ## horizontal:bool}) - the theater dresses both.
 var rooms: Array[Rect2i] = []
 var doors: Array[Dictionary] = []
+## Places with purpose: a role id and display name per room (1-based
+## room order), and which room holds the dungeon's landmark.
+var room_roles: Array[String] = []
+var room_names: Array[String] = []
+var landmark_room := -1
+
+## Per-theme naming: what each role is CALLED here. Rooms are never
+## "Room 2"; they are places.
+const ROLE_NAMES := {
+	"forest": {
+		"entrance": "The Broken Gate", "guard_post": "The Collapsed Guard Post",
+		"hall": "The Fallen Hall", "storeroom": "The Looted Storeroom",
+		"shrine": "The Mossy Shrine", "warren": "The Warren",
+		"landmark": "The Warden's Rest", "mid_boss": "The Chieftain's Hold",
+		"boss": "The Slime King's Court",
+	},
+	"nest": {
+		"entrance": "The Silk Mouth", "guard_post": "The Watcher's Web",
+		"hall": "The Husk Gallery", "storeroom": "The Wrapped Larder",
+		"shrine": "The Moulting Ground", "warren": "The Brood Tunnels",
+		"landmark": "The Idol Cavern", "mid_boss": "The Weaver's Den",
+		"boss": "The Broodmother's Deep",
+	},
+	"workshop": {
+		"entrance": "The Flooded Dock", "guard_post": "The Rusted Checkpoint",
+		"hall": "The Assembly Hall", "storeroom": "The Parts Crib",
+		"shrine": "The Oil Chapel", "warren": "The Scrap Heaps",
+		"landmark": "The Dead Colossus", "mid_boss": "The Foreman's Floor",
+		"boss": "The Engine Heart",
+	},
+}
 
 ## Deterministic for a given rng: the layout IS the dungeon instance.
 static func generate(dungeon: DungeonDefinition, rng: RandomNumberGenerator) -> DungeonLayout:
@@ -102,9 +133,39 @@ static func generate(dungeon: DungeonDefinition, rng: RandomNumberGenerator) -> 
 		layout.waypoint_rooms.append(i + 1)
 
 	layout.rooms = rooms.duplicate()
+	_assign_roles(layout, dungeon, rng)
 	_find_doors(layout, rooms, walkable)
 	_place_packs(layout, dungeon, rooms, rng)
 	return layout
+
+## Every room draws a purpose. The entrance, the mid-boss hold, the
+## landmark chamber and the boss lair are fixed; the rest draw from
+## the wandering pool. Names come from the theme.
+static func _assign_roles(layout: DungeonLayout, dungeon: DungeonDefinition,
+		rng: RandomNumberGenerator):
+	var names: Dictionary = ROLE_NAMES.get(dungeon.theme, ROLE_NAMES["forest"])
+	var n = layout.rooms.size()
+	var mid = n / 2
+	# The landmark stands in a quiet room past the midpoint when the
+	# dungeon is long enough, else just before the middle.
+	layout.landmark_room = clampi(mid + 2, 1, n - 2) if n >= 6 else maxi(1, mid - 1)
+	if layout.landmark_room == mid:
+		layout.landmark_room = maxi(1, mid - 1)
+	var pool := ["guard_post", "hall", "storeroom", "shrine", "warren"]
+	for i in n:
+		var role: String
+		if i == 0:
+			role = "entrance"
+		elif i == n - 1:
+			role = "boss"
+		elif i == mid:
+			role = "mid_boss"
+		elif i == layout.landmark_room:
+			role = "landmark"
+		else:
+			role = pool[rng.randi_range(0, pool.size() - 1)]
+		layout.room_roles.append(role)
+		layout.room_names.append(names.get(role, "Room %d" % (i + 1)))
 
 ## A door is where a corridor crosses a room boundary: runs of
 ## walkable cells just outside an edge that connect to walkable
@@ -164,8 +225,10 @@ static func _place_packs(layout: DungeonLayout, dungeon: DungeonDefinition,
 				"link": -1})
 			continue
 		if i == mid:
-			# The mid-boss: the dungeon's farmable identity, grown up.
-			var elite_pack = dungeon.guaranteed.duplicate()
+			# The mid-boss: the dungeon's named elite when it has one,
+			# else the farmable identity grown up.
+			var elite_pack = dungeon.mid_boss.duplicate() \
+				if not dungeon.mid_boss.is_empty() else dungeon.guaranteed.duplicate()
 			elite_pack.append_array(_roll(dungeon, room_no, rng, 2))
 			layout.packs.append({"room": room_no, "center": center,
 				"templates": elite_pack, "elite": true, "link": -1})

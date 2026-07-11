@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_template.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/data/skill_definition.gd" id="2_skill"]
+[ext_resource type="Resource" path="res://resources/skills/auto_attack.tres" id="3_slash"]
+[ext_resource type="PackedScene" path="res://resources/models/goblin_chief_m.glb" id="4_model"]
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "goblin_chief"
+enemy_name = "Goblin Chief"
+model_scene = ExtResource("4_model")
+base_health = 60
+base_attack = 6
+base_attack_interval = 2.8
+move_speed = 75.0
+skills = Array[ExtResource("2_skill")]([ExtResource("3_slash")])
+material_loot = Array[String](["iron_scrap", "iron_scrap", "leather", "leather"])
+recipe_loot = Array[String](["wardens_pauldrons", "iron_helm"])
+affix_loot = Array[String](["guarding"])
+doctrine_loot = Array[String](["priority"])
+loot_ids = Array[String](["heavy_axe", "starter_sword", "starter_shield"])
+armor = 2
+block_rating = 0.2

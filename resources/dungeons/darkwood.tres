@@ -7,6 +7,9 @@
 [ext_resource type="Resource" path="res://resources/enemies/goblin_warrior.tres" id="5_warrior"]
 [ext_resource type="Resource" path="res://resources/enemies/venomous_spider.tres" id="6_spider"]
 [ext_resource type="Resource" path="res://resources/enemies/slime_king.tres" id="7_king"]
+[ext_resource type="Resource" path="res://resources/enemies/goblin_scout.tres" id="8_scout"]
+[ext_resource type="Resource" path="res://resources/enemies/goblin_shaman.tres" id="9_shaman"]
+[ext_resource type="Resource" path="res://resources/enemies/goblin_chief.tres" id="10_chief"]
 
 [resource]
 script = ExtResource("1_dungeon")
@@ -14,11 +17,12 @@ dungeon_id = "darkwood"
 dungeon_name = "The Darkwood"
 flavor = "Moonlit firs, goblin warbands, and the crowned thing in room ten."
 length = 10
-pool_core = Array[ExtResource("2_enemy")]([ExtResource("3_slime"), ExtResource("3_slime"), ExtResource("4_archer"), ExtResource("5_warrior")])
-pool_deep = Array[ExtResource("2_enemy")]([ExtResource("6_spider"), ExtResource("6_spider")])
+pool_core = Array[ExtResource("2_enemy")]([ExtResource("3_slime"), ExtResource("3_slime"), ExtResource("4_archer"), ExtResource("5_warrior"), ExtResource("8_scout")])
+pool_deep = Array[ExtResource("2_enemy")]([ExtResource("6_spider"), ExtResource("6_spider"), ExtResource("9_shaman")])
 deep_from = 3
 guaranteed = Array[ExtResource("2_enemy")]([ExtResource("5_warrior"), ExtResource("3_slime")])
 boss_pack = Array[ExtResource("2_enemy")]([ExtResource("7_king"), ExtResource("3_slime"), ExtResource("4_archer")])
+mid_boss = Array[ExtResource("2_enemy")]([ExtResource("10_chief"), ExtResource("5_warrior"), ExtResource("9_shaman")])
 level_offset = 0
 rare_chance = 0.01
 boss_epic_chance = 0.03

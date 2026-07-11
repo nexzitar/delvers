@@ -765,6 +765,13 @@ func _spawn_floating_text(at: Vector3, text: String, color: Color, size_mult := 
 	tween.tween_callback(label.queue_free)
 
 ## Fades a "Room N of 10" banner at the top as the fight opens.
+## The display name of a room: its place name in a delve, its number
+## on a plain arena.
+func _place_name(room: int) -> String:
+	if _layout != null and room - 1 < _layout.room_names.size():
+		return _layout.room_names[room - 1]
+	return "Room %d" % room
+
 func _show_room_banner(room: int):
 	var layer := CanvasLayer.new()
 	layer.layer = 11
@@ -773,8 +780,9 @@ func _show_room_banner(room: int):
 	var tier_tag = ""
 	if PlayerRoster.current_tier > 1:
 		tier_tag = " " + ["", "", "II", "III", "IV", "V"][PlayerRoster.current_tier]
-	label.text = "%s%s  -  Room %d of %d" % [
-		dungeon().dungeon_name, tier_tag, room, dungeon().length]
+	label.text = "%s%s  -  %s  (%d of %d)" % [
+		dungeon().dungeon_name, tier_tag, _place_name(room),
+		room, dungeon().length]
 	label.anchor_left = 0.0
 	label.anchor_right = 1.0
 	label.offset_top = 40
@@ -1100,9 +1108,9 @@ func _show_room_toast(room: int, entries: Array):
 	panel.add_child(box)
 	var title := Label.new()
 	title.text = (
-		"Room %d cleared — pressing on..." % room
+		"%s cleared — pressing on..." % _place_name(room)
 		if not entries.is_empty()
-		else "Room %d cleared — nothing worth carrying. Pressing on..." % room
+		else "%s cleared — nothing worth carrying. Pressing on..." % _place_name(room)
 	)
 	title.add_theme_font_override("font", FONT)
 	title.add_theme_font_size_override("font_size", 26)
@@ -1483,6 +1491,69 @@ func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary)
 		pile.position = to_world(corner)
 		pile.rotation.y = (i * 2.4)
 		add_child(pile)
+
+	# Ecology: every pack seeds its surroundings, so the dungeon shows
+	# who LIVES here before a single enemy moves.
+	var eco := {"spider": ["Web", "Web", "EggSac", "EggSac"],
+		"slime": ["GelPool", "GelPool"], "goblin": ["Campfire"]}
+	for pi in _layout.packs.size():
+		var pack = _layout.packs[pi]
+		var family := _pack_family(pack)
+		if family == "" or not eco.has(family):
+			continue
+		var props: Array = eco[family]
+		for k in props.size():
+			if not kit_meshes.has(props[k]):
+				continue
+			var angle = pi * 2.1 + k * (TAU / props.size())
+			var dist = 0.0 if props[k] == "Campfire" else (1.6 + 0.5 * ((pi + k) % 3))
+			var spot = pack.center + Vector2(cos(angle), sin(angle)) 				* dist * _layout.arena.tile_size
+			var prop := MeshInstance3D.new()
+			prop.mesh = kit_meshes[props[k]]
+			prop.position = to_world(spot)
+			prop.rotation.y = angle + PI
+			add_child(prop)
+
+	# The landmark: the thing this dungeon is remembered by.
+	var lm_path = "res://resources/models/landmark_%s.glb" % dungeon().theme
+	if _layout.landmark_room >= 0 and ResourceLoader.exists(lm_path):
+		var lm_room: Rect2i = _layout.rooms[_layout.landmark_room]
+		var lm = load(lm_path).instantiate()
+		var aabb := AABB()
+		var lm_stack := [lm]
+		while not lm_stack.is_empty():
+			var n = lm_stack.pop_back()
+			if n is MeshInstance3D:
+				var b: AABB = n.get_aabb()
+				aabb = b if aabb.size == Vector3.ZERO else aabb.merge(b)
+			lm_stack.append_array(n.get_children())
+		var lm_scale = 3.4 / maxf(aabb.size.y, 0.01)
+		lm.scale = Vector3.ONE * lm_scale
+		var spot = Vector2(lm_room.get_center().x + 0.5,
+			lm_room.position.y + 2.2) * _layout.arena.tile_size
+		lm.position = to_world(spot)
+		lm.position.y = -aabb.position.y * lm_scale
+		add_child(lm)
+		var glow := OmniLight3D.new()
+		glow.light_color = Color(1.0, 0.85, 0.55)
+		glow.light_energy = 2.4
+		glow.omni_range = 6.0
+		glow.position = lm.position + Vector3(0, 2.0, 0.8)
+		add_child(glow)
+
+## The resident family of a pack: nests outrank puddles outrank camps.
+func _pack_family(pack: Dictionary) -> String:
+	var ids: Array = pack.templates.map(func(t): return String(t.enemy_id))
+	for eid in ids:
+		if "spider" in eid or "brood" in eid or "weaver" in eid or "spiderling" in eid:
+			return "spider"
+	for eid in ids:
+		if "slime" in eid or "ooze" in eid or "slick" in eid:
+			return "slime"
+	for eid in ids:
+		if "goblin" in eid:
+			return "goblin"
+	return ""
 
 ## Kit meshes carry solid Arch* materials; dye them to the theme the
 ## same way garment surfaces dye (per-surface, by material name).
