@@ -101,8 +101,10 @@ static func _render(key: String, rig: Node3D, host: Node) -> Texture2D:
 		# their own scales, so accumulate transforms down from the rig.
 		var box := _rig_aabb(rig)
 		var h := box.end.y
+		# Distance follows the smaller extent: wide-headed goblins need
+		# the full height back-off, tall narrow delvers sit closer.
 		var face_y = h * 0.75
-		camera.position = Vector3(0, face_y + 0.05, h * 1.15)
+		camera.position = Vector3(0, face_y + 0.05, minf(h, box.size.x) * 1.15)
 		camera.look_at_from_position(camera.position, Vector3(0, face_y, 0))
 	else:
 		var head_y = 0.9 * rig.scale.y

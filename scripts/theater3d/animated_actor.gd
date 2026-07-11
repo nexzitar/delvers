@@ -191,7 +191,12 @@ func _align_world_rest(fit_key: String):
 		piece.transform = mount.global_transform.affine_inverse() \
 			* _skeleton.global_transform
 
-func _init(scene: PackedScene, opts := {}):
+func _init(scene: PackedScene = null, opts := {}):
+	# A null scene happens when a tool scene (the Socket Workshop) was
+	# saved with a built actor baked in: reconstruct as an empty shell
+	# instead of erroring; the workshop frees and rebuilds it anyway.
+	if scene == null:
+		return
 	var model = scene.instantiate()
 	model.rotation.y = opts.get("facing_fix", facing_fix)
 	if opts.has("model_scale"):
@@ -432,12 +437,15 @@ func _dress(opts: Dictionary):
 		if WORN_MODELS.get(opts.get("off_gear", ""), {}).has("palette"):
 			_recolor(_shield_prop, WORN_MODELS[opts.off_gear].palette)
 	elif opts.get("shield", false):
-		_shield_arm = _attach("L_Forearm")
 		var shield = DelverBuilder.build_shield()
-		shield.position = Vector3(0.0, 0.12, -0.05)
-		shield.rotation_degrees = Vector3(90, -35, 0)
-		shield.scale = Vector3.ONE * 0.8
-		_shield_arm.add_child(shield)
+		if _socket_mount_node(shield, "shield_p", 0.8):
+			_shield_arm = shield.get_parent()
+		else:
+			_shield_arm = _attach("L_Forearm")
+			shield.position = Vector3(0.0, 0.12, -0.05)
+			shield.rotation_degrees = Vector3(90, -35, 0)
+			shield.scale = Vector3.ONE * 0.8
+			_shield_arm.add_child(shield)
 		# At rest the shield comes off the arm and leans beside him.
 		_shield_prop = DelverBuilder.build_shield()
 		_shield_prop.position = Vector3(0.4, 0.0, 0.2)

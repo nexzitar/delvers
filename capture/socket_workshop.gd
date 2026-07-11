@@ -14,14 +14,15 @@ extends Node3D
 ##                    keeps its Fitting Room fit until you add
 ##                    "shield_m" to GEAR_GRIP_SOCKETS below.
 ##
-## Select a marker, move/rotate it with the standard gizmos, then
-## tick save_sockets on this root node - the game mounts every item
-## so its GRIP lands exactly on its SOCKET, in every pose. Tick
-## rebuild to re-mount from the saved file and inspect the result.
-## Sockets without items yet (back, hips) are the future homes of
-## quivers, backpacks and potion pouches. A bow will add a second
-## grip for the string hand when the new bows arrive.
-## DON'T Ctrl+S the scene itself; pose_tuning.json is the save.
+## Select a marker, move/rotate it with the standard gizmos - the
+## weapon follows live. Tick save_sockets on this root node (or just
+## Ctrl+S the scene: saving banks the sockets too, and keeps the
+## scene file clean) - the game mounts every item so its GRIP lands
+## exactly on its SOCKET, in every pose. Tick rebuild to re-mount
+## from the saved file and inspect the result. Sockets without items
+## yet (back, hips) are the future homes of quivers, backpacks and
+## potion pouches. A bow will add a second grip for the string hand
+## when the new bows arrive.
 
 ## Sockets every delver body carries, and the bone each rides.
 const DEFAULT_SOCKETS := {
@@ -62,7 +63,9 @@ var _grip_props := {}
 ## Live preview: every frame, re-mount each prop so its grip marker
 ## lands on its socket marker - drag a gizmo, watch the weapon move.
 func _process(_delta):
-	if not Engine.is_editor_hint() or actor == null:
+	if actor == null or not is_instance_valid(actor):
+		_reconnect()
+	if actor == null:
 		return
 	for grip_key in _grip_markers:
 		var marker = _grip_markers.get(grip_key)
@@ -80,6 +83,46 @@ func _process(_delta):
 
 func _ready():
 	_build()
+
+## Ctrl+S on the scene: bank the tuning, strip the built actor so
+## the scene file stays clean (a baked actor breaks the next open),
+## and rebuild from the fresh save afterwards.
+func _notification(what):
+	if what == NOTIFICATION_EDITOR_PRE_SAVE:
+		if actor == null or not is_instance_valid(actor):
+			_reconnect()
+		_save()
+		for child in get_children():
+			if child.name == "WorkshopActor":
+				remove_child(child)
+				child.free()
+		actor = null
+	elif what == NOTIFICATION_EDITOR_POST_SAVE:
+		_build()
+
+## A script hot-reload (e.g. after a git pull with the scene open)
+## wipes plain vars but leaves the scene standing: rewire the maps
+## from the existing markers so the preview and save keep working.
+func _reconnect():
+	var found = get_node_or_null("WorkshopActor")
+	if found == null or not (found is AnimatedActor):
+		return
+	actor = found
+	_socket_markers.clear()
+	_grip_markers.clear()
+	_grip_socket.clear()
+	_grip_props.clear()
+	for socket_name in DEFAULT_SOCKETS:
+		var marker = actor.find_child("SOCKET_" + socket_name, true, false)
+		if marker != null:
+			_socket_markers[socket_name] = marker
+	var saved_grips: Dictionary = actor.tuning.get("grips", {})
+	for marker in actor.find_children("GRIP_*", "Marker3D", true, false):
+		var grip_key: String = marker.name.trim_prefix("GRIP_")
+		_grip_markers[grip_key] = marker
+		_grip_props[grip_key] = marker.get_parent()
+		_grip_socket[grip_key] = GEAR_GRIP_SOCKETS.get(grip_key,
+			saved_grips.get(grip_key, {}).get("socket", "grip_main"))
 
 func _build():
 	for child in get_children():
@@ -127,10 +170,12 @@ func _build():
 		_add_grip_marker(fit_key, actor.worn_mounts[fit_key].back(),
 			saved_grips, root)
 	# Procedural weapons (goblin sword and shield, the bow) fit the
-	# same way: their grips live on prop_mounts.
+	# same way: their grips live on prop_mounts. Worn socket-mounted
+	# pieces register in both maps; skip the ones already fitted.
 	for grip_key in actor.prop_mounts:
-		_add_grip_marker(grip_key, actor.prop_mounts[grip_key],
-			saved_grips, root)
+		if not _grip_markers.has(grip_key):
+			_add_grip_marker(grip_key, actor.prop_mounts[grip_key],
+				saved_grips, root)
 
 func _add_grip_marker(grip_key: String, piece: Node3D,
 		saved_grips: Dictionary, root: Node):
