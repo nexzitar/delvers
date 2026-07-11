@@ -107,6 +107,14 @@ func dungeon() -> DungeonDefinition:
 ## bench the fallen for the rest of the delve).
 var _party_indices := []
 
+## Architecture kit: per-theme dye palettes for the compiled masonry
+## (ArchPrimary/ArchSecondary/ArchTrim tint like garment surfaces).
+const ARCH_THEMES := {
+	"forest": {"primary": Color(0.3, 0.32, 0.28), "secondary": Color(0.22, 0.25, 0.21), "trim": Color(0.34, 0.42, 0.28)},
+	"nest": {"primary": Color(0.3, 0.24, 0.3), "secondary": Color(0.2, 0.16, 0.21), "trim": Color(0.74, 0.7, 0.6)},
+	"workshop": {"primary": Color(0.33, 0.29, 0.23), "secondary": Color(0.25, 0.21, 0.16), "trim": Color(0.55, 0.43, 0.22)},
+}
+
 ## Continuous delve: the compiled layout being walked, sidebar entries
 ## deferred until packs wake, and how deep the party got.
 var _layout: DungeonLayout = null
@@ -1355,27 +1363,7 @@ func _setup_world(arena):
 				shown.append(tile)
 				break
 	if shown.size() > 120:
-		# Dungeon scale: one MultiMesh carries every wall block.
-		var box := BoxMesh.new()
-		box.size = Vector3(1.0, 1.5, 1.0)
-		box.material = pillar_mat
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = box
-		mm.instance_count = shown.size()
-		for i in shown.size():
-			var tile = shown[i]
-			var wobble = 0.15 * ((tile.x * 7 + tile.y * 13) % 5) / 4.0
-			var base = to_world(Vector2(
-				(tile.x + 0.5) * arena.tile_size,
-				(tile.y + 0.5) * arena.tile_size
-			))
-			mm.set_instance_transform(i, Transform3D(
-				Basis.from_scale(Vector3(1.0, 1.0 + wobble, 1.0)),
-				base + Vector3(0, 0.75, 0)))
-		var mmi := MultiMeshInstance3D.new()
-		mmi.multimesh = mm
-		add_child(mmi)
+		_build_architecture(arena, shown, blocked_set)
 	else:
 		for tile in shown:
 			var pillar := BoxMesh.new()
@@ -1420,6 +1408,100 @@ func _setup_world(arena):
 	camera.position = center + CAMERA_OFFSET.normalized() * 13.0
 	add_child(camera)
 	camera.look_at(center)
+
+## The architecture kit dresses the dungeon: coursed walls in three
+## variants (MultiMesh), pillars where masonry stands alone, arches
+## over every corridor mouth, rubble where rooms have settled - all
+## dyed to the dungeon theme like garments.
+func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary):
+	var palette: Dictionary = ARCH_THEMES.get(dungeon().theme, ARCH_THEMES["forest"])
+	var kit = load("res://resources/models/arch_kit.glb").instantiate()
+	var kit_meshes := {}
+	var stack := [kit]
+	while not stack.is_empty():
+		var node = stack.pop_back()
+		if node is MeshInstance3D:
+			kit_meshes[String(node.name)] = _themed_mesh(node.mesh, palette)
+		stack.append_array(node.get_children())
+	kit.free()
+
+	# Sort the shell: freestanding masonry is a pillar, the rest walls.
+	var buckets := {"Wall0": [], "Wall1": [], "Wall2": [], "Pillar": []}
+	for tile in shown:
+		var alone := true
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if blocked_set.has(tile + d):
+				alone = false
+				break
+		if alone:
+			buckets["Pillar"].append(tile)
+		else:
+			buckets["Wall%d" % ((tile.x * 7 + tile.y * 13) % 3)].append(tile)
+
+	for bucket_name in buckets:
+		var tiles: Array = buckets[bucket_name]
+		if tiles.is_empty() or not kit_meshes.has(bucket_name):
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = kit_meshes[bucket_name]
+		mm.instance_count = tiles.size()
+		for i in tiles.size():
+			var tile: Vector2i = tiles[i]
+			var yaw = (PI / 2.0) * ((tile.x * 5 + tile.y * 3) % 4)
+			var base = to_world(Vector2(
+				(tile.x + 0.5) * arena.tile_size,
+				(tile.y + 0.5) * arena.tile_size
+			))
+			mm.set_instance_transform(i, Transform3D(
+				Basis(Vector3.UP, yaw), base))
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		add_child(mmi)
+
+	if _layout == null:
+		return
+	# Arches crown every corridor mouth.
+	if kit_meshes.has("Arch"):
+		for door in _layout.doors:
+			var arch := MeshInstance3D.new()
+			arch.mesh = kit_meshes["Arch"]
+			arch.position = to_world(door.center)
+			if not door.horizontal:
+				arch.rotation.y = PI / 2.0
+			add_child(arch)
+	# Rubble where the masonry has settled.
+	for i in _layout.rooms.size():
+		if (i * 13) % 3 == 0 or not kit_meshes.has("Rubble%d" % (i % 2)):
+			continue
+		var room: Rect2i = _layout.rooms[i]
+		var corner = Vector2(
+			(room.position.x + 1.5 + ((i * 7) % (maxi(room.size.x - 3, 1)))),
+			(room.position.y + 1.5)) * _layout.arena.tile_size
+		var pile := MeshInstance3D.new()
+		pile.mesh = kit_meshes["Rubble%d" % (i % 2)]
+		pile.position = to_world(corner)
+		pile.rotation.y = (i * 2.4)
+		add_child(pile)
+
+## Kit meshes carry solid Arch* materials; dye them to the theme the
+## same way garment surfaces dye (per-surface, by material name).
+func _themed_mesh(mesh: Mesh, palette: Dictionary) -> Mesh:
+	var themed = mesh.duplicate()
+	for si in themed.get_surface_count():
+		var mat = themed.surface_get_material(si)
+		if not (mat is StandardMaterial3D):
+			continue
+		var mat_name := String(mat.resource_name)
+		var tinted: StandardMaterial3D = mat.duplicate()
+		if mat_name.contains("Secondary"):
+			tinted.albedo_color = palette.secondary
+		elif mat_name.contains("Trim"):
+			tinted.albedo_color = palette.trim
+		elif mat_name.contains("Primary"):
+			tinted.albedo_color = palette.primary
+		themed.surface_set_material(si, tinted)
+	return themed
 
 func _setup_ui():
 	var layer := CanvasLayer.new()

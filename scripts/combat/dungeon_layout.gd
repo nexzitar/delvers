@@ -18,6 +18,10 @@ var waypoint_rooms: Array[int] = []
 ## Packs: {room:int, center:Vector2, templates:Array, elite:bool,
 ##         link:int} - link >= 0 groups packs that pull together.
 var packs: Array[Dictionary] = []
+## Room rects (tiles) and doorways ({center:Vector2 world px,
+## horizontal:bool}) - the theater dresses both.
+var rooms: Array[Rect2i] = []
+var doors: Array[Dictionary] = []
 
 ## Deterministic for a given rng: the layout IS the dungeon instance.
 static func generate(dungeon: DungeonDefinition, rng: RandomNumberGenerator) -> DungeonLayout:
@@ -97,8 +101,50 @@ static func generate(dungeon: DungeonDefinition, rng: RandomNumberGenerator) -> 
 		layout.waypoints.append(Vector2(c.x + 0.5, c.y + 0.5) * TILE)
 		layout.waypoint_rooms.append(i + 1)
 
+	layout.rooms = rooms.duplicate()
+	_find_doors(layout, rooms, walkable)
 	_place_packs(layout, dungeon, rooms, rng)
 	return layout
+
+## A door is where a corridor crosses a room boundary: runs of
+## walkable cells just outside an edge that connect to walkable
+## cells inside. One arch per run, spanning the corridor.
+static func _find_doors(layout: DungeonLayout, rooms: Array[Rect2i],
+		walkable: Dictionary):
+	for room in rooms:
+		for side in 4:
+			var runs: Array = []
+			var run: Array = []
+			var span = room.size.y if side < 2 else room.size.x
+			for k in span:
+				var outside: Vector2i
+				var inside: Vector2i
+				match side:
+					0:
+						outside = Vector2i(room.position.x - 1, room.position.y + k)
+						inside = outside + Vector2i(1, 0)
+					1:
+						outside = Vector2i(room.end.x, room.position.y + k)
+						inside = outside + Vector2i(-1, 0)
+					2:
+						outside = Vector2i(room.position.x + k, room.position.y - 1)
+						inside = outside + Vector2i(0, 1)
+					_:
+						outside = Vector2i(room.position.x + k, room.end.y)
+						inside = outside + Vector2i(0, -1)
+				if walkable.has(outside) and walkable.has(inside):
+					run.append(outside)
+				elif not run.is_empty():
+					runs.append(run)
+					run = []
+			if not run.is_empty():
+				runs.append(run)
+			for r in runs:
+				var mid: Vector2i = r[r.size() / 2]
+				layout.doors.append({
+					"center": Vector2(mid.x + 0.5, mid.y + 0.5) * TILE,
+					"horizontal": side >= 2,
+				})
 
 ## Encounter composition per room, continuous-dungeon rules: the
 ## entrance is empty, some rooms hold two packs (occasionally linked

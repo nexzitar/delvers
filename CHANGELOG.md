@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **THE ARCHITECTURE KIT** (the garment engine pattern at room
+  scale): a Blender compiler (arch_kit.py) generates a modular
+  masonry kit from a construction grammar - coursed stone walls in
+  three variants (wandering joints, proud capstones, one jutting
+  stone so nothing is flush), pillars with base and capital, arches
+  spanning every corridor mouth, rubble piles where rooms settled.
+  Solid Arch* materials dye per dungeon theme at runtime exactly like
+  garment surfaces (forest moss, nest silk, workshop brass). The
+  layout now records rooms and doorways; walls render as per-variant
+  MultiMeshes; freestanding masonry becomes pillars automatically.
 - **One dungeon, walked end to end**: no more teleporting between
   rooms. DungeonLayout compiles a DungeonDefinition into one place -
   rooms carved along a winding spine with L-corridors and pillars -
