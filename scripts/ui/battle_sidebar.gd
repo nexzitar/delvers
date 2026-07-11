@@ -30,6 +30,11 @@ var unit_rows := {}
 var meter_rows := {}
 var damage_totals := {}
 var encounter_time := 0.0
+## Enemy meters consolidate by kind: one row per enemy type, the
+## value showing total plus the per-individual average.
+var group_meters := false
+var _meter_group_of := {}
+var _group_counts := {}
 ## Death freezes a combatant's DPS clock; their number stays honest.
 var _frozen_at := {}
 
@@ -106,7 +111,16 @@ func add_unit(event):
 	set_health(event.entity_id, event.current_health, event.max_health)
 	set_mana(event.entity_id, event.current_mana, event.max_mana)
 
-	_add_meter_row(event.entity_id, event.entity_name)
+	if group_meters and event.template != null and "enemy_name" in event.template:
+		var group: String = event.template.enemy_name
+		_meter_group_of[event.entity_id] = group
+		_group_counts[group] = _group_counts.get(group, 0) + 1
+		if not meter_rows.has(group):
+			_add_meter_row(group, group)
+		meter_rows[group].name.text = "%s ×%d" % [group, _group_counts[group]] \
+			if _group_counts[group] > 1 else group
+	else:
+		_add_meter_row(event.entity_id, event.entity_name)
 
 ## Portraits render from the unit's actual 3D rig (one frame late).
 func _apply_portrait(rect: TextureRect, event):
@@ -147,7 +161,8 @@ func remove_unit(entity_id):
 
 func add_damage(entity_id, amount, sim_time):
 
-	damage_totals[entity_id] = damage_totals.get(entity_id, 0) + amount
+	var key = _meter_group_of.get(entity_id, entity_id)
+	damage_totals[key] = damage_totals.get(key, 0) + amount
 	encounter_time = max(encounter_time, sim_time)
 	_refresh_meter()
 
@@ -192,7 +207,8 @@ func _add_meter_row(entity_id, entity_name):
 	bar.add_child(value_label)
 
 	meter_list.add_child(bar)
-	meter_rows[entity_id] = {"bar": bar, "value": value_label}
+	meter_rows[entity_id] = {"bar": bar, "value": value_label,
+		"name": name_label}
 
 func _refresh_meter():
 
@@ -207,13 +223,16 @@ func _refresh_meter():
 	)
 
 	for i in order.size():
-		var entity_id = order[i]
-		var row = meter_rows[entity_id]
-		var total = damage_totals[entity_id]
-		var dps = total / max(_frozen_at.get(entity_id, encounter_time), 0.1)
-
+		var key = order[i]
+		var row = meter_rows[key]
+		var total = damage_totals[key]
 		row.bar.value = float(total) / top
-		row.value.text = "%d (%.1f)" % [total, dps]
+		if key is String and _group_counts.get(key, 1) > 1:
+			# A kind, not an individual: total and per-head average.
+			row.value.text = "%d (%d avg)" % [total, total / _group_counts[key]]
+		else:
+			var dps = total / max(_frozen_at.get(key, encounter_time), 0.1)
+			row.value.text = "%d (%.1f)" % [total, dps]
 		meter_list.move_child(row.bar, i)
 
 func _make_label(

@@ -5,6 +5,18 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Replay speed control**: 1×/2×/3× buttons in the battle UI - the
+  replay obeys the player's clock (the whole architecture was built
+  for exactly this: the sim already ran ahead; the theater just reads
+  the log faster).
+- **THE LEASH**: packs with nobody left to chase walk home, mend to
+  full, and take up their posts again (PACK_RESET events; the panel
+  forgets them, the music relaxes, and they will pull again). Charging
+  past a pack no longer leaves it trailing you across the dungeon.
+- **Consolidated enemy damage meters**: one row per enemy KIND -
+  "Nest Spiderling ×12" with total and per-head average - instead of
+  a hundred entries converging on noise. Heroes keep individual rows
+  and DPS.
 - **Contact reactions**: bodies answer the fight - a jolt away from
   a landed hit (bigger on crits), a quick sidestep on a dodge, a
   small brace on a block. Decaying offsets, no new animations needed.
@@ -218,7 +230,9 @@ Notable changes per pull request. Newest first.
   landmark, mid-boss hold, boss lair) - ordinary rooms just show
   their name in the clear-toast.
 - The battle camera opens on the party at the dungeon door, not the
-  middle of the map.
+  middle of the map - and stays ANCHORED to the party: enemies only
+  widen the frame when they are part of this fight, within seven
+  units, never stragglers across the map.
 - DPS meters freeze a combatant's clock at death - numbers stop
   converging to zero.
 - The spider death rerolled: wet crunch and curling legs, no screech.

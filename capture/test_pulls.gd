@@ -68,10 +68,11 @@ func _ready():
 			"both packs reported")
 
 	# --- 2. Chain aggro: a woken neighbor drags the sleepers in --------
+	# Close enough to the party that the leash stays out of it.
 	var chain_layout = _tiny_layout([
-		{"room": 2, "center": Vector2(40.5, 7.5) * 32.0,
+		{"room": 2, "center": Vector2(12.5, 7.5) * 32.0,
 			"templates": [slime], "elite": false, "link": -1},
-		{"room": 2, "center": Vector2(42.5, 7.5) * 32.0,
+		{"room": 2, "center": Vector2(14.5, 7.5) * 32.0,
 			"templates": [slime], "elite": false, "link": -1},
 	])
 	var chain = CombatState.new()
@@ -116,6 +117,21 @@ func _ready():
 	full.setup_delve([delver, delver], real, {}, 0)
 	_run(full, 30000)
 	assert(full.combat_over, "a full Darkwood delve terminates")
+
+	# --- 4b. The leash: abandoned pulls walk home and sleep ------------
+	var leash_layout = _tiny_layout([
+		{"room": 2, "center": Vector2(50.5, 7.5) * 32.0,
+			"templates": [slime], "elite": false, "link": -1}])
+	var leashed = CombatState.new()
+	leashed.setup_delve([delver], leash_layout)
+	leashed._activate_pack(0)
+	leashed.enemies[0].current_health = 5
+	leashed.update(STEP)
+	assert(leashed.enemies[0].dormant, "far pull re-sleeps")
+	assert(leashed.enemies[0].current_health == leashed.enemies[0].max_health,
+		"the leash mends")
+	assert(leashed.combat_log.events.any(func(e):
+		return e.type == CombatEvent.EventType.PACK_RESET), "reset logged")
 
 	# --- 5. The shaman keeps its pack standing -------------------------
 	seed(11)

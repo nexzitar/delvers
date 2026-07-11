@@ -23,6 +23,7 @@ var layout = null
 const PERCEPTION_RADIUS := 160.0
 const CHAIN_RADIUS := 96.0
 const TRAVEL_ARRIVE := 48.0
+const LEASH_RADIUS := 620.0
 const TRAVEL_SLOTS := [Vector2(0, 0), Vector2(-30, 24), Vector2(-30, -24),
 	Vector2(-60, 12), Vector2(-60, -12), Vector2(-90, 0)]
 var travel_index := 0
@@ -607,6 +608,7 @@ func setup_delve(hero_templates, dungeon_layout, hero_health := {},
 ## all is quiet, walk the spine toward the next room.
 func _tick_delve(delta):
 	_check_pack_wakes()
+	_check_leashes()
 	_report_defeated_packs()
 	if enemies.any(func(e): return e.alive and not e.dormant):
 		return
@@ -652,6 +654,39 @@ func _check_pack_wakes():
 				break
 	for pack_id in woken:
 		_activate_pack(pack_id)
+
+## A pack with nobody left to chase walks home, mends, and takes up
+## its post again - abandoned pulls do not trail the party forever.
+func _check_leashes():
+	var living = heroes.filter(func(h): return h.alive)
+	if living.is_empty():
+		return
+	var packs_active := {}
+	for enemy in enemies:
+		if enemy.alive and not enemy.dormant and enemy.pack_id >= 0:
+			if not packs_active.has(enemy.pack_id):
+				packs_active[enemy.pack_id] = []
+			packs_active[enemy.pack_id].append(enemy)
+	for pack_id in packs_active:
+		var anyone_near := false
+		for enemy in packs_active[pack_id]:
+			for hero in living:
+				if enemy.position.distance_to(hero.position) < LEASH_RADIUS:
+					anyone_near = true
+					break
+			if anyone_near:
+				break
+		if anyone_near:
+			continue
+		for enemy in packs_active[pack_id]:
+			enemy.dormant = true
+			enemy.position = enemy.home_position
+			enemy.current_health = enemy.max_health
+			enemy.target_id = -1
+			enemy.threat_table.clear()
+			enemy.path = PackedVector2Array()
+		combat_log.add_event(CombatEvent.create_pack_reset(
+			pack_id, combat_time))
 
 func _activate_pack(pack_id: int):
 	var link: int = layout.packs[pack_id].link

@@ -147,6 +147,7 @@ const ARCH_THEMES := {
 ## deferred until packs wake, and how deep the party got.
 var _layout: DungeonLayout = null
 var _pending_units := {}
+var _spawn_events := {}
 var _room_reached := 1
 
 func _ready():
@@ -239,9 +240,12 @@ func _pick_arena(room: int) -> BattleArena:
 
 # --- Replay loop --------------------------------------------------------
 
+var replay_speed := 1.0
+
 func _process(delta):
 	if not _playing:
 		return
+	delta *= replay_speed
 	_clock += delta
 	while _cursor < _timeline.size() and _timeline[_cursor].time <= _clock:
 		_dispatch(_timeline[_cursor])
@@ -401,6 +405,15 @@ func _play_event(event):
 			_wake_pack(event.pack_id)
 		CombatEvent.EventType.PACK_DEFEATED:
 			_bank_pack(event)
+		CombatEvent.EventType.PACK_RESET:
+			for entity_id in actors:
+				var st = actors[entity_id]
+				if st.get("pack_id", -1) != event.pack_id or st.mode == "dead":
+					continue
+				st.dormant = true
+				st.mode = "idle"
+				enemy_sidebar.remove_unit(entity_id)
+			call_deferred("_music_update")
 		CombatEvent.EventType.TELEGRAPH:
 			var telegraph = AoeTelegraph3D.new(
 				event.telegraph_radius * WORLD_SCALE, event.telegraph_duration
@@ -447,6 +460,7 @@ func _play_spawn(event):
 	)
 	# A dormant pack hasn't been met yet: its sidebar entry appears
 	# when it wakes, so the enemy panel reads as the current fight.
+	_spawn_events[event.entity_id] = event
 	if actors[event.entity_id].dormant:
 		_pending_units[event.entity_id] = event
 	else:
@@ -835,17 +849,32 @@ func _unhandled_input(event):
 		_cam_yaw -= event.relative.x * 0.008
 
 func _update_camera(delta):
+	# The party anchors the frame; enemies only widen it when they
+	# are part of THIS fight, not stragglers across the map.
+	var hero_center := Vector3.ZERO
+	var hero_count := 0
+	for state in actors.values():
+		if state.team == CombatEntity.Team.HERO and state.mode != "dead":
+			hero_center += state.rig.position
+			hero_count += 1
+	if hero_count == 0:
+		return
+	hero_center /= hero_count
 	var low := Vector3(INF, 0, INF)
 	var high := Vector3(-INF, 0, -INF)
 	var count := 0
 	for state in actors.values():
-		if state.mode != "dead" and not state.get("dormant", false):
-			var p = state.rig.position
-			low.x = minf(low.x, p.x)
-			low.z = minf(low.z, p.z)
-			high.x = maxf(high.x, p.x)
-			high.z = maxf(high.z, p.z)
-			count += 1
+		if state.mode == "dead" or state.get("dormant", false):
+			continue
+		var p = state.rig.position
+		if state.team != CombatEntity.Team.HERO \
+				and p.distance_to(hero_center) > 7.0:
+			continue
+		low.x = minf(low.x, p.x)
+		low.z = minf(low.z, p.z)
+		high.x = maxf(high.x, p.x)
+		high.z = maxf(high.z, p.z)
+		count += 1
 	if count == 0:
 		return
 	var center = (low + high) * 0.5
@@ -1037,10 +1066,10 @@ func _wake_pack(pack_id: int):
 		if state.get("pack_id", -1) != pack_id or not state.get("dormant", false):
 			continue
 		state.dormant = false
-		if _pending_units.has(entity_id):
-			enemy_sidebar.add_unit(_pending_units[entity_id])
+		if not enemy_sidebar.has_unit(entity_id) and _spawn_events.has(entity_id):
+			enemy_sidebar.add_unit(_spawn_events[entity_id])
 			sidebars_by_entity[entity_id] = enemy_sidebar
-			_pending_units.erase(entity_id)
+		_pending_units.erase(entity_id)
 
 ## A pack died: its loot banks and toasts NOW, mid-run - the delve
 ## keeps walking while the pouch fills.
@@ -1870,6 +1899,29 @@ func _setup_ui():
 
 	enemy_sidebar = BattleSidebar.new()
 	enemy_sidebar.title = "Enemies"
+	enemy_sidebar.group_meters = true
 	enemy_sidebar.position = Vector2(1328, 12)
 	enemy_sidebar.size = Vector2(260, 876)
 	layer.add_child(enemy_sidebar)
+
+	# Replay speed: the player's clock, not the sim's.
+	var speed_row := HBoxContainer.new()
+	speed_row.position = Vector2(744, 16)
+	speed_row.add_theme_constant_override("separation", 6)
+	layer.add_child(speed_row)
+	var speed_buttons := {}
+	for speed in [1.0, 2.0, 3.0]:
+		var b := Button.new()
+		b.text = "%d×" % int(speed)
+		b.custom_minimum_size = Vector2(34, 30)
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_color_override("font_color",
+			Color(0.85, 0.72, 0.42) if speed == 1.0 else Color(0.55, 0.5, 0.42))
+		speed_buttons[speed] = b
+		b.pressed.connect(func():
+			replay_speed = speed
+			for sp in speed_buttons:
+				speed_buttons[sp].add_theme_color_override("font_color",
+					Color(0.85, 0.72, 0.42) if sp == speed
+					else Color(0.55, 0.5, 0.42)))
+		speed_row.add_child(b)

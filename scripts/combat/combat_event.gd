@@ -15,6 +15,7 @@ enum EventType {
 	TELEGRAPH,
 	PACK_PULLED,
 	PACK_DEFEATED,
+	PACK_RESET,
 	ROOM_ENTERED,
 }
 
@@ -130,6 +131,13 @@ static func create_pack_defeated(the_pack: int, the_room: int, sim_time: float) 
 	event.type = EventType.PACK_DEFEATED
 	event.pack_id = the_pack
 	event.room = the_room
+	event.time = sim_time
+	return event
+
+static func create_pack_reset(the_pack: int, sim_time: float) -> CombatEvent:
+	var event = CombatEvent.new()
+	event.type = EventType.PACK_RESET
+	event.pack_id = the_pack
 	event.time = sim_time
 	return event
 
