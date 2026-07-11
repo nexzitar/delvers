@@ -48,12 +48,14 @@ func update(delta: float):
 
 	check_victory()
 
+## Console tap for debugging sims; a full tier-2 delve prints
+## hundreds of thousands of lines when this is on.
+var debug_log := false
+
 func add_event(event):
 	combat_log.add_event(event)
-
-	print(
-		CombatFormatter.format_event(event)
-	)
+	if debug_log:
+		print(CombatFormatter.format_event(event))
 
 
 func entity_by_id(id):
@@ -515,6 +517,14 @@ func spawn_reinforcement(template, level: int, near: Vector2, spawned_by := -1):
 	enemy.facing = Vector2.LEFT
 	enemy.in_combat = true
 	enemy.spawned_by = spawned_by
+	# Broodlings belong to the brood: they share the spawner's pack,
+	# leash home with it, and never roam the dungeon chain-waking
+	# every nest they pass.
+	var spawner = entity_by_id(spawned_by)
+	if spawner:
+		enemy.pack_id = spawner.pack_id
+		enemy.link_id = spawner.link_id
+		enemy.home_position = spawner.home_position
 	enemies.append(enemy)
 	entities_by_id[enemy.entity_id] = enemy
 	combat_log.add_event(CombatEvent.create_spawn(enemy))

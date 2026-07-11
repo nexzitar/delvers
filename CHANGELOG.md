@@ -4,6 +4,20 @@ Notable changes per pull request. Newest first.
 
 ## Phase B — The Heightfield *(open)*
 
+### Fixed
+- **The spiderling cascade**: reinforcement-spawned adds (brood
+  spiderlings) had no pack - they never leashed, never slept, and
+  roamed the dungeon chain-waking every nest they passed (28 active
+  at the door, 20 trailing two rooms later). Spawns now inherit the
+  spawner's pack, link and home - they fight, leash and rest with
+  the family. Pinned in test_pulls.
+- **The tier-2 "freeze"**: every sim event printed to the console -
+  a tier-2 delve emits hundreds of thousands of lines and looked
+  like a hang. Event printing is now a debug_log tap, off by
+  default; the same sim runs in half a second.
+- The gear comparison flows into two columns when the stat breakdown
+  grows past four lines, instead of overflowing the panel.
+
 ### Added
 - **ELEVATION**: the delve descends - the Broken Gate stands highest
   and the boss lair waits at the bottom. Every tile carries a height;

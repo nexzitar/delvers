@@ -151,5 +151,19 @@ func _ready():
 		return src != null and src.team == CombatEntity.Team.ENEMY)
 	assert(not enemy_heals.is_empty(), "the shaman heals its pack")
 
+	# --- 6. Broodlings belong to the brood ------------------------------
+	var brood_layout = _tiny_layout([
+		{"room": 2, "center": Vector2(12.5, 7.5) * 32.0,
+			"templates": [slime, slime], "elite": false, "link": -1}])
+	var brood = CombatState.new()
+	brood.setup_delve([delver], brood_layout)
+	brood._activate_pack(0)
+	var mother = brood.enemies[0]
+	var child = brood.spawn_reinforcement(slime, 1, mother.position,
+		mother.entity_id)
+	assert(child.pack_id == mother.pack_id, "spawn inherits the pack")
+	assert(child.home_position == mother.home_position,
+		"spawn leashes home with the family")
+
 	print("PASS test_pulls")
 	get_tree().quit()
