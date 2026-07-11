@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dq6fnv0i67d4r"
-path="res://.godot/imported/goblin_warrior_m_ORM_89b16678-a17b-4329-94e4-b301b484c8f6.jpg-adf8286e75ff8a295a822a59505560ba.ctex"
+path.s3tc="res://.godot/imported/goblin_warrior_m_ORM_89b16678-a17b-4329-94e4-b301b484c8f6.jpg-adf8286e75ff8a295a822a59505560ba.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "049c57caec3cec97a5d371ab654e5454"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/goblin_warrior_m_ORM_89b16678-a17b-4329-94e4-b301b484c8f6.jpg"
-dest_files=["res://.godot/imported/goblin_warrior_m_ORM_89b16678-a17b-4329-94e4-b301b484c8f6.jpg-adf8286e75ff8a295a822a59505560ba.ctex"]
+dest_files=["res://.godot/imported/goblin_warrior_m_ORM_89b16678-a17b-4329-94e4-b301b484c8f6.jpg-adf8286e75ff8a295a822a59505560ba.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

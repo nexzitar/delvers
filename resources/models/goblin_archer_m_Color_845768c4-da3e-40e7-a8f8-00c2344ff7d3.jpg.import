@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5vquhbwrrxbq"
-path="res://.godot/imported/goblin_archer_m_Color_845768c4-da3e-40e7-a8f8-00c2344ff7d3.jpg-39ba7189561cba18b858205d1a8cddd6.ctex"
+path.s3tc="res://.godot/imported/goblin_archer_m_Color_845768c4-da3e-40e7-a8f8-00c2344ff7d3.jpg-39ba7189561cba18b858205d1a8cddd6.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "181e2f5b7269fe76b8dfe59474301ee2"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/goblin_archer_m_Color_845768c4-da3e-40e7-a8f8-00c2344ff7d3.jpg"
-dest_files=["res://.godot/imported/goblin_archer_m_Color_845768c4-da3e-40e7-a8f8-00c2344ff7d3.jpg-39ba7189561cba18b858205d1a8cddd6.ctex"]
+dest_files=["res://.godot/imported/goblin_archer_m_Color_845768c4-da3e-40e7-a8f8-00c2344ff7d3.jpg-39ba7189561cba18b858205d1a8cddd6.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

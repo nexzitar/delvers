@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5o5fvvocp75l"
-path="res://.godot/imported/landmark_nest_Color_809c4447-e7a3-4232-a5f7-f3b2b39e606c.jpg-f22c38c74b895bbf73c00dd788f4ac8a.ctex"
+path.s3tc="res://.godot/imported/landmark_nest_Color_809c4447-e7a3-4232-a5f7-f3b2b39e606c.jpg-f22c38c74b895bbf73c00dd788f4ac8a.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7e78a5c8c71a2f4acc9311233b092b45"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://resources/models/landmark_nest_Color_809c4447-e7a3-4232-a5f7-f3b2b39e606c.jpg"
-dest_files=["res://.godot/imported/landmark_nest_Color_809c4447-e7a3-4232-a5f7-f3b2b39e606c.jpg-f22c38c74b895bbf73c00dd788f4ac8a.ctex"]
+dest_files=["res://.godot/imported/landmark_nest_Color_809c4447-e7a3-4232-a5f7-f3b2b39e606c.jpg-f22c38c74b895bbf73c00dd788f4ac8a.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

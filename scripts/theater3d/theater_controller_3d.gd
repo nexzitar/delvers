@@ -317,7 +317,13 @@ func _dispatch(item):
 		if state and state.mode != "dead":
 			state.mode = "attack_off" if item.get("off", false) else "attack"
 			state.anim_t = 0.0
-			_sfx_pick(["sword_swing_1", "sword_swing_2"], -10.0)
+			match state.get("family", ""):
+				"slime":
+					_sfx("slime_attack", -8.0, randf_range(0.9, 1.1))
+				"spider":
+					_sfx("spider_bite", -9.0, randf_range(0.92, 1.08))
+				_:
+					_sfx_pick(["sword_swing_1", "sword_swing_2"], -10.0)
 		return
 	if item.kind == "spin":
 		var state = actors.get(item.id)
@@ -496,9 +502,16 @@ func _play_damage(event):
 		event.skill != null
 		and event.skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
 	)
+	var attacker_family = actors.get(event.source_id, {}).get("family", "")
 	if event.blocked and _sfx("shield_block", -4.0, randf_range(0.95, 1.05)):
 		pass
 	elif event.crit and _sfx("crit_impact", -3.0, randf_range(0.95, 1.05)):
+		pass
+	elif attacker_family == "slime" and _sfx("slime_impact", -5.0,
+			randf_range(0.9, 1.1)):
+		pass
+	elif attacker_family == "spider" and _sfx("spider_bite", -6.0,
+			randf_range(0.92, 1.08)):
 		pass
 	elif ranged and _sfx("arrow_hit", -5.0, randf_range(0.92, 1.08)):
 		pass
@@ -705,6 +718,21 @@ func _update_arrows():
 
 ## The camera frames all living combatants: centered on their bounding
 ## box, pulled back far enough to fit the spread.
+var _cam_yaw := 0.0
+var _cam_zoom := 1.0
+var _cam_orbiting := false
+
+func _unhandled_input(event):
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			_cam_orbiting = event.pressed
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			_cam_zoom = clampf(_cam_zoom * 0.9, 0.55, 1.9)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			_cam_zoom = clampf(_cam_zoom / 0.9, 0.55, 1.9)
+	elif event is InputEventMouseMotion and _cam_orbiting:
+		_cam_yaw -= event.relative.x * 0.008
+
 func _update_camera(delta):
 	var low := Vector3(INF, 0, INF)
 	var high := Vector3(-INF, 0, -INF)
@@ -723,8 +751,9 @@ func _update_camera(delta):
 	var spread = (high - low).length()
 	# Generous distance so the fight stays inside the strip between the
 	# sidebar panels rather than hiding behind them.
-	var distance = clampf(4.0 + spread * 0.95, 8.0, 16.0)
-	var goal = center + CAMERA_OFFSET.normalized() * distance
+	var distance = clampf(4.0 + spread * 0.95, 8.0, 16.0) * _cam_zoom
+	var bearing = CAMERA_OFFSET.normalized().rotated(Vector3.UP, _cam_yaw)
+	var goal = center + bearing * distance
 	var blend = 1.0 - exp(-2.5 * delta)
 	camera.position = camera.position.lerp(goal, blend)
 	camera.look_at(center + Vector3(0, 0.4, 0))

@@ -5,6 +5,14 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Battle camera orbit**: right-drag turns the bearing, the wheel
+  zooms (0.55x-1.9x) - the follow framing keeps tracking the fight
+  underneath, so you orbit the battle, not a fixed point. Same feel
+  as the camp camera.
+- **Creature attacks own their sounds**: slimes lunge with a wet
+  stretchy squelch and land gooey slaps (no more sword whooshes from
+  a blob), spiders snap their mandibles on attack and on hit. The
+  attacker's family picks both the wind-up and the impact sound.
 - **THE AUDIO LIBRARY** (ElevenLabs batch, the Tripo pattern for
   sound - audio_batch.py): 24 SFX + 3 per-theme ambience beds
   generated in one sweep. The theater now plays: per-theme looping
