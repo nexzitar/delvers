@@ -4,6 +4,27 @@ Notable changes per pull request. Newest first.
 
 ## Phase B — The Heightfield *(open)*
 
+### Added
+- **Save slots** (Options menu): three slots with Store/Load - stash
+  the current guild away, test any stage of the game, bring it back.
+  Loading a slot copies it over the active save and reloads the camp.
+- **Hero switcher arrows** in the loadout: < and > beside the name
+  walk the roster.
+- **Every arrow flies**: ordinary bow shots (hero and goblin alike)
+  now streak visibly to their target at impact - the draw pose was
+  always there; the arrow itself only existed for Multishot and
+  Piercing Shot.
+
+### Changed
+- Goblin warriors hold their shields properly: the procedural shield
+  mounts through the socket system (shield_arm socket + shield_p
+  grip) instead of delver-tuned fallback numbers.
+- Tooltip panels grew 60px and the stat-delta list splits to two
+  columns past three lines - no more overflow in compare or forge
+  preview.
+- Tier scaling bites harder: +3 enemy levels per tier above the
+  first (was +2) - tier 2 was strolling.
+
 ### Fixed
 - **The spiderling cascade**: reinforcement-spawned adds (brood
   spiderlings) had no pack - they never leashed, never slept, and

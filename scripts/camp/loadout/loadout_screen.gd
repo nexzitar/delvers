@@ -218,6 +218,16 @@ func _build_left_panel():
 
 	vbox.add_child(_title("Hero"))
 
+	var name_row := HBoxContainer.new()
+	name_row.add_theme_constant_override("separation", 6)
+	vbox.add_child(name_row)
+	var prev_btn := Button.new()
+	prev_btn.text = "<"
+	prev_btn.custom_minimum_size = Vector2(40, 40)
+	prev_btn.focus_mode = Control.FOCUS_NONE
+	prev_btn.pressed.connect(func(): _step_hero(-1))
+	name_row.add_child(prev_btn)
+
 	_name_edit = LineEdit.new()
 	_name_edit.add_theme_font_override("font", FONT)
 	_name_edit.add_theme_font_size_override("font_size", 24)
@@ -228,7 +238,14 @@ func _build_left_panel():
 	_name_edit.custom_minimum_size = Vector2(0, 40)
 	_name_edit.text_submitted.connect(_on_name_submitted)
 	_name_edit.focus_exited.connect(func(): _on_name_submitted(_name_edit.text))
-	vbox.add_child(_name_edit)
+	_name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_row.add_child(_name_edit)
+	var next_btn := Button.new()
+	next_btn.text = ">"
+	next_btn.custom_minimum_size = Vector2(40, 40)
+	next_btn.focus_mode = Control.FOCUS_NONE
+	next_btn.pressed.connect(func(): _step_hero(1))
+	name_row.add_child(next_btn)
 
 	# Columns flanking the preview.
 	var mid = HBoxContainer.new()
@@ -1141,7 +1158,7 @@ func _make_recipe_row(recipe: RecipeDefinition) -> Control:
 	return panel
 
 func _build_tooltip():
-	_tooltip_compare_panel = _panel(660, -270, -520, -40, 0, 1, 1, 1)
+	_tooltip_compare_panel = _panel(660, -330, -520, -40, 0, 1, 1, 1)
 	_tooltip_compare_panel.visible = false
 	_tooltip_compare_box = VBoxContainer.new()
 	_tooltip_compare_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -1152,7 +1169,7 @@ func _build_tooltip():
 	_tooltip_compare_box.add_theme_constant_override("separation", 6)
 	_tooltip_compare_panel.add_child(_tooltip_compare_box)
 
-	_tooltip_panel = _panel(-580, -270, -40, -40, 1, 1, 1, 1)
+	_tooltip_panel = _panel(-580, -330, -40, -40, 1, 1, 1, 1)
 	_tooltip_panel.visible = false
 
 	var margin = MarginContainer.new()
@@ -1206,6 +1223,13 @@ func _make_icon(kind, res, origin) -> LoadoutIcon:
 	return icon
 
 # --- Refresh ---------------------------------------------------------
+
+## The arrows beside the name walk the roster.
+func _step_hero(direction: int):
+	if PlayerRoster.heroes.size() < 2:
+		return
+	var next = wrapi(hero_index + direction, 0, PlayerRoster.heroes.size())
+	open(next)
 
 func refresh():
 	if hero_index < 0:

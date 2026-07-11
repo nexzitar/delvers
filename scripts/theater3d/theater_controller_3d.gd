@@ -202,7 +202,7 @@ func _ready():
 		rng.randomize()
 		_layout = DungeonLayout.generate(dungeon(), rng)
 		combat.setup_delve(party, _layout, entry_health,
-			(PlayerRoster.current_tier - 1) * 2)
+			(PlayerRoster.current_tier - 1) * 3)
 	var guard := 60000
 	while not combat.combat_over and guard > 0:
 		combat.update(0.1)
@@ -307,6 +307,14 @@ func _build_timeline(log):
 						"from": event.source_id, "to": event.target_id,
 					})
 					continue
+				# EVERY arrow flies: ordinary shots streak at impact
+				# too (the draw pose comes from the cast wind-up).
+				if event.skill != null and event.skill.delivery_type \
+						== SkillDefinition.DeliveryType.PROJECTILE:
+					_timeline.append({
+						"time": event.time, "kind": "streak",
+						"from": event.source_id, "to": event.target_id,
+					})
 				# AoE bursts get one distinctive cue, not a swing per victim.
 				if event.skill_name in ["Whirlwind", "Thunderclap"]:
 					var burst_key = "%d:%s:%.2f" % [event.source_id, event.skill_name, event.time]

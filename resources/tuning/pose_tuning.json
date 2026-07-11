@@ -432,6 +432,19 @@
 				0,
 				0
 			]
+		},
+		"shield_arm": {
+			"bone": "L_Forearm",
+			"position": [
+				0,
+				0.12,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			]
 		}
 	},
 	"grips": {
@@ -472,6 +485,20 @@
 			],
 			"rotation": [
 				0,
+				0,
+				0
+			],
+			"scale": 0.8
+		},
+		"shield_p": {
+			"socket": "shield_arm",
+			"position": [
+				0,
+				0,
+				0
+			],
+			"rotation": [
+				90,
 				0,
 				0
 			],
