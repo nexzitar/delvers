@@ -79,7 +79,7 @@ func _fill():
 			"The banner still lies where it fell.", 20, LOCKED, true
 		))
 		_box.add_child(_label(
-			"The guild must first prove itself — slay the Slime King.",
+			"The guild must first prove itself — conquer the Darkwood.",
 			16, DIM, true
 		))
 		return

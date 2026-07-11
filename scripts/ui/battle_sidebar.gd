@@ -11,8 +11,8 @@ const HP_FILL = Color(0.33, 0.6, 0.24)
 const MANA_FILL = Color(0.23, 0.42, 0.78)
 const BAR_BG = Color(0.07, 0.07, 0.09, 0.9)
 const DEAD_TINT = Color(0.45, 0.38, 0.38, 0.8)
-const METER_TEXT = Color.BLACK
-const METER_OUTLINE = Color.WHITE
+const METER_TEXT = Color(0.96, 0.94, 0.88)
+const METER_OUTLINE = Color(0.05, 0.05, 0.06)
 
 ## Classic damage-meter row colors, assigned by join order.
 const METER_COLORS = [
@@ -169,8 +169,8 @@ func _add_meter_row(entity_id, entity_name):
 	bar.add_theme_stylebox_override("fill", fill)
 
 	var name_label = _make_label(
-		entity_name, 12, METER_TEXT,
-		HORIZONTAL_ALIGNMENT_LEFT, METER_OUTLINE, 1
+		entity_name, 13, METER_TEXT,
+		HORIZONTAL_ALIGNMENT_LEFT, METER_OUTLINE, 4
 	)
 	name_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	name_label.offset_left = 5
@@ -179,8 +179,8 @@ func _add_meter_row(entity_id, entity_name):
 	bar.add_child(name_label)
 
 	var value_label = _make_label(
-		"", 12, METER_TEXT,
-		HORIZONTAL_ALIGNMENT_RIGHT, METER_OUTLINE, 1
+		"", 13, METER_TEXT,
+		HORIZONTAL_ALIGNMENT_RIGHT, METER_OUTLINE, 4
 	)
 	value_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	value_label.offset_right = -5

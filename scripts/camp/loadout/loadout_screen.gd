@@ -264,24 +264,30 @@ func _build_left_panel():
 	under.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(under)
 
+	var left_col := VBoxContainer.new()
+	left_col.add_theme_constant_override("separation", 8)
+	left_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	under.add_child(left_col)
+
 	_mastery_box = VBoxContainer.new()
 	_mastery_box.add_theme_constant_override("separation", 2)
-	_mastery_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mastery_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	under.add_child(_mastery_box)
+	left_col.add_child(_mastery_box)
 
 	_totals_box = VBoxContainer.new()
 	_totals_box.add_theme_constant_override("separation", 1)
 	_totals_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_totals_box.custom_minimum_size = Vector2(210, 0)
 	_totals_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	under.add_child(_totals_box)
 
-	# Weapon row.
+	# Weapon row, beneath the stars in the left column.
 	var weapons = HBoxContainer.new()
 	weapons.alignment = BoxContainer.ALIGNMENT_CENTER
 	weapons.add_theme_constant_override("separation", 14)
 	weapons.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(weapons)
+	left_col.add_child(weapons)
 	for pos in Equip.WEAPON_ROW:
 		weapons.add_child(_build_equip_slot(pos))
 
@@ -1557,6 +1563,7 @@ const MASTERY_TRAINING := {
 	"sword": "Trains every room fought with a sword in the main hand.",
 	"shield": "Trains every room fought with a shield in the off hand.",
 	"bow": "Trains every room fought with a bow.",
+	"dualwield": "Trains every room fought with a weapon in each hand.",
 	"restoration": "Trains every room fought with a healing skill slotted.",
 }
 
@@ -1715,7 +1722,7 @@ static func loadout_totals(hero) -> Dictionary:
 const STAT_HELP := {
 	"HP": "Health. At zero the delver falls and sits out the rest of the delve. Health carries between fights - what you lose in one room you bring to the next.",
 	"Mana": "Fuel for casts like Heal. Regenerates slowly during combat.",
-	"Armor": "Flat damage removed from every physical hit taken - at least 1 always gets through. Armor stops steel; it does nothing against poison.",
+	"Armor": "Flat damage removed from every physical hit taken - at least 1 always gets through.",
 	"Dodge": "Chance to avoid a physical hit entirely.",
 	"Block": "Chance to take only half damage from a hit. Carried by shields.",
 	"Crit": "Chance to strike for 150% damage.",

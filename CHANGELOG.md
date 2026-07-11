@@ -5,6 +5,10 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Dual Wield mastery**: fighting with a weapon in each hand now
+  trains its own discipline - Ambidexterity, Twin Fangs, Off-Hand
+  Training, Blade Dance (passives; its unique techniques wait for
+  their tomes).
 - **Stat and mastery tooltips**: every stat row and mastery row in
   the hero panel explains itself on hover - what armor actually
   does, what blocks, what rusts and what never fades, and each
@@ -197,6 +201,17 @@ Notable changes per pull request. Newest first.
   fitted model covers the region.
 
 ### Changed
+- Dead enemies now actually fade off the roster (the despawn was
+  listening to the wrong event field) - the damage meter no longer
+  gets pushed off screen.
+- Damage meter names/numbers: light text with a dark outline on the
+  colored bars, up a size - readable at a glance.
+- Room banners dedupe and replace instead of stacking doubles.
+- The combat music stem rerolled calmer - a scuffle, not a war
+  (the epic version remains one prompt away for bosses).
+- The armor tooltip no longer lectures about poison (that fact
+  belongs to Poison Res); the Guild panel no longer names the
+  Slime King before you've met him.
 - The hero panel lays out like a character sheet: mastery stars on
   the left, the stat table (name left, value right) on the right,
   armor-type census below.

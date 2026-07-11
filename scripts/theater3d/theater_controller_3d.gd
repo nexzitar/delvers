@@ -566,13 +566,13 @@ func _play_heal(event):
 
 func _play_death(event):
 	call_deferred("_music_update")
-	if actors.get(event.entity_id, {}).get("team", -1) == CombatEntity.Team.ENEMY:
+	if actors.get(event.target_id, {}).get("team", -1) == CombatEntity.Team.ENEMY:
 		var linger := get_tree().create_timer(7.0)
 		linger.timeout.connect(func():
-			var bar = sidebars_by_entity.get(event.entity_id)
+			var bar = sidebars_by_entity.get(event.target_id)
 			if bar:
-				bar.remove_unit(event.entity_id))
-	var dead_state = actors.get(event.entity_id)
+				bar.remove_unit(event.target_id))
+	var dead_state = actors.get(event.target_id)
 	if dead_state:
 		match dead_state.get("family", ""):
 			"goblin":
@@ -952,8 +952,14 @@ func _place_name(room: int) -> String:
 	return "Room %d" % room
 
 func _show_room_banner(room: int):
+	if room == _last_banner_room:
+		return
+	_last_banner_room = room
+	if is_instance_valid(_banner_layer):
+		_banner_layer.queue_free()
 	_sfx("room_banner", -8.0)
 	var layer := CanvasLayer.new()
+	_banner_layer = layer
 	layer.layer = 11
 	add_child(layer)
 	var label := Label.new()
@@ -1276,6 +1282,8 @@ func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: 
 
 ## Brief bottom-center spoils toast; the delve marches on by itself.
 var _toast_layer: CanvasLayer = null
+var _banner_layer: CanvasLayer = null
+var _last_banner_room := -1
 
 func _show_room_toast(room: int, entries: Array):
 	_sfx("loot_toast", -6.0)
