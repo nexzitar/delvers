@@ -5,6 +5,16 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **THE AUDIO LIBRARY** (ElevenLabs batch, the Tripo pattern for
+  sound - audio_batch.py): 24 SFX + 3 per-theme ambience beds
+  generated in one sweep. The theater now plays: per-theme looping
+  ambience (wind through firs / cavern drips / dead machinery),
+  a danger sting plus the family's own voice on every pull (goblin
+  barks, spider hisses, slime squelches), family death cries, sword
+  swing/hit variants with block clangs and crit crunches, bowstring
+  and arrow impacts, heal chimes, loot chimes, banner whooshes, and
+  victory/defeat stings. Every hook is guarded - a missing file
+  falls back to the old wavs or silence.
 - **THE GOBLIN FAMILY** (enemy families, not more enemies): Scout
   (fast, slippery, drops the hood recipe), Shaman (heals its pack -
   pinned by test; teaches Flaming), and Chief (armored elite, teaches

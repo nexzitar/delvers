@@ -18,6 +18,34 @@ const GOBLIN_WARRIOR = preload("res://resources/enemies/goblin_warrior.tres")
 const VENOMOUS_SPIDER = preload("res://resources/enemies/venomous_spider.tres")
 const MELEE_HIT_SOUND = preload("res://audio/melee_hit.wav")
 const ARROW_HIT_SOUND = preload("res://audio/arrow_hit.wav")
+
+## The generated library (ElevenLabs batch): loaded on demand,
+## guarded - a missing file falls back to the old wavs or silence.
+var _sfx_cache := {}
+func _sfx(name: String, db := -4.0, pitch := 1.0):
+	if not _sfx_cache.has(name):
+		var path = "res://audio/sfx/%s.mp3" % name
+		_sfx_cache[name] = load(path) if ResourceLoader.exists(path) else null
+	if _sfx_cache[name] != null:
+		UiSounds.play(_sfx_cache[name], "SFX", db, pitch)
+		return true
+	return false
+
+func _sfx_pick(names: Array, db := -4.0):
+	_sfx(names.pick_random(), db, randf_range(0.92, 1.08))
+
+## The family a template belongs to (creature voices).
+static func _family_of(template) -> String:
+	if template == null:
+		return ""
+	var eid := String(template.enemy_id) if "enemy_id" in template else ""
+	if "spider" in eid or "brood" in eid or "weaver" in eid:
+		return "spider"
+	if "slime" in eid or "ooze" in eid or "slick" in eid:
+		return "slime"
+	if "goblin" in eid:
+		return "goblin"
+	return ""
 const FONT = preload("res://art/fonts/Herculanum.ttf")
 
 const WORLD_SCALE := 1.0 / 32.0
@@ -289,6 +317,7 @@ func _dispatch(item):
 		if state and state.mode != "dead":
 			state.mode = "attack_off" if item.get("off", false) else "attack"
 			state.anim_t = 0.0
+			_sfx_pick(["sword_swing_1", "sword_swing_2"], -10.0)
 		return
 	if item.kind == "spin":
 		var state = actors.get(item.id)
@@ -392,6 +421,7 @@ func _play_spawn(event):
 		"shoot_dist": 2.0,
 		"pack_id": event.pack_id,
 		"dormant": event.team == CombatEntity.Team.ENEMY and event.pack_id >= 0,
+		"family": _family_of(event.template),
 	}
 
 	var sidebar = (
@@ -466,10 +496,20 @@ func _play_damage(event):
 		event.skill != null
 		and event.skill.delivery_type == SkillDefinition.DeliveryType.PROJECTILE
 	)
-	UiSounds.play(
-		ARROW_HIT_SOUND if ranged else MELEE_HIT_SOUND,
-		"SFX", -4.0, randf_range(0.9, 1.1)
-	)
+	if event.blocked and _sfx("shield_block", -4.0, randf_range(0.95, 1.05)):
+		pass
+	elif event.crit and _sfx("crit_impact", -3.0, randf_range(0.95, 1.05)):
+		pass
+	elif ranged and _sfx("arrow_hit", -5.0, randf_range(0.92, 1.08)):
+		pass
+	elif not ranged and _sfx("sword_hit_%d" % (randi_range(1, 2)), -5.0,
+			randf_range(0.92, 1.08)):
+		pass
+	else:
+		UiSounds.play(
+			ARROW_HIT_SOUND if ranged else MELEE_HIT_SOUND,
+			"SFX", -4.0, randf_range(0.9, 1.1)
+		)
 	if event.blocked:
 		_spawn_floating_text(
 			target.rig.position, "%d (blocked)" % event.amount,
@@ -489,6 +529,7 @@ func _play_damage(event):
 		)
 
 func _play_heal(event):
+	_sfx("heal_chime", -8.0, randf_range(0.95, 1.05))
 	var target = actors.get(event.target_id)
 	if target == null:
 		return
@@ -504,6 +545,15 @@ func _play_heal(event):
 	)
 
 func _play_death(event):
+	var dead_state = actors.get(event.entity_id)
+	if dead_state:
+		match dead_state.get("family", ""):
+			"goblin":
+				_sfx("goblin_death", -5.0, randf_range(0.9, 1.1))
+			"slime":
+				_sfx("slime_death", -5.0, randf_range(0.9, 1.1))
+			"spider":
+				_sfx("spider_death", -5.0, randf_range(0.9, 1.1))
 	var state = actors.get(event.target_id)
 	if state == null:
 		return
@@ -691,6 +741,7 @@ var _float_lanes := {}
 
 ## A fast arrow flying point to point (archer behavior skills).
 func _spawn_arrow_streak(from: Vector3, to: Vector3):
+	_sfx("bow_release", -8.0, randf_range(0.92, 1.08))
 	var streak := MeshInstance3D.new()
 	var shaft := CylinderMesh.new()
 	shaft.top_radius = 0.015
@@ -773,6 +824,7 @@ func _place_name(room: int) -> String:
 	return "Room %d" % room
 
 func _show_room_banner(room: int):
+	_sfx("room_banner", -8.0)
 	var layer := CanvasLayer.new()
 	layer.layer = 11
 	add_child(layer)
@@ -804,6 +856,17 @@ func _show_room_banner(room: int):
 ## A pack noticed the party: wake its actors and reveal them in the
 ## enemy panel.
 func _wake_pack(pack_id: int):
+	_sfx("pack_pulled", -6.0)
+	var voices := {"goblin": ["goblin_bark_1", "goblin_bark_2"],
+		"spider": ["spider_hiss"], "slime": ["slime_hop"]}
+	var pack_family := ""
+	for entity_id in actors:
+		var st = actors[entity_id]
+		if st.get("pack_id", -1) == pack_id and st.get("family", "") != "":
+			pack_family = st.family
+			break
+	if voices.has(pack_family):
+		_sfx_pick(voices[pack_family], -5.0)
 	for entity_id in actors:
 		var state = actors[entity_id]
 		if state.get("pack_id", -1) != pack_id or not state.get("dormant", false):
@@ -1082,6 +1145,7 @@ func _drop_entries(gear: Array, materials: Dictionary, recipes: Array, affixes: 
 
 ## Brief bottom-center spoils toast; the delve marches on by itself.
 func _show_room_toast(room: int, entries: Array):
+	_sfx("loot_toast", -6.0)
 	var layer := CanvasLayer.new()
 	layer.layer = 12
 	add_child(layer)
@@ -1149,6 +1213,7 @@ func _bank_and_return():
 	SceneFlow.change_scene("res://scenes/camp/camp.tscn")
 
 func _show_battle_result(victory):
+	_sfx("victory_sting" if victory else "defeat_sting", -5.0)
 	var layer = CanvasLayer.new()
 	layer.layer = 10
 	add_child(layer)
@@ -1410,6 +1475,20 @@ func _setup_world(arena):
 		mesh.material_override = prop_mat
 		mesh.position += center + Vector3(7.5 * cos(a), 0, 4.6 * sin(a))
 		add_child(mesh)
+
+	var beds := {"forest": "darkwood", "nest": "spider_nest",
+		"workshop": "sunken_workshop"}
+	var bed_path = "res://audio/ambience/%s.mp3" % beds.get(dungeon().theme, "darkwood")
+	if ResourceLoader.exists(bed_path):
+		var bed_stream = load(bed_path)
+		if bed_stream is AudioStreamMP3:
+			bed_stream.loop = true
+		var bed := AudioStreamPlayer.new()
+		bed.stream = bed_stream
+		bed.bus = "Ambience"
+		bed.volume_db = -8.0
+		bed.autoplay = true
+		add_child(bed)
 
 	camera = Camera3D.new()
 	camera.fov = 35
