@@ -35,6 +35,11 @@ var encounter_time := 0.0
 var group_meters := false
 var _meter_group_of := {}
 var _group_counts := {}
+## The unit list consolidates too: one row per enemy kind, the bar
+## showing the pack's POOLED health ("Nest Spiderling ×15").
+var group_units := false
+var _unit_group_of := {}
+var _group_members := {}
 ## Death freezes a combatant's DPS clock; their number stays honest.
 var _frozen_at := {}
 
@@ -71,10 +76,66 @@ func _ready():
 	meter_list.add_theme_constant_override("separation", 4)
 	root.add_child(meter_list)
 
+func _unit_key(entity_id):
+	return _unit_group_of.get(entity_id, entity_id)
+
+func _refresh_group_row(group: String):
+	if not unit_rows.has(group):
+		return
+	var members: Dictionary = _group_members[group]
+	var total := 0
+	var total_max := 0
+	var alive := 0
+	for m in members.values():
+		total += m.hp
+		total_max += m.max
+		if m.hp > 0:
+			alive += 1
+	var row = unit_rows[group]
+	row.name.text = "%s ×%d" % [group, alive] if alive > 1 else String(group)
+	row.hp_bar.max_value = max(total_max, 1)
+	row.hp_bar.value = total
+	row.hp_text.text = "%d/%d" % [total, total_max]
+	row.row.modulate = DEAD_TINT if alive == 0 else Color.WHITE
+
 func has_unit(entity_id) -> bool:
-	return unit_rows.has(entity_id)
+	return unit_rows.has(entity_id) or _unit_group_of.has(entity_id)
 
 func add_unit(event):
+	if group_units and event.team == CombatEntity.Team.ENEMY \
+			and event.template != null and "enemy_name" in event.template:
+		var group: String = event.template.enemy_name
+		if _unit_group_of.get(event.entity_id, "") == group \
+				and _group_members.get(group, {}).has(event.entity_id):
+			return
+		_unit_group_of[event.entity_id] = group
+		if not _group_members.has(group):
+			_group_members[group] = {}
+		_group_members[group][event.entity_id] = {
+			"hp": event.current_health, "max": event.max_health}
+		if not unit_rows.has(group):
+			_build_unit_row(event, group, true)
+		_refresh_group_row(group)
+		_meter_setup(event)
+		return
+	_build_unit_row(event, event.entity_id, false)
+	set_health(event.entity_id, event.current_health, event.max_health)
+	set_mana(event.entity_id, event.current_mana, event.max_mana)
+	_meter_setup(event)
+
+func _meter_setup(event):
+	if group_meters and event.template != null and "enemy_name" in event.template:
+		var group: String = event.template.enemy_name
+		_meter_group_of[event.entity_id] = group
+		_group_counts[group] = _group_counts.get(group, 0) + 1
+		if not meter_rows.has(group):
+			_add_meter_row(group, group)
+		meter_rows[group].name.text = "%s ×%d" % [group, _group_counts[group]] \
+			if _group_counts[group] > 1 else group
+	else:
+		_add_meter_row(event.entity_id, event.entity_name)
+
+func _build_unit_row(event, key, hide_mana: bool):
 
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -91,7 +152,10 @@ func add_unit(event):
 	info.add_theme_constant_override("separation", 2)
 	row.add_child(info)
 
-	info.add_child(_make_label(event.entity_name, 15, NAME_COLOR))
+	var unit_name = _make_label(
+		event.entity_name if not group_units or event.team != CombatEntity.Team.ENEMY
+		else String(event.template.enemy_name), 15, NAME_COLOR)
+	info.add_child(unit_name)
 
 	var hp = _make_stat_bar(HP_FILL, 16, 12)
 	info.add_child(hp.bar)
@@ -100,27 +164,16 @@ func add_unit(event):
 	mana.bar.visible = event.max_mana > 0
 	info.add_child(mana.bar)
 
+	if hide_mana:
+		mana.bar.visible = false
+
 	unit_list.add_child(row)
 
-	unit_rows[event.entity_id] = {
-		"row": row,
+	unit_rows[key] = {
+		"row": row, "name": unit_name,
 		"hp_bar": hp.bar, "hp_text": hp.text,
 		"mana_bar": mana.bar, "mana_text": mana.text
 	}
-
-	set_health(event.entity_id, event.current_health, event.max_health)
-	set_mana(event.entity_id, event.current_mana, event.max_mana)
-
-	if group_meters and event.template != null and "enemy_name" in event.template:
-		var group: String = event.template.enemy_name
-		_meter_group_of[event.entity_id] = group
-		_group_counts[group] = _group_counts.get(group, 0) + 1
-		if not meter_rows.has(group):
-			_add_meter_row(group, group)
-		meter_rows[group].name.text = "%s ×%d" % [group, _group_counts[group]] \
-			if _group_counts[group] > 1 else group
-	else:
-		_add_meter_row(event.entity_id, event.entity_name)
 
 ## Portraits render from the unit's actual 3D rig (one frame late).
 func _apply_portrait(rect: TextureRect, event):
@@ -130,6 +183,15 @@ func _apply_portrait(rect: TextureRect, event):
 
 func set_health(entity_id, current, max_value):
 
+	if _unit_group_of.has(entity_id):
+		var group: String = _unit_group_of[entity_id]
+		if _group_members[group].has(entity_id):
+			_group_members[group][entity_id].hp = current
+			_group_members[group][entity_id].max = max_value
+		_refresh_group_row(group)
+		return
+	if not unit_rows.has(entity_id):
+		return
 	var row = unit_rows[entity_id]
 	row.hp_bar.max_value = max_value
 	row.hp_bar.value = current
@@ -137,6 +199,8 @@ func set_health(entity_id, current, max_value):
 
 func set_mana(entity_id, current, max_value):
 
+	if _unit_group_of.has(entity_id) or not unit_rows.has(entity_id):
+		return
 	var row = unit_rows[entity_id]
 	row.mana_bar.max_value = max(max_value, 1)
 	row.mana_bar.value = current
@@ -145,16 +209,36 @@ func set_mana(entity_id, current, max_value):
 func mark_dead(entity_id):
 
 	_frozen_at[entity_id] = encounter_time
+	if _unit_group_of.has(entity_id):
+		var group: String = _unit_group_of[entity_id]
+		if _group_members[group].has(entity_id):
+			_group_members[group][entity_id].hp = 0
+		_refresh_group_row(group)
+		return
+	if not unit_rows.has(entity_id):
+		return
 	set_health(entity_id, 0, unit_rows[entity_id].hp_bar.max_value)
 	unit_rows[entity_id].row.modulate = DEAD_TINT
 
 ## The fallen linger a moment, then fade off the roster (the damage
 ## meter keeps their line - credit outlives the corpse).
 func remove_unit(entity_id):
-	if not unit_rows.has(entity_id):
+	if _unit_group_of.has(entity_id):
+		var group: String = _unit_group_of[entity_id]
+		_group_members[group].erase(entity_id)
+		_unit_group_of.erase(entity_id)
+		if _group_members[group].is_empty():
+			_fade_row(group)
+		else:
+			_refresh_group_row(group)
 		return
-	var row = unit_rows[entity_id].row
-	unit_rows.erase(entity_id)
+	_fade_row(entity_id)
+
+func _fade_row(key):
+	if not unit_rows.has(key):
+		return
+	var row = unit_rows[key].row
+	unit_rows.erase(key)
 	var fade := create_tween()
 	fade.tween_property(row, "modulate:a", 0.0, 0.7)
 	fade.tween_callback(row.queue_free)

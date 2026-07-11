@@ -13,6 +13,10 @@ Notable changes per pull request. Newest first.
   full, and take up their posts again (PACK_RESET events; the panel
   forgets them, the music relaxes, and they will pull again). Charging
   past a pack no longer leaves it trailing you across the dungeon.
+- **Consolidated enemy unit list**: the panel shows one row per
+  enemy KIND with the pack's pooled health as its bar ("Nest
+  Spiderling ×15" over a shared 400/600) - the count tracks the
+  living, and only wakened enemies appear at all.
 - **Consolidated enemy damage meters**: one row per enemy KIND -
   "Nest Spiderling ×12" with total and per-head average - instead of
   a hundred entries converging on noise. Heroes keep individual rows

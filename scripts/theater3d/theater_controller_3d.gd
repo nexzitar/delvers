@@ -1900,6 +1900,7 @@ func _setup_ui():
 	enemy_sidebar = BattleSidebar.new()
 	enemy_sidebar.title = "Enemies"
 	enemy_sidebar.group_meters = true
+	enemy_sidebar.group_units = true
 	enemy_sidebar.position = Vector2(1328, 12)
 	enemy_sidebar.size = Vector2(260, 876)
 	layer.add_child(enemy_sidebar)
