@@ -3,6 +3,8 @@ class_name EnemyDefinition
 
 @export var enemy_id: String
 @export var enemy_name: String
+## Imported character model (Tripo). Null = procedural rig.
+@export var model_scene: PackedScene
 @export var template_id : String
 
 @export var base_health: int

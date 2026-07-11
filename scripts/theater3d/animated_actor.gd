@@ -389,11 +389,12 @@ func _dress(opts: Dictionary):
 			piece.position = pair[2]
 			mount.add_child(piece)
 	if opts.get("bow", false):
-		var bow_mount = _attach("L_Hand")
 		var bow = DelverBuilder.build_bow()
-		bow.position = Vector3(0, 0.05, 0)
-		bow.scale = Vector3.ONE * 0.9
-		bow_mount.add_child(bow)
+		if not _socket_mount_node(bow, "bow_p", 0.9):
+			var bow_mount = _attach("L_Hand")
+			bow.position = Vector3(0, 0.05, 0)
+			bow.scale = Vector3.ONE * 0.9
+			bow_mount.add_child(bow)
 
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.
@@ -404,16 +405,17 @@ func _dress(opts: Dictionary):
 			var main_fit = WORN_MODELS[opts.main_gear].fit
 			_sword_node = worn_mounts[main_fit].back()
 	if not main_model and (opts.get("sword", false) or opts.get("axe", false) or opts.get("dagger", false)):
-		var hand = _attach("R_Hand")
 		var weapon = DelverBuilder.build_axe() if opts.get("axe", false) \
 			else DelverBuilder.build_dagger() if opts.get("dagger", false) \
 			else DelverBuilder.build_sword()
-		# Hand bone: +Y runs along the fingers; the grip tilts the
-		# blade forward and slightly up from the fist.
-		weapon.position = Vector3(0.0, 0.05, 0.0)
-		weapon.rotation_degrees = Vector3(-115, 0, 0)
-		weapon.scale = Vector3.ONE * 0.8
-		hand.add_child(weapon)
+		if not _socket_mount_node(weapon, "sword_p", 0.8):
+			var hand = _attach("R_Hand")
+			# Hand bone: +Y runs along the fingers; the grip tilts the
+			# blade forward and slightly up from the fist.
+			weapon.position = Vector3(0.0, 0.05, 0.0)
+			weapon.rotation_degrees = Vector3(-115, 0, 0)
+			weapon.scale = Vector3.ONE * 0.8
+			hand.add_child(weapon)
 		_sword_node = weapon
 	if opts.get("shield", false) and _mount_worn_model(opts.get("off_gear", "")):
 		var off_fit = WORN_MODELS[opts.off_gear].fit
@@ -479,27 +481,17 @@ func _mount_worn_model(gear_id: String) -> bool:
 	# Sockets live on bones (grip_main, grip_off, back, hip_l...);
 	# grips live on items - both placed visually in the Socket
 	# Workshop (capture/socket_workshop.tscn) and saved to tuning.
-	var grip = tuning.get("grips", {}).get(entry.fit)
-	var socket = tuning.get("sockets", {}).get(grip.socket) if grip else null
-	if grip and socket:
-		var mount = _attach(socket.bone)
+	if tuning.get("grips", {}).has(entry.fit):
 		var piece = load(fit.path).instantiate()
-		var socket_rot := Basis.from_euler(_vec(socket.rotation) * PI / 180.0)
-		var grip_rot := Basis.from_euler(_vec(grip.rotation) * PI / 180.0)
-		piece.quaternion = (socket_rot * grip_rot.inverse()).get_rotation_quaternion()
-		piece.scale = Vector3.ONE * float(grip.get("scale", fit.get("scale", 1.0)))
-		# basis carries the scale, so grip offsets are authored in the
-		# item's own (unscaled) coordinates.
-		piece.position = _vec(socket.position) - piece.basis * _vec(grip.position)
-		piece.set_meta("mount_transform", piece.transform)
-		mount.add_child(piece)
-		if not worn_mounts.has(entry.fit):
-			worn_mounts[entry.fit] = []
-		worn_mounts[entry.fit].append(piece)
-		if entry.has("palette"):
-			_recolor(piece, entry.palette)
-		_hide_covered(fit)
-		return true
+		if _socket_mount_node(piece, entry.fit, fit.get("scale", 1.0)):
+			if not worn_mounts.has(entry.fit):
+				worn_mounts[entry.fit] = []
+			worn_mounts[entry.fit].append(piece)
+			if entry.has("palette"):
+				_recolor(piece, entry.palette)
+			_hide_covered(fit)
+			return true
+		piece.queue_free()
 
 	var bones = fit.get("pair_bones", [fit.get("bone", "")])
 	var saved_pieces: Array = tuning.get("fits", {}).get(entry.fit, {}).get("pieces", [])
@@ -542,6 +534,27 @@ func _mount_worn_model(gear_id: String) -> bool:
 
 ## The registry fit, with any owner-saved override from the tuning
 ## file laid over it (the Guild Animator's Gear Fitter writes these).
+## Mounts any prop by grip data: the prop's grip point lands on its
+## body socket, oriented grip-to-socket - one math for worn models
+## and built weapons alike. The basis carries the scale, so grip
+## offsets stay in the prop's own coordinates.
+func _socket_mount_node(node: Node3D, grip_key: String, default_scale := 1.0) -> bool:
+	var grip = tuning.get("grips", {}).get(grip_key)
+	if grip == null:
+		return false
+	var socket = tuning.get("sockets", {}).get(grip.socket)
+	if socket == null:
+		return false
+	var mount = _attach(socket.bone)
+	var socket_rot := Basis.from_euler(_vec(socket.rotation) * PI / 180.0)
+	var grip_rot := Basis.from_euler(_vec(grip.rotation) * PI / 180.0)
+	node.quaternion = (socket_rot * grip_rot.inverse()).get_rotation_quaternion()
+	node.scale = Vector3.ONE * float(grip.get("scale", default_scale))
+	node.position = _vec(socket.position) - node.basis * _vec(grip.position)
+	node.set_meta("mount_transform", node.transform)
+	mount.add_child(node)
+	return true
+
 func fit_for(fit_key: String) -> Dictionary:
 	var fit = GEAR_FITS[fit_key].duplicate()
 	# Garments are compiled per body: a "_f" sibling GLB (same spec,

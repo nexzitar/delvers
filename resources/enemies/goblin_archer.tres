@@ -4,11 +4,13 @@
 [ext_resource type="Script" uid="uid://yr14mekdhr2x" path="res://scripts/data/skill_definition.gd" id="3_skill"]
 [ext_resource type="Resource" uid="uid://d2na08wwgi7f7" path="res://resources/skills/arrow_shot.tres" id="4_arrow"]
 [ext_resource type="Texture2D" uid="uid://ddu643uri6b8d" path="res://art/portraits/icon_goblin_archer.png" id="5_icon"]
+[ext_resource type="PackedScene" path="res://resources/models/goblin_archer_m.glb" id="9_model"]
 
 [resource]
 script = ExtResource("1_enemy")
 enemy_id = "goblin_archer"
 enemy_name = "Goblin Archer"
+model_scene = ExtResource("9_model")
 base_health = 20
 base_attack = 2
 base_attack_interval = 3.5

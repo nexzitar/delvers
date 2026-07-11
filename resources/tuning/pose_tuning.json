@@ -378,7 +378,7 @@
 			"rotation": [
 				0,
 				0,
-				0
+				-90
 			]
 		},
 		"grip_off": {
@@ -391,7 +391,7 @@
 			"rotation": [
 				0,
 				0,
-				0
+				90
 			]
 		},
 		"back": {
@@ -448,6 +448,34 @@
 				0
 			],
 			"scale": 0.5
+		},
+		"bow_p": {
+			"socket": "grip_off",
+			"position": [
+				0,
+				0,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": 0.9
+		},
+		"sword_p": {
+			"socket": "grip_main",
+			"position": [
+				0,
+				0.02,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": 0.8
 		}
 	}
 }

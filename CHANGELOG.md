@@ -5,6 +5,21 @@ Notable changes per pull request. Newest first.
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added
+- **Enemies get the treatment: modeled goblins** - a headless Tripo
+  character pipeline (gen_character.py: text -> model -> rig ->
+  preset animations -> one GLB) generated the Goblin Warrior and
+  Goblin Archer with the SAME skeleton as the delvers, so sockets,
+  pose functions and clip conventions work unchanged. EnemyTemplate
+  gains model_scene; modeled enemies ride AnimatedActor in battle
+  (weapon flags live on the model config). Slimes and spiders stay
+  procedural by choice - blobs and arachnids animate better as code.
+- **Weapons are held properly**: the socket convention changed to
+  the thumb line (a fist holds the handle ACROSS the palm, not along
+  the fingers) - the sword now continues the arm mid-swing; the
+  procedural bow socket-mounts upright with the string toward the
+  archer (it hung upside down from the finger line); the procedural
+  sword shares the same grip through a new _socket_mount_node used
+  by worn models and built props alike.
 - **THE ARCHITECTURE KIT** (the garment engine pattern at room
   scale): a Blender compiler (arch_kit.py) generates a modular
   masonry kit from a construction grammar - coursed stone walls in

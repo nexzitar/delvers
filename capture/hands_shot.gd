@@ -5,9 +5,9 @@ extends Node3D
 
 func _ready():
 	var cam := Camera3D.new()
-	cam.position = Vector3(0.0, 0.85, 1.7)
+	cam.position = Vector3(0.0, 0.95, 2.9)
 	cam.look_at_from_position(cam.position, Vector3(0, 0.62, 0))
-	cam.fov = 35
+	cam.fov = 40
 	add_child(cam)
 	cam.current = true
 	var sun := DirectionalLight3D.new()
@@ -23,18 +23,23 @@ func _ready():
 	env.environment.ambient_light_color = Color(0.6, 0.6, 0.6)
 	add_child(env)
 
-	for i in 2:
+	for i in 3:
 		var config = ActorFactory3D.MODEL_CONFIGS["res://resources/models/delver_male.glb"].duplicate(true)
-		config.merge({"sword": true, "shield": true,
-			"main_gear": "starter_sword", "off_gear": "starter_shield"}, true)
+		if i == 2:
+			config.merge({"bow": true, "main_gear": "starter_bow"}, true)
+		else:
+			config.merge({"sword": true, "shield": true,
+				"main_gear": "starter_sword", "off_gear": "starter_shield"}, true)
 		var actor = AnimatedActor.new(load("res://resources/models/delver_male.glb"), config)
-		actor.position = Vector3(-0.45 + i * 0.9, 0, 0)
-		actor.rotation.y = -0.5 + i * 0.6
+		actor.position = Vector3(-0.85 + i * 0.85, 0, 0)
+		actor.rotation.y = -0.55 + i * 0.5
 		add_child(actor)
 		if i == 0:
 			actor.pose_idle(0.0)
-		else:
+		elif i == 1:
 			actor.pose_swing(0.55)
+		else:
+			actor.pose_shoot(0.7)
 	await get_tree().create_timer(0.4).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(
