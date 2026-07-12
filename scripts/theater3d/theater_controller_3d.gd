@@ -512,7 +512,8 @@ func _play_cast_start(event):
 		state.anim_t = 0.0
 		# Scale the pose so the arrow releases exactly at CAST_FINISH.
 		state.anim_speed = (0.62 * DelverRig.SHOOT_T) / duration \
-			if state.rig is DelverRig else 0.8 / maxf(duration, 0.1)
+			if state.rig is DelverRig \
+			else AnimatedActor.DRAW_RELEASE_T / maxf(duration, 0.1)
 		var target = actors.get(event.target_id)
 		if target:
 			state.shoot_dist = (

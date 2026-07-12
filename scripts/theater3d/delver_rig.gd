@@ -190,6 +190,8 @@ func _reset_pose():
 	if bow:
 		bow.rotation_degrees = BOW_REST
 		arrow.visible = false
+		if bow is BowProp:
+			bow.set_draw(0.0)
 
 func pose_idle(t: float):
 	_reset_pose()
@@ -357,11 +359,11 @@ func pose_shoot(t: float, target_dist := 2.2):
 	var flight := 0.06
 	if bow == null or arrow == null:
 		return
-	if p >= 0.34 and p < release:
-		arrow.visible = true
-		# Rides at aim height; slides back with the draw.
-		arrow.position = Vector3(0.24, 0.62, lerpf(0.3, 0.1, draw))
-	elif p >= release and p < 0.92:
+	# The string follows the same hand: drawn until the release beat,
+	# then it snaps home and the bow's own nocked arrow vanishes.
+	if bow is BowProp:
+		bow.set_draw(draw if p < release else 0.0)
+	if p >= release and p < 0.92:
 		arrow.visible = true
 		var f := clampf((p - release) / flight, 0.0, 1.0)
 		arrow.position = Vector3(0.24, 0.62, lerpf(0.1, target_dist, f))

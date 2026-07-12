@@ -159,6 +159,9 @@ static func _load_tuning() -> Dictionary:
 var _shield_arm: BoneAttachment3D
 var _shield_prop: Node3D
 var _sword_node: Node3D
+var _bow_node: Node3D
+var _draw_hand: BoneAttachment3D
+var _draw_hand_offset := Vector3.ZERO
 ## fit_key -> [mounted piece nodes], for live fitting in the Animator.
 var worn_mounts := {}
 ## grip_key -> prop node, for socket-mounted built weapons (sword_p,
@@ -403,6 +406,7 @@ func _dress(opts: Dictionary):
 			bow.position = Vector3(0, 0.05, 0)
 			bow.scale = Vector3.ONE * 0.9
 			bow_mount.add_child(bow)
+		_bow_node = bow
 
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.
@@ -691,6 +695,10 @@ func _pose(role: String, fraction: float, looped := false):
 		# Undo the campfire sit-grip override: back to how it mounted.
 		_sword_node.transform = _sword_node.get_meta(
 			"mount_transform", _sword_node.transform)
+	if role != "shoot" and _bow_node is BowProp:
+		_bow_node.set_draw(0.0)
+		_bow_node.transform = _bow_node.get_meta(
+			"mount_transform", _bow_node.transform)
 	# The captures carry the chin low; lift the gaze off the ground.
 	_rotate_bone("Head", Vector3.RIGHT, 0.25)
 
@@ -793,8 +801,96 @@ func pose_sit(t: float, stroke_scale := 1.0):
 	_set_shield_grounded(true)
 	_model.position = _vec(sit.get("seat_offset", [0, 0, 0])) + Vector3(0, -0.31, 0)
 
+## The theater paces the shoot pose so anim_t hits this value exactly
+## at CAST_FINISH - the string's release beat.
+const DRAW_RELEASE_T := 0.8
+
 func pose_shoot(t: float, _target_dist := 2.2):
-	_pose("shoot", t)
+	if _skeleton == null or not (_bow_node is BowProp):
+		_pose("shoot", t)
+		_draw_bow(t)
+		return
+	# Baked clips carry no draw (shoot falls back to a melee swing);
+	# build the archery on the bones instead - raise the bow arm, pull
+	# the draw arm - and let the live string and arrow tell the story.
+	_bone_pose_base()
+	var u := t / DRAW_RELEASE_T
+	var settle := smoothstep(1.05, 1.45, u)
+	var aim := smoothstep(0.0, 0.22, clampf(u, 0.0, 1.0)) * (1.0 - settle)
+	var k := BowProp.draw_amount(u)
+	_rotate_bone("L_Upperarm", Vector3.RIGHT, 1.25 * aim)
+	_rotate_bone("R_Upperarm", Vector3.RIGHT, 1.15 * aim - 0.35 * k)
+	_rotate_bone("R_Upperarm", Vector3.BACK, -0.25 * k)
+	_rotate_bone("R_Forearm", Vector3.RIGHT, 0.95 * k)
+	_rotate_bone("Spine01", Vector3.UP, 0.28 * aim)
+	_rotate_bone("Spine02", Vector3.UP, 0.17 * aim)
+	_rotate_bone("Head", Vector3.UP, -0.3 * aim)
+	_aim_bow(aim)
+	_draw_bow(t)
+
+## The carry orientation is tuned for the idle hang; at full aim the
+## bow must stand vertical with the arrow axis (+X) along the actor's
+## forward. Blend between them in the mount's own space.
+func _aim_bow(aim: float):
+	var mt: Transform3D = _bow_node.get_meta("mount_transform", _bow_node.transform)
+	var rest_q := mt.basis.get_rotation_quaternion()
+	var aim_q := rest_q
+	var parent = _bow_node.get_parent()
+	if aim > 0.0 and parent is Node3D and is_inside_tree():
+		var fwd: Vector3 = global_transform.basis.z.normalized()
+		var up := (Vector3.UP - fwd * fwd.dot(Vector3.UP)).normalized()
+		var world_aim := Basis(fwd, up, fwd.cross(up))
+		# The attachment's global_transform lags the bone pose we just
+		# set this call; read the bone directly (it force-updates).
+		var pb: Basis = _mount_basis(parent)
+		aim_q = (pb.inverse() * world_aim).get_rotation_quaternion()
+	_bow_node.quaternion = rest_q.slerp(aim_q, aim)
+	_bow_node.scale = mt.basis.get_scale()
+	_bow_node.position = mt.origin
+
+## Clip-scrubbed rigs have no authored string hand, so the string
+## reaches for the hand instead: the nock pulls toward the grip_main
+## socket (the draw hand), keeping the two visually connected in any
+## baked animation, and snaps home at the release beat.
+func _draw_bow(t: float):
+	if not (_bow_node is BowProp):
+		return
+	var k := BowProp.draw_amount(t / DRAW_RELEASE_T)
+	if k <= 0.0 or not is_inside_tree():
+		_bow_node.set_draw(0.0)
+		return
+	if _draw_hand == null:
+		var socket = tuning.get("sockets", {}).get("grip_main")
+		if socket != null and _skeleton != null:
+			_draw_hand = _attach(socket.bone)
+			_draw_hand_offset = _vec(socket.position)
+	if _draw_hand != null:
+		var hand: Vector3 = (_skeleton.global_transform
+			* _skeleton.get_bone_global_pose(_draw_hand.bone_idx)) \
+			* _draw_hand_offset
+		var bow_world := Transform3D(
+			_mount_basis(_bow_node.get_parent())
+				* Basis(_bow_node.quaternion).scaled(_bow_node.scale),
+			Vector3.ZERO)
+		bow_world.origin = _mount_origin(_bow_node.get_parent()) \
+			+ _mount_basis(_bow_node.get_parent()) * _bow_node.position
+		_bow_node.draw_toward(bow_world.affine_inverse() * hand, k)
+	else:
+		_bow_node.set_draw(k)
+
+## Fresh world basis/origin for a prop mount, bypassing the lazy
+## BoneAttachment global_transform (stale within the posing call).
+func _mount_basis(mount) -> Basis:
+	if mount is BoneAttachment3D and _skeleton != null:
+		return (_skeleton.global_transform
+			* _skeleton.get_bone_global_pose(mount.bone_idx)).basis.orthonormalized()
+	return mount.global_transform.basis.orthonormalized()
+
+func _mount_origin(mount) -> Vector3:
+	if mount is BoneAttachment3D and _skeleton != null:
+		return (_skeleton.global_transform
+			* _skeleton.get_bone_global_pose(mount.bone_idx)).origin
+	return mount.global_transform.origin
 
 func pose_death(t: float):
 	_pose("death", t)
