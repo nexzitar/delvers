@@ -376,6 +376,10 @@ func _dispatch(item):
 		var from_state = actors.get(item.from)
 		var to_state = actors.get(item.to)
 		if from_state and to_state:
+			# Quickdraw shots have no CAST_FINISH; their fast draw
+			# reaches the loose right at this beat, so twang here.
+			if from_state.mode == "shoot" and from_state.anim_speed >= 2.0:
+				_sfx("bow_release", -8.0, randf_range(0.92, 1.08))
 			_spawn_arrow_streak(
 				from_state.rig.position + Vector3(0, 1.0, 0),
 				to_state.rig.position + Vector3(0, 0.7, 0)
@@ -407,7 +411,12 @@ func _play_event(event):
 		CombatEvent.EventType.CAST_START:
 			_play_cast_start(event)
 		CombatEvent.EventType.CAST_FINISH:
-			pass  # release timing is baked into the shoot pose speed
+			# Release timing is baked into the shoot pose speed; the
+			# loose itself twangs here, at the archer, not at impact.
+			var caster = actors.get(event.source_id)
+			if caster and caster.rig.has_method("has_bow") \
+					and caster.rig.has_bow():
+				_sfx("bow_release", -8.0, randf_range(0.92, 1.08))
 		CombatEvent.EventType.DAMAGE:
 			_play_damage(event)
 		CombatEvent.EventType.HEAL:
@@ -929,9 +938,9 @@ func _yaw_of(facing: Vector2) -> float:
 ## climbing a half-step per full ring so long bursts stack upward.
 var _float_lanes := {}
 
-## A fast arrow flying point to point (archer behavior skills).
+## A fast arrow flying point to point (archer behavior skills). The
+## twang belongs to the loose (CAST_FINISH), not the flight.
 func _spawn_arrow_streak(from: Vector3, to: Vector3):
-	_sfx("bow_release", -8.0, randf_range(0.92, 1.08))
 	var streak := MeshInstance3D.new()
 	var shaft := CylinderMesh.new()
 	shaft.top_radius = 0.015

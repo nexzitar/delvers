@@ -314,6 +314,9 @@ func pose_death(t: float):
 
 ## Raise, nock, draw to the cheek, loose, lower. t in [0, SHOOT_T].
 ## target_dist: rig-local forward distance the arrow flies before sticking.
+func has_bow() -> bool:
+	return bow != null
+
 func pose_shoot(t: float, target_dist := 2.2):
 	# No bow (a sword hero casting Heal): wind up a spell instead.
 	if bow == null:

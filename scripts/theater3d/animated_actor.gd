@@ -407,6 +407,10 @@ func _dress(opts: Dictionary):
 			bow.scale = Vector3.ONE * 0.9
 			bow_mount.add_child(bow)
 		_bow_node = bow
+		# Every archer wears their arrows: quiver on the back socket.
+		var quiver = DelverBuilder.build_quiver()
+		if not _socket_mount_node(quiver, "quiver_p", 1.0):
+			quiver.free()
 
 	# Weapons: the same meshes the procedural rigs carry, gripped by
 	# the hand bones. Blade along the hand's local axis, tuned by eye.
@@ -804,6 +808,9 @@ func pose_sit(t: float, stroke_scale := 1.0):
 ## The theater paces the shoot pose so anim_t hits this value exactly
 ## at CAST_FINISH - the string's release beat.
 const DRAW_RELEASE_T := 0.8
+
+func has_bow() -> bool:
+	return _bow_node != null
 
 func pose_shoot(t: float, _target_dist := 2.2):
 	if _skeleton == null or not (_bow_node is BowProp):
