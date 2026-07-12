@@ -44,6 +44,26 @@ static func for_enemy(template, host: Node) -> Texture2D:
 		rig = ActorFactory3D.build_enemy(template)
 	return await _render(key, rig, host)
 
+## Union of all mesh AABBs in rig-parent space (rig sits at the origin,
+## so this is also camera space for the portrait viewport).
+static func _rig_aabb(rig: Node3D) -> AABB:
+	var merged := AABB()
+	var first := true
+	var stack := [[rig, Transform3D()]]
+	while not stack.is_empty():
+		var entry = stack.pop_back()
+		var n = entry[0]
+		var xf: Transform3D = entry[1]
+		if n is Node3D:
+			xf = xf * n.transform
+		if n is MeshInstance3D:
+			var b: AABB = xf * n.get_aabb()
+			merged = b if first else merged.merge(b)
+			first = false
+		for c in n.get_children():
+			stack.append([c, xf])
+	return merged
+
 static func _render(key: String, rig: Node3D, host: Node) -> Texture2D:
 	var vp := SubViewport.new()
 	vp.size = SIZE
@@ -67,19 +87,33 @@ static func _render(key: String, rig: Node3D, host: Node) -> Texture2D:
 	camera.environment = env
 	vp.add_child(camera)
 
-	vp.add_child(rig)
+	if rig.get_parent() == null:
+		vp.add_child(rig)
 	# Bust framing for humanoids, whole-blob framing for slimes.
 	if rig is SlimeRig:
 		camera.position = Vector3(0, 0.42, 1.35) * maxf(rig.scale.y, 1.0)
 		camera.look_at_from_position(
 			camera.position, Vector3(0, 0.26 * rig.scale.y, 0)
 		)
+	elif rig is AnimatedActor:
+		# Chibi models carry huge heads: aim at the face, a third of
+		# a head below the crown. Mesh AABBs are local to nodes with
+		# their own scales, so accumulate transforms down from the rig.
+		var box := _rig_aabb(rig)
+		var h := box.end.y
+		# Distance follows the smaller extent: wide-headed goblins need
+		# the full height back-off, tall narrow delvers sit closer.
+		var face_y = h * 0.75
+		camera.position = Vector3(0, face_y + 0.05, minf(h, box.size.x) * 1.15)
+		camera.look_at_from_position(camera.position, Vector3(0, face_y, 0))
 	else:
 		var head_y = 0.9 * rig.scale.y
 		camera.position = Vector3(0, head_y + 0.06, 0.98 * rig.scale.y)
 		camera.look_at_from_position(camera.position, Vector3(0, head_y, 0))
 
 	host.add_child(vp)
+	if OS.has_environment("PORTRAIT_DEBUG"):
+		print("PORTRAIT %s box=%s cam=%s" % [key, _rig_aabb(rig), camera.position])
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image = vp.get_texture().get_image()

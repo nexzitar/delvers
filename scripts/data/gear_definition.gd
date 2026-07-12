@@ -41,6 +41,9 @@ enum HeadStyle {
 ## moves and crits, cloth casts - never in what you may wear.
 @export var armor_type := ""
 @export var weapon_type: WeaponType = WeaponType.NONE
+## Weapon family for mastery training: "sword" (default for melee),
+## "dagger", "axe", "bow". Empty = inferred from weapon_type.
+@export var weapon_family := ""
 @export var quality: ItemQuality.Tier = ItemQuality.Tier.COMMON
 ## Drop level: stats scale from the authored (level 1) values via
 ## LootTable.materialize. Higher item level = stronger item.

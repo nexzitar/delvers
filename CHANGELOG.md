@@ -2,6 +2,78 @@
 
 Notable changes per pull request. Newest first.
 
+## Phase B — The Heightfield *(open)*
+
+### Added
+- **A scripted opening**: room two always fields exactly the
+  dungeon's farmable pair (Darkwood: one warrior, one slime) and
+  room three adds a single body - the first fights are lessons,
+  never five-enemy ambushes. The dice start rolling in room four.
+- **Save slots** (Options menu): three slots with Store/Load - stash
+  the current guild away, test any stage of the game, bring it back.
+  Loading a slot copies it over the active save and reloads the camp.
+- **Hero switcher arrows** in the loadout: < and > beside the name
+  walk the roster.
+- **Every arrow flies**: ordinary bow shots (hero and goblin alike)
+  now streak visibly to their target at impact - the draw pose was
+  always there; the arrow itself only existed for Multishot and
+  Piercing Shot.
+
+### Changed
+- The goblin shield straps to the FRONT of the forearm (a two-angle
+  probe caught the earlier fix hiding it behind the arm), and the
+  goblin sword carries forward at a ready angle instead of pointing
+  backward - both settled by side-by-side candidate renders.
+- The camp has a proper theme now: a 90-second lute-and-strings
+  campfire piece from the music pipeline, looping in place of the
+  first-version wav (which remains the menu's and the fallback).
+- Archers DRAW now: the cast wind-up pose was gated to procedural
+  rigs only - every modeled rig (Wren and the goblins) skipped it.
+  Any rig that can pose_shoot draws before the arrow flies.
+- Portraits frame the face from the mesh's actual crown - goblin
+  portraits show goblins, not foreheads.
+- The shield grip resolved by lineup probe (four candidate rotations
+  rendered side by side): face out, guarding the flank.
+- Goblin warriors hold their shields properly: the procedural shield
+  mounts through the socket system (shield_arm socket + shield_p
+  grip) instead of delver-tuned fallback numbers.
+- Tooltip panels grew 60px and the stat-delta list splits to two
+  columns past three lines - no more overflow in compare or forge
+  preview.
+- Tier scaling bites harder: +3 enemy levels per tier above the
+  first (was +2) - tier 2 was strolling.
+
+### Fixed
+- **The spiderling cascade**: reinforcement-spawned adds (brood
+  spiderlings) had no pack - they never leashed, never slept, and
+  roamed the dungeon chain-waking every nest they passed (28 active
+  at the door, 20 trailing two rooms later). Spawns now inherit the
+  spawner's pack, link and home - they fight, leash and rest with
+  the family. Pinned in test_pulls.
+- **The tier-2 "freeze"**: every sim event printed to the console -
+  a tier-2 delve emits hundreds of thousands of lines and looked
+  like a hang. Event printing is now a debug_log tap, off by
+  default; the same sim runs in half a second.
+- The gear comparison flows into two columns when the stat breakdown
+  grows past four lines, instead of overflowing the panel.
+
+### Added
+- **ELEVATION**: the delve descends - the Broken Gate stands highest
+  and the boss lair waits at the bottom. Every tile carries a height;
+  corridors between levels become RAMPS (graded over their fresh
+  ground so room mouths never cliff); a ledge is a wall to
+  pathfinding; and terrain occludes sightlines - a ridge higher than
+  both heads hides the far side. The theater renders raised ground
+  as stepped stone, and everything - actors, props, arches,
+  landmarks, telegraphs - stands on its floor.
+- **test_elevation** pins the contracts: ledges block, ramps carry,
+  ridges hide, the compiled descent stays walkable end to end, and
+  an elevated Darkwood delve terminates.
+- **Dagger mastery**: a dagger in the main hand trains its own
+  discipline (Hamstring, Find the Gap, Flurry, Red Ribbons) via the
+  new GearDefinition.weapon_family - Bram's rare blade earns its
+  keep. Pairs with Dual Wield.
+
 ## The Continuous Dungeon — Phase A *(open)*
 
 ### Added

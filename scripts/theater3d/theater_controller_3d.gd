@@ -110,6 +110,22 @@ var _wrapping_up := false
 static func to_world(sim_pos: Vector2) -> Vector3:
 	return Vector3(sim_pos.x * WORLD_SCALE, 0.0, sim_pos.y * WORLD_SCALE)
 
+## One level of elevation in world units.
+const HEIGHT_Y := 0.55
+var _height_grid: Dictionary = {}
+var _height_tile_size := 32
+
+## Sim position to world WITH the ground under it.
+func world_at(sim_pos: Vector2) -> Vector3:
+	var w = to_world(sim_pos)
+	w.y = ground_y(sim_pos)
+	return w
+
+func ground_y(sim_pos: Vector2) -> float:
+	var tile = Vector2i(floori(sim_pos.x / _height_tile_size),
+		floori(sim_pos.y / _height_tile_size))
+	return _height_grid.get(tile, 0.0) * HEIGHT_Y
+
 const ARENA_POOL := [
 	"res://resources/arenas/open_arena.tres",
 	"res://resources/arenas/pillared_hall.tres",
@@ -186,7 +202,7 @@ func _ready():
 		rng.randomize()
 		_layout = DungeonLayout.generate(dungeon(), rng)
 		combat.setup_delve(party, _layout, entry_health,
-			(PlayerRoster.current_tier - 1) * 2)
+			(PlayerRoster.current_tier - 1) * 3)
 	var guard := 60000
 	while not combat.combat_over and guard > 0:
 		combat.update(0.1)
@@ -291,6 +307,14 @@ func _build_timeline(log):
 						"from": event.source_id, "to": event.target_id,
 					})
 					continue
+				# EVERY arrow flies: ordinary shots streak at impact
+				# too (the draw pose comes from the cast wind-up).
+				if event.skill != null and event.skill.delivery_type \
+						== SkillDefinition.DeliveryType.PROJECTILE:
+					_timeline.append({
+						"time": event.time, "kind": "streak",
+						"from": event.source_id, "to": event.target_id,
+					})
 				# AoE bursts get one distinctive cue, not a swing per victim.
 				if event.skill_name in ["Whirlwind", "Thunderclap"]:
 					var burst_key = "%d:%s:%.2f" % [event.source_id, event.skill_name, event.time]
@@ -419,12 +443,12 @@ func _play_event(event):
 				event.telegraph_radius * WORLD_SCALE, event.telegraph_duration
 			)
 			add_child(telegraph)
-			telegraph.position = to_world(event.position)
+			telegraph.position = world_at(event.position)
 
 func _play_spawn(event):
 	var rig = ActorFactory3D.build_from_spawn(event)
 	add_child(rig)
-	rig.position = to_world(event.position)
+	rig.position = world_at(event.position)
 	rig.rotation.y = _yaw_of(event.facing)
 
 	var badge_row := Node3D.new()
@@ -472,7 +496,7 @@ func _play_move(event):
 	if state == null or state.mode == "dead":
 		return
 	state.move_from = state.rig.position
-	state.move_to = to_world(event.position)
+	state.move_to = world_at(event.position)
 	state.move_progress = 0.0
 	state.walk_until = _clock + 0.3
 
@@ -483,11 +507,12 @@ func _play_cast_start(event):
 	state.target_id = event.target_id
 	var queue = _cast_durations.get(event.source_id, [])
 	var duration = queue.pop_front() if not queue.is_empty() else 0.3
-	if state.rig is DelverRig:
+	if state.rig is DelverRig or state.rig.has_method("pose_shoot"):
 		state.mode = "shoot"
 		state.anim_t = 0.0
 		# Scale the pose so the arrow releases exactly at CAST_FINISH.
-		state.anim_speed = (0.62 * DelverRig.SHOOT_T) / duration
+		state.anim_speed = (0.62 * DelverRig.SHOOT_T) / duration \
+			if state.rig is DelverRig else 0.8 / maxf(duration, 0.1)
 		var target = actors.get(event.target_id)
 		if target:
 			state.shoot_dist = (
@@ -862,6 +887,7 @@ func _update_camera(delta):
 	hero_center /= hero_count
 	var low := Vector3(INF, 0, INF)
 	var high := Vector3(-INF, 0, -INF)
+	var y_sum := 0.0
 	var count := 0
 	for state in actors.values():
 		if state.mode == "dead" or state.get("dormant", false):
@@ -874,10 +900,14 @@ func _update_camera(delta):
 		low.z = minf(low.z, p.z)
 		high.x = maxf(high.x, p.x)
 		high.z = maxf(high.z, p.z)
+		y_sum += p.y
 		count += 1
 	if count == 0:
 		return
+	# Heightfield terrain: the frame rides the fighters' ground level,
+	# not absolute zero, or elevated rooms get framed at the feet.
 	var center = (low + high) * 0.5
+	center.y = y_sum / count
 	var spread = (high - low).length()
 	# Generous distance so the fight stays inside the strip between the
 	# sidebar panels rather than hiding behind them.
@@ -886,7 +916,7 @@ func _update_camera(delta):
 	var goal = center + bearing * distance
 	var blend = 1.0 - exp(-2.5 * delta)
 	camera.position = camera.position.lerp(goal, blend)
-	camera.look_at(center + Vector3(0, 0.4, 0))
+	camera.look_at(center + Vector3(0, 0.9, 0))
 
 # --- Presentation helpers -----------------------------------------------
 
@@ -1470,6 +1500,8 @@ func _show_battle_result(victory):
 # --- World & UI ---------------------------------------------------------
 
 func _setup_world(arena):
+	_height_grid = arena.heights
+	_height_tile_size = arena.tile_size
 	# Each dungeon dresses its own stage: the Darkwood is a moonlit
 	# forest clearing; the Nest a warm webbed cavern.
 	var nest: bool = dungeon().theme == "nest"
@@ -1647,6 +1679,42 @@ func _setup_world(arena):
 	var pillar_mat := StandardMaterial3D.new()
 	pillar_mat.albedo_color = Color("42463e")
 	pillar_mat.roughness = 1.0
+	# Elevated ground: every raised walkable tile is a stone step
+	# under the walker - the descent reads in the floor itself.
+	if not arena.heights.is_empty():
+		var floor_mat := StandardMaterial3D.new()
+		floor_mat.albedo_color = Color("373b34") if dressing else Color("3a3e37")
+		floor_mat.roughness = 1.0
+		var raised: Array[Vector2i] = []
+		var blocked_lookup := {}
+		for t in arena.blocked_tiles:
+			blocked_lookup[t] = true
+		for tile in arena.heights:
+			if blocked_lookup.has(tile):
+				continue
+			if arena.heights[tile] > 0.02:
+				raised.append(tile)
+		if not raised.is_empty():
+			var slab := BoxMesh.new()
+			slab.size = Vector3(1.0, 1.0, 1.0)
+			slab.material = floor_mat
+			var fmm := MultiMesh.new()
+			fmm.transform_format = MultiMesh.TRANSFORM_3D
+			fmm.mesh = slab
+			fmm.instance_count = raised.size()
+			for i in raised.size():
+				var tile = raised[i]
+				var h = arena.heights[tile] * HEIGHT_Y
+				var base = to_world(Vector2(
+					(tile.x + 0.5) * arena.tile_size,
+					(tile.y + 0.5) * arena.tile_size))
+				fmm.set_instance_transform(i, Transform3D(
+					Basis.from_scale(Vector3(1.0, maxf(h, 0.05), 1.0)),
+					base + Vector3(0, maxf(h, 0.05) * 0.5, 0)))
+			var fmmi := MultiMeshInstance3D.new()
+			fmmi.multimesh = fmm
+			add_child(fmmi)
+
 	# Only wall faces the party can see: blocked tiles touching open
 	# ground. Interior rock stays un-meshed.
 	var blocked_set := {}
@@ -1723,7 +1791,7 @@ func _setup_world(arena):
 	camera.fov = 35
 	var open_on = center
 	if _layout != null:
-		open_on = to_world(Vector2(
+		open_on = world_at(Vector2(
 			(arena.hero_spawn_center.x + 0.5) * arena.tile_size,
 			(arena.hero_spawn_center.y + 0.5) * arena.tile_size))
 	camera.position = open_on + CAMERA_OFFSET.normalized() * 10.0
@@ -1770,7 +1838,7 @@ func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary)
 		for i in tiles.size():
 			var tile: Vector2i = tiles[i]
 			var yaw = (PI / 2.0) * ((tile.x * 5 + tile.y * 3) % 4)
-			var base = to_world(Vector2(
+			var base = world_at(Vector2(
 				(tile.x + 0.5) * arena.tile_size,
 				(tile.y + 0.5) * arena.tile_size
 			))
@@ -1787,7 +1855,7 @@ func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary)
 		for door in _layout.doors:
 			var arch := MeshInstance3D.new()
 			arch.mesh = kit_meshes["Arch"]
-			arch.position = to_world(door.center)
+			arch.position = world_at(door.center)
 			if not door.horizontal:
 				arch.rotation.y = PI / 2.0
 			add_child(arch)
@@ -1801,7 +1869,7 @@ func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary)
 			(room.position.y + 1.5)) * _layout.arena.tile_size
 		var pile := MeshInstance3D.new()
 		pile.mesh = kit_meshes["Rubble%d" % (i % 2)]
-		pile.position = to_world(corner)
+		pile.position = world_at(corner)
 		pile.rotation.y = (i * 2.4)
 		add_child(pile)
 
@@ -1823,7 +1891,7 @@ func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary)
 			var spot = pack.center + Vector2(cos(angle), sin(angle)) 				* dist * _layout.arena.tile_size
 			var prop := MeshInstance3D.new()
 			prop.mesh = kit_meshes[props[k]]
-			prop.position = to_world(spot)
+			prop.position = world_at(spot)
 			prop.rotation.y = angle + PI
 			add_child(prop)
 
@@ -1844,8 +1912,8 @@ func _build_architecture(arena, shown: Array[Vector2i], blocked_set: Dictionary)
 		lm.scale = Vector3.ONE * lm_scale
 		var spot = Vector2(lm_room.get_center().x + 0.5,
 			lm_room.position.y + 2.2) * _layout.arena.tile_size
-		lm.position = to_world(spot)
-		lm.position.y = -aabb.position.y * lm_scale
+		lm.position = world_at(spot)
+		lm.position.y += -aabb.position.y * lm_scale
 		add_child(lm)
 		var glow := OmniLight3D.new()
 		glow.light_color = Color(1.0, 0.85, 0.55)

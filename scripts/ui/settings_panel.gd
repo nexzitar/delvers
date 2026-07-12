@@ -29,6 +29,41 @@ func _ready():
 	reset.pressed.connect(_on_reset_pressed.bind(reset))
 	%FullscreenCheck.get_parent().add_child(reset)
 
+	# Save slots: stash the current ledger away or bring one back -
+	# testing different stages of the guild without burning anything.
+	var slots_title := Label.new()
+	slots_title.text = "Save Slots"
+	%FullscreenCheck.get_parent().add_child(slots_title)
+	for i in [1, 2, 3]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var label := Label.new()
+		label.custom_minimum_size = Vector2(110, 0)
+		row.add_child(label)
+		var store := Button.new()
+		store.text = "Store"
+		var restore := Button.new()
+		restore.text = "Load"
+		row.add_child(store)
+		row.add_child(restore)
+		%FullscreenCheck.get_parent().add_child(row)
+		var refresh = func():
+			var exists = FileAccess.file_exists(_slot_path(i))
+			label.text = "Slot %d%s" % [i, "" if exists else " (empty)"]
+			restore.disabled = not exists
+		store.pressed.connect(func():
+			RosterSave.save(PlayerRoster, _slot_path(i))
+			refresh.call())
+		restore.pressed.connect(func():
+			if RosterSave.load_into(PlayerRoster, _slot_path(i)):
+				RosterSave.save(PlayerRoster)
+				visible = false
+				SceneFlow.change_scene("res://scenes/camp/camp.tscn"))
+		refresh.call()
+
+func _slot_path(i: int) -> String:
+	return "user://delvers_slot_%d.json" % i
+
 func _on_reset_pressed(button: Button):
 	if button.text == "Reset Save":
 		button.text = "Really? Everything is lost!"

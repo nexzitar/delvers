@@ -83,21 +83,63 @@ static func generate(dungeon: DungeonDefinition, rng: RandomNumberGenerator) -> 
 	for i in rooms.size():
 		rooms[i].position += shift
 
+	# The delve DESCENDS: the entrance stands highest, the boss lair
+	# at the bottom. Each room owns a level; corridors ramp between.
+	var levels: Array[float] = []
+	var level := float((rooms.size() - 1) / 3)
+	for i in rooms.size():
+		levels.append(level)
+		if i % 3 == 2:
+			level = maxf(level - 1.0, 0.0)
+	var heights := {}
+
 	# Carve rooms and L-corridors into a walkable set.
 	var walkable := {}
-	for room in rooms:
+	for i in rooms.size():
+		var room = rooms[i]
 		for x in range(room.position.x, room.end.x):
 			for y in range(room.position.y, room.end.y):
 				walkable[Vector2i(x, y)] = true
+				heights[Vector2i(x, y)] = levels[i]
 	for i in rooms.size() - 1:
 		var a = rooms[i].get_center()
 		var b = rooms[i + 1].get_center()
+		# The corridor's tiles ramp smoothly from level to level.
+		var route: Array[Vector2i] = []
 		for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
-			for dy in range(-CORRIDOR_HALF, CORRIDOR_HALF + 1):
-				walkable[Vector2i(x, a.y + dy)] = true
+			route.append(Vector2i(x, a.y))
+		if a.x > b.x:
+			route.reverse()
+		var leg2: Array[Vector2i] = []
 		for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
-			for dx in range(-CORRIDOR_HALF, CORRIDOR_HALF + 1):
-				walkable[Vector2i(b.x + dx, y)] = true
+			leg2.append(Vector2i(b.x, y))
+		if a.y > b.y:
+			leg2.reverse()
+		route.append_array(leg2)
+		# The ramp spans only the fresh ground BETWEEN the rooms -
+		# lerping across the full center-to-center route would leave a
+		# cliff at the room mouth where in-room tiles keep their level.
+		var fresh_spine := 0
+		for k in route.size():
+			if not heights.has(route[k]):
+				fresh_spine += 1
+		var fresh_seen := 0
+		for k in route.size():
+			var spine = route[k]
+			var h: float
+			if heights.has(spine):
+				h = heights[spine]
+			else:
+				fresh_seen += 1
+				h = lerpf(levels[i], levels[i + 1],
+					float(fresh_seen) / float(fresh_spine + 1))
+			var across = Vector2i(0, 1) if k < route.size() - leg2.size() \
+				else Vector2i(1, 0)
+			for w in range(-CORRIDOR_HALF, CORRIDOR_HALF + 1):
+				var cell = spine + across * w
+				walkable[cell] = true
+				if not heights.has(cell):
+					heights[cell] = h
 
 	# A few pillars inside larger rooms (never on the spine row).
 	for i in range(1, rooms.size() - 1):
@@ -124,6 +166,17 @@ static func generate(dungeon: DungeonDefinition, rng: RandomNumberGenerator) -> 
 			if not walkable.has(Vector2i(x, y)):
 				blocked.append(Vector2i(x, y))
 	layout.arena.blocked_tiles = blocked
+	# Walls stand on the ground beside them.
+	for tile in blocked:
+		var best := 0.0
+		var found := false
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if heights.has(tile + d):
+				best = maxf(best, heights[tile + d]) if found else heights[tile + d]
+				found = true
+		if found:
+			heights[tile] = best
+	layout.arena.heights = heights
 	layout.arena.hero_spawn_center = rooms[0].get_center()
 	layout.arena.enemy_spawn_center = rooms[rooms.size() - 1].get_center()
 
@@ -233,6 +286,22 @@ static func _place_packs(layout: DungeonLayout, dungeon: DungeonDefinition,
 			elite_pack.append_array(_roll(dungeon, room_no, rng, -3))
 			layout.packs.append({"room": room_no, "center": center,
 				"templates": elite_pack, "elite": true, "link": -1})
+			continue
+		# The opening is scripted, not rolled: room two fields exactly
+		# the farmable pair, room three adds one. A new delver's first
+		# fight is a lesson, never an ambush.
+		if room_no == 2:
+			layout.packs.append({"room": room_no, "center": center,
+				"templates": dungeon.guaranteed.duplicate(), "elite": false,
+				"link": -1})
+			continue
+		if room_no == 3:
+			var opening = dungeon.guaranteed.duplicate()
+			opening.append_array(_roll(dungeon, room_no, rng,
+				-(opening.size() + 1)))
+			layout.packs.append({"room": room_no, "center": center,
+				"templates": opening.slice(0, 3), "elite": false,
+				"link": -1})
 			continue
 		var two = rooms[i].size.x >= 11 and rng.randf() < 0.45
 		var linked = two and rng.randf() < 0.5
