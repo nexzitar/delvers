@@ -916,7 +916,7 @@ func _update_camera(delta):
 	var goal = center + bearing * distance
 	var blend = 1.0 - exp(-2.5 * delta)
 	camera.position = camera.position.lerp(goal, blend)
-	camera.look_at(center + Vector3(0, 0.4, 0))
+	camera.look_at(center + Vector3(0, 0.9, 0))
 
 # --- Presentation helpers -----------------------------------------------
 
