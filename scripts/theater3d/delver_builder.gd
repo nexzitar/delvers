@@ -177,21 +177,9 @@ static func build_helmet() -> Node3D:
 	return root
 
 static func build_bow() -> Node3D:
-	var root := Node3D.new()
-	var radius := 0.45
-	var half_arc := 55.0
-	var segments := 7
-	for i in segments:
-		var a := deg_to_rad(-half_arc + (2.0 * half_arc) * i / (segments - 1))
-		var pos := Vector3(radius * cos(a) - radius, radius * sin(a), 0)
-		# Segments overlap so the limb reads as one curved piece.
-		_box(root, Vector3(0.035, 0.17, 0.045), WOOD, pos, Vector3(0, 0, rad_to_deg(a)))
-	var tip_y := radius * sin(deg_to_rad(half_arc))
-	var tip_x := radius * cos(deg_to_rad(half_arc)) - radius
-	_box(root, Vector3(0.012, tip_y * 2.0, 0.012), Color("d8d2c2"), Vector3(tip_x, 0, 0))
-	# Grip wrap in the middle.
-	_box(root, Vector3(0.045, 0.1, 0.055), LEATHER, Vector3.ZERO)
-	return root
+	# The bow owns its string now: BowProp carries the flexing nock,
+	# the draw schedule, and the nocked arrow.
+	return BowProp.new()
 
 static func build_quiver() -> Node3D:
 	var root := Node3D.new()

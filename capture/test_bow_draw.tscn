@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8bowdrawt01"]
+
+[ext_resource type="Script" path="res://capture/test_bow_draw.gd" id="1_test"]
+
+[node name="TestBowDraw" type="Node"]
+script = ExtResource("1_test")
